@@ -1,4 +1,4 @@
-// Stack Panic - UI Scenes (Menu, GameOver, HUD, Pause, Settings)
+// Stack Panic - UI Scenes (Menu, GameOver, HUD)
 
 class MenuScene extends Phaser.Scene {
     constructor() { super('MenuScene'); }
@@ -7,7 +7,6 @@ class MenuScene extends Phaser.Scene {
         const cx = GAME_WIDTH / 2, cy = GAME_HEIGHT / 2;
         this.cameras.main.setBackgroundColor(COLORS.background);
 
-        // Background grid
         this._drawGrid();
 
         // Title
@@ -20,23 +19,23 @@ class MenuScene extends Phaser.Scene {
             duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
 
-        // High score
+        // High score & best stage
         const hs = StorageManager.getHighScore();
+        const bs = StorageManager.getBestStage();
         if (hs > 0) {
-            this.add.text(cx, cy - 80, `BEST: ${hs}`, {
-                fontSize: '20px', fontFamily: 'Arial', color: '#FFD700'
+            this.add.text(cx, cy - 80, `BEST: ${hs}  |  STAGE ${bs}`, {
+                fontSize: '18px', fontFamily: 'Arial', color: '#FFD700'
             }).setOrigin(0.5);
         }
 
         // Play button
         const playBtn = this.add.rectangle(cx, cy + 20, 240, 64, COLORS.block, 1).setInteractive();
         playBtn.setStrokeStyle(2, COLORS.blockHighlight);
-        const playTxt = this.add.text(cx, cy + 20, 'TAP TO PLAY', {
+        this.add.text(cx, cy + 20, 'TAP TO PLAY', {
             fontSize: '24px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
         }).setOrigin(0.5);
 
         playBtn.on('pointerdown', () => {
-            this.tweens.add({ targets: [playBtn, playTxt], scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true });
             audioManager.init();
             audioManager.resume();
             audioManager.play('ui_click');
@@ -60,19 +59,14 @@ class MenuScene extends Phaser.Scene {
             StorageManager.saveSetting('sound', audioManager.enabled);
         });
 
-        // Settings overlay (hidden)
         this.settingsOverlay = null;
     }
 
     _drawGrid() {
         const g = this.add.graphics();
         g.lineStyle(1, COLORS.grid, 0.3);
-        for (let x = 0; x < GAME_WIDTH; x += 40) {
-            g.moveTo(x, 0); g.lineTo(x, GAME_HEIGHT);
-        }
-        for (let y = 0; y < GAME_HEIGHT; y += 40) {
-            g.moveTo(0, y); g.lineTo(GAME_WIDTH, y);
-        }
+        for (let x = 0; x < GAME_WIDTH; x += 40) { g.moveTo(x, 0); g.lineTo(x, GAME_HEIGHT); }
+        for (let y = 0; y < GAME_HEIGHT; y += 40) { g.moveTo(0, y); g.lineTo(GAME_WIDTH, y); }
         g.strokePath();
     }
 
@@ -130,10 +124,12 @@ class GameOverScene extends Phaser.Scene {
 
         const score = data.score || 0;
         const blocksLanded = data.blocksLanded || 0;
-        const milestone = data.milestone || 1;
+        const stage = data.stage || 1;
         const isNewBest = score > StorageManager.getHighScore();
+        const isNewBestStage = stage > StorageManager.getBestStage();
 
         if (isNewBest) StorageManager.setHighScore(score);
+        if (isNewBestStage) StorageManager.setBestStage(stage);
         StorageManager.incrementGamesPlayed();
 
         // Game Over title
@@ -164,8 +160,8 @@ class GameOverScene extends Phaser.Scene {
         this.add.text(cx, 320, `Blocks Landed: ${blocksLanded}`, {
             fontSize: '18px', color: '#999999'
         }).setOrigin(0.5);
-        this.add.text(cx, 348, `Milestone Reached: ${milestone}`, {
-            fontSize: '18px', color: '#999999'
+        this.add.text(cx, 348, `Stage Reached: ${stage}`, {
+            fontSize: '18px', color: '#E8A838'
         }).setOrigin(0.5);
 
         let btnY = 420;
@@ -206,7 +202,6 @@ class GameOverScene extends Phaser.Scene {
             this.scene.start('MenuScene');
         });
 
-        // Handle interstitial
         adManager.onGameOver();
     }
 
@@ -219,7 +214,7 @@ class GameOverScene extends Phaser.Scene {
     }
 }
 
-// HUD Manager - created within GameScene
+// HUD Manager
 class HUDManager {
     constructor(scene) {
         this.scene = scene;
@@ -230,19 +225,25 @@ class HUDManager {
         this.container.add(topBar);
 
         // Score
-        this.scoreText = scene.add.text(12, 12, '\u2605 SCORE: 0', {
+        this.scoreText = scene.add.text(12, 12, 'SCORE: 0', {
             fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
         });
         this.container.add(this.scoreText);
 
-        // Milestone
-        this.milestoneText = scene.add.text(GAME_WIDTH - 12, 12, '\u25A0 MILESTONE 1', {
-            fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
+        // Stage
+        this.stageText = scene.add.text(GAME_WIDTH - 12, 12, 'STAGE 1', {
+            fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#E8A838'
         }).setOrigin(1, 0);
-        this.container.add(this.milestoneText);
+        this.container.add(this.stageText);
 
-        // Streak (below top bar, center)
-        this.streakText = scene.add.text(GAME_WIDTH / 2, 50, '', {
+        // Progress bar (below top bar)
+        this.progressBg = scene.add.rectangle(GAME_WIDTH / 2, 46, GAME_WIDTH - 20, 5, 0x333333).setScrollFactor(0);
+        this.progressFill = scene.add.rectangle(10, 46, 0, 5, COLORS.block).setOrigin(0, 0.5).setScrollFactor(0);
+        this.container.add(this.progressBg);
+        this.container.add(this.progressFill);
+
+        // Streak (below progress bar)
+        this.streakText = scene.add.text(GAME_WIDTH / 2, 62, '', {
             fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#E8A838'
         }).setOrigin(0.5).setAlpha(0);
         this.container.add(this.streakText);
@@ -254,8 +255,8 @@ class HUDManager {
         this.container.add(this.tiltFill);
 
         // Pause button
-        const pauseBtn = scene.add.text(GAME_WIDTH - 12, 50, '\u23F8', {
-            fontSize: '28px', color: '#FFFFFF'
+        const pauseBtn = scene.add.text(GAME_WIDTH - 12, 58, '\u23F8', {
+            fontSize: '24px', color: '#FFFFFF'
         }).setOrigin(1, 0).setInteractive().setScrollFactor(0);
         pauseBtn.on('pointerdown', (p) => {
             p.event.stopPropagation();
@@ -265,15 +266,20 @@ class HUDManager {
     }
 
     updateScore(score) {
-        this.scoreText.setText(`\u2605 SCORE: ${score}`);
+        this.scoreText.setText(`SCORE: ${score}`);
         this.scene.tweens.add({
             targets: this.scoreText, scaleX: 1.35, scaleY: 1.35,
             duration: 90, yoyo: true, ease: 'Back.easeOut'
         });
     }
 
-    updateMilestone(m) {
-        this.milestoneText.setText(`\u25A0 MILESTONE ${m}`);
+    updateStage(stageNum, traits) {
+        let text = `STAGE ${stageNum}`;
+        this.stageText.setText(text);
+    }
+
+    updateProgress(pct) {
+        this.progressFill.setSize((GAME_WIDTH - 20) * Math.min(1, pct), 5);
     }
 
     updateStreak(n) {
@@ -298,19 +304,58 @@ class HUDManager {
         this.tiltFill.setSize(8, height);
     }
 
-    showMilestoneBanner(n) {
-        const banner = this.scene.add.container(GAME_WIDTH / 2, -50).setDepth(200).setScrollFactor(0);
-        const bg = this.scene.add.rectangle(0, 0, 240, 40, COLORS.block);
-        const txt = this.scene.add.text(0, 0, `MILESTONE ${n}`, {
-            fontSize: '24px', fontStyle: 'bold', color: '#FFFFFF'
+    showStageClearBanner(stageNum, bonus) {
+        const cx = GAME_WIDTH / 2, cy = GAME_HEIGHT / 2;
+        const banner = this.scene.add.container(cx, cy).setDepth(200).setScrollFactor(0);
+
+        const bg = this.scene.add.rectangle(0, 0, 300, 120, 0x000000, 0.85);
+        const title = this.scene.add.text(0, -25, `STAGE ${stageNum} CLEAR!`, {
+            fontSize: '28px', fontStyle: 'bold', color: '#FFD700'
         }).setOrigin(0.5);
-        banner.add([bg, txt]);
+        const bonusTxt = this.scene.add.text(0, 15, `+${bonus} BONUS`, {
+            fontSize: '20px', fontStyle: 'bold', color: '#4CAF50'
+        }).setOrigin(0.5);
+        banner.add([bg, title, bonusTxt]);
+
+        banner.setScale(0.5).setAlpha(0);
         this.scene.tweens.add({
-            targets: banner, y: 90, duration: 300, ease: 'Back.easeOut',
+            targets: banner, scaleX: 1, scaleY: 1, alpha: 1,
+            duration: 300, ease: 'Back.easeOut',
+            hold: 1200,
+            onComplete: () => {
+                this.scene.tweens.add({
+                    targets: banner, alpha: 0, duration: 300,
+                    onComplete: () => banner.destroy()
+                });
+            }
+        });
+    }
+
+    showStageIntroBanner(stageNum, traits) {
+        const cx = GAME_WIDTH / 2, cy = GAME_HEIGHT / 2;
+        const hasTraits = traits && traits.length > 0;
+        const banner = this.scene.add.container(cx, cy).setDepth(200).setScrollFactor(0);
+
+        const bg = this.scene.add.rectangle(0, 0, 300, hasTraits ? 100 : 70, 0x000000, 0.85);
+        const title = this.scene.add.text(0, hasTraits ? -20 : 0, `STAGE ${stageNum}`, {
+            fontSize: '32px', fontStyle: 'bold', color: '#FFFFFF'
+        }).setOrigin(0.5);
+        banner.add([bg, title]);
+
+        if (hasTraits) {
+            const traitText = this.scene.add.text(0, 18, traits.join(' + '), {
+                fontSize: '15px', fontStyle: 'bold', color: '#E8A838'
+            }).setOrigin(0.5);
+            banner.add(traitText);
+        }
+
+        banner.setAlpha(0);
+        this.scene.tweens.add({
+            targets: banner, alpha: 1, duration: 300,
             hold: 1000,
             onComplete: () => {
                 this.scene.tweens.add({
-                    targets: banner, y: -50, duration: 200,
+                    targets: banner, alpha: 0, duration: 300,
                     onComplete: () => banner.destroy()
                 });
             }

@@ -9,6 +9,12 @@ class StorageManager {
     static setHighScore(v) {
         localStorage.setItem(this._key('high_score'), v.toString());
     }
+    static getBestStage() {
+        return parseInt(localStorage.getItem(this._key('best_stage')) || '1', 10);
+    }
+    static setBestStage(v) {
+        localStorage.setItem(this._key('best_stage'), v.toString());
+    }
     static getGamesPlayed() {
         return parseInt(localStorage.getItem(this._key('games_played')) || '0', 10);
     }

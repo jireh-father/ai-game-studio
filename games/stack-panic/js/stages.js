@@ -1,62 +1,50 @@
-// Stack Panic - Milestone System & Difficulty
+// Stack Panic - Stage System & Audio
 
-class MilestoneManager {
+class StageManager {
     constructor() {
-        this.currentMilestone = 1;
-        this.blocksLanded = 0;
+        this.currentStage = 1;
+        this.stageParams = generateStage(1);
+        this.blocksLandedInStage = 0;
+        this.totalBlocksLanded = 0;
         this.consecutiveMisses = 0;
         this.consecutivePerfects = 0;
-        this.params = getMilestoneParams(1);
-        this.windOffset = 0;
-        this.windDirection = 1;
-    }
-
-    reset() {
-        this.currentMilestone = 1;
-        this.blocksLanded = 0;
-        this.consecutiveMisses = 0;
-        this.consecutivePerfects = 0;
-        this.params = getMilestoneParams(1);
         this.windOffset = 0;
         this.windDirection = 1;
     }
 
     onBlockLanded(quality) {
-        this.blocksLanded++;
+        this.totalBlocksLanded++;
+        this.blocksLandedInStage++;
         this.consecutiveMisses = 0;
+        if (quality === 'perfect') this.consecutivePerfects++;
+        else this.consecutivePerfects = 0;
 
-        if (quality === 'perfect') {
-            this.consecutivePerfects++;
-        } else {
-            this.consecutivePerfects = 0;
-        }
+        return this.blocksLandedInStage >= this.stageParams.blocksRequired ? 'stage_clear' : 'landed';
+    }
 
-        const newMilestone = Math.floor(this.blocksLanded / 10) + 1;
-        const changed = newMilestone !== this.currentMilestone;
-        this.currentMilestone = newMilestone;
-        this.params = getMilestoneParams(newMilestone);
-        return changed;
+    advanceStage() {
+        this.currentStage++;
+        this.stageParams = generateStage(this.currentStage);
+        this.blocksLandedInStage = 0;
+        this.windOffset = 0;
     }
 
     onMiss() {
         this.consecutiveMisses++;
         this.consecutivePerfects = 0;
-        return this.consecutiveMisses >= 3; // instant game over
+        return this.consecutiveMisses >= 3;
     }
 
     getBlockVariant() {
-        const p = this.params;
+        const p = this.stageParams;
         let width = p.blockWidth;
         let height = BLOCK_HEIGHT;
 
-        // Width variance +-8px
         width += (Math.random() - 0.5) * 16;
         width = Math.max(BLOCK_MIN_WIDTH, Math.min(BLOCK_BASE_WIDTH + 10, width));
 
-        // Mercy mechanic: after 2 consecutive misses, +15% width
-        if (this.consecutiveMisses >= 2) {
-            width *= 1.15;
-        }
+        // Mercy: after 2 misses, +15% width
+        if (this.consecutiveMisses >= 2) width *= 1.15;
 
         // Breathing room: every 5th consecutive perfect, force standard block
         if (this.consecutivePerfects > 0 && this.consecutivePerfects % 5 === 0) {
@@ -68,35 +56,31 @@ class MilestoneManager {
         if (Math.random() < p.irregularChance) {
             irregular = true;
             const variant = Math.random();
-            if (variant < 0.33) {
-                width *= 1.3; // wide
-            } else if (variant < 0.66) {
-                width *= 0.65; // narrow
-            } else {
-                height += 8; // tall
-            }
+            if (variant < 0.33) width *= 1.3;
+            else if (variant < 0.66) width *= 0.65;
+            else height += 8;
         }
 
         return { width: Math.round(width), height: Math.round(height), irregular };
     }
 
-    shouldTriggerEarthquake() {
-        return Math.random() < this.params.earthquakeChance;
-    }
-
     applyEarthquake(scene) {
-        if (!this.shouldTriggerEarthquake()) return false;
+        if (Math.random() >= this.stageParams.earthquakeChance) return false;
         scene.cameras.main.shake(600, 0.025);
         return true;
     }
 
     getWindDrift() {
-        if (this.params.windDrift === 0) return 0;
-        this.windOffset += this.windDirection * this.params.windDrift * 0.016;
-        if (Math.abs(this.windOffset) > this.params.windDrift) {
+        if (this.stageParams.windDrift === 0) return 0;
+        this.windOffset += this.windDirection * this.stageParams.windDrift * 0.016;
+        if (Math.abs(this.windOffset) > this.stageParams.windDrift) {
             this.windDirection *= -1;
         }
         return this.windOffset;
+    }
+
+    getProgress() {
+        return this.blocksLandedInStage / this.stageParams.blocksRequired;
     }
 }
 
@@ -139,7 +123,7 @@ class AudioManager {
             case 'drop_whoosh': this._whoosh(t); break;
             case 'collapse': this._rumble(t); break;
             case 'streak': this._streakChime(t); break;
-            case 'milestone': this._milestoneChime(t); break;
+            case 'stage_clear': this._stageClearFanfare(t); break;
             case 'ui_click': this._click(t); break;
             case 'earthquake': this._earthquakeRumble(t); break;
         }
@@ -217,13 +201,13 @@ class AudioManager {
     }
 
     _streakChime(t) {
-        const notes = [523, 659, 784]; // C5 E5 G5
+        const notes = [523, 659, 784];
         notes.forEach((freq, i) => this._chime(t + i * 0.08, freq, 0.2));
     }
 
-    _milestoneChime(t) {
-        const notes = [262, 330, 392, 523]; // C4 E4 G4 C5
-        notes.forEach((freq, i) => this._chime(t + i * 0.06, freq, 0.25));
+    _stageClearFanfare(t) {
+        const notes = [262, 330, 392, 523, 659];
+        notes.forEach((freq, i) => this._chime(t + i * 0.1, freq, 0.3));
     }
 
     _click(t) {
@@ -251,9 +235,9 @@ class AudioManager {
         osc.start(t); osc.stop(t + 0.65);
     }
 
-    startMusic(milestone) { /* simplified: no continuous music for now */ }
-    stopMusic() { }
-    setMusicVolume(vol) { }
+    startMusic() {}
+    stopMusic() {}
+    setMusicVolume() {}
 }
 
 const audioManager = new AudioManager();
