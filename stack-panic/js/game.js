@@ -151,7 +151,7 @@ class GameScene extends Phaser.Scene {
         this.matter.world.remove(block.body);
         const newBody = this.matter.add.rectangle(
             pos.x, pos.y, block.width, block.height,
-            { isStatic: false, friction: 0.9, restitution: 0.02, frictionAir: 0.05,
+            { isStatic: false, friction: 0.9, restitution: 0.03, frictionAir: 0.03,
               label: 'block_' + block.index }
         );
         block.body = newBody;
@@ -345,16 +345,12 @@ class GameScene extends Phaser.Scene {
     _freezeSettledBlocks() {
         for (const b of this.droppedBlocks) {
             if (!b.body || b.body.isStatic || !b.settled) continue;
-            const vel = b.body.velocity;
-            const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
-            if (speed < 0.3) {
-                b.freezeFrames = (b.freezeFrames || 0) + 1;
-                if (b.freezeFrames > 30) {
-                    Phaser.Physics.Matter.Matter.Body.setStatic(b.body, true);
-                    b.body.label = 'static_base';
-                }
-            } else {
-                b.freezeFrames = 0;
+            // Prevent blocks from phasing below platform
+            if (b.body.position.y > PLATFORM_Y + PLATFORM_HEIGHT - 5) {
+                Phaser.Physics.Matter.Matter.Body.setPosition(b.body, {
+                    x: b.body.position.x, y: PLATFORM_Y + PLATFORM_HEIGHT - 5
+                });
+                Phaser.Physics.Matter.Matter.Body.setVelocity(b.body, { x: b.body.velocity.x, y: 0 });
             }
         }
     }
