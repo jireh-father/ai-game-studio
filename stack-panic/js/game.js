@@ -1,39 +1,32 @@
-// Stack Panic - Core Game Scene (Pendulum, Physics, Blocks, Tilt, Stages)
-// Rendering in render.js, Audio/StageManager in stages.js
+// Stack Panic - Core Game Scene
 
 class GameScene extends Phaser.Scene {
     constructor() { super('GameScene'); }
 
     create(data) {
+        const Matter = Phaser.Physics.Matter.Matter;
         this.cameras.main.setBackgroundColor(COLORS.background);
 
-        // State
-        this.score = 0;
-        this.tilt = 0;
-        this.targetTilt = 0;
-        this.perfectStreak = 0;
-        this.noMissStreak = 0;
-        this.gameOver = false;
-        this.paused = false;
-        this.transitioning = false;
-        this.lastTapTime = 0;
-        this.blockIndex = 0;
-        this.droppedBlocks = [];
-        this.obstacleObjects = [];
+        this.score = 0; this.tilt = 0; this.targetTilt = 0;
+        this.perfectStreak = 0; this.noMissStreak = 0;
+        this.gameOver = false; this.paused = false; this.transitioning = false;
+        this.lastTapTime = 0; this.blockIndex = 0;
+        this.droppedBlocks = []; this.obstacleObjects = [];
+        this.nextBlockGlue = false; this.nextBlockShrink = false;
 
-        // Stage manager
+        // Items inventory
+        this.items = { glue: 0, expand: 0, slow: 0, bomb: 0, skip: 0, shrink: 0 };
+        this.activeEffects = {};
+
         this.stages = new StageManager();
         this.hud = new HUDManager(this);
 
-        // Continue from rewarded ad
         if (data && data.continueGame && data.prevData) {
             this.score = data.prevData.score || 0;
             this.stages.totalBlocksLanded = data.prevData.blocksLanded || 0;
             this.stages.currentStage = data.prevData.stage || 1;
             this.stages.stageParams = generateStage(this.stages.currentStage);
             this.stages.blocksLandedInStage = data.prevData.blocksLandedInStage || 0;
-            this.tilt = 0;
-            this.targetTilt = 0;
             this.hud.updateScore(this.score);
         }
 
@@ -53,6 +46,7 @@ class GameScene extends Phaser.Scene {
 
         this.hud.updateStage(this.stages.currentStage, this.stages.stageParams.traits);
         this.hud.updateProgress(this.stages.getProgress());
+        this.hud.updateItems(this.items);
         this._drawObstacles();
     }
 
@@ -89,17 +83,15 @@ class GameScene extends Phaser.Scene {
         this.matter.world.remove(this.platform);
         this.platform = this.matter.add.rectangle(
             GAME_WIDTH / 2, PLATFORM_Y + PLATFORM_HEIGHT / 2,
-            newWidth, PLATFORM_HEIGHT,
-            { isStatic: true, friction: 0.9, label: 'platform' }
+            newWidth, PLATFORM_HEIGHT, { isStatic: true, friction: 0.9, label: 'platform' }
         );
         this._drawPlatformVisual();
     }
 
-    _createObstacles(obstacleConfigs) {
-        for (const obs of obstacleConfigs) {
+    _createObstacles(configs) {
+        for (const obs of configs) {
             const body = this.matter.add.rectangle(
-                obs.x, PLATFORM_Y - obs.height / 2,
-                obs.width, obs.height,
+                obs.x, PLATFORM_Y - obs.height / 2, obs.width, obs.height,
                 { isStatic: true, friction: 0.9, label: 'obstacle' }
             );
             this.obstacleObjects.push({ body, x: obs.x, width: obs.width, height: obs.height });
@@ -111,22 +103,14 @@ class GameScene extends Phaser.Scene {
         this.obstacleGraphics.clear();
         for (const obs of this.obstacleObjects) {
             this.obstacleGraphics.fillStyle(COLORS.obstacle);
-            this.obstacleGraphics.fillRoundedRect(
-                obs.x - obs.width / 2, PLATFORM_Y - obs.height,
-                obs.width, obs.height, 2
-            );
+            this.obstacleGraphics.fillRoundedRect(obs.x - obs.width / 2, PLATFORM_Y - obs.height, obs.width, obs.height, 2);
             this.obstacleGraphics.fillStyle(COLORS.obstacleShadow);
-            this.obstacleGraphics.fillRect(
-                obs.x - obs.width / 2, PLATFORM_Y - 3,
-                obs.width, 3
-            );
+            this.obstacleGraphics.fillRect(obs.x - obs.width / 2, PLATFORM_Y - 3, obs.width, 3);
         }
     }
 
     _clearObstacles() {
-        for (const obs of this.obstacleObjects) {
-            this.matter.world.remove(obs.body);
-        }
+        for (const obs of this.obstacleObjects) this.matter.world.remove(obs.body);
         this.obstacleObjects = [];
         if (this.obstacleGraphics) this.obstacleGraphics.clear();
     }
@@ -142,14 +126,37 @@ class GameScene extends Phaser.Scene {
 
     _spawnSwingBlock() {
         if (this.gameOver || this.transitioning) return;
-        const variant = this.stages.getBlockVariant();
-        const color = getBlockColor(this.blockIndex);
-        const body = this.matter.add.rectangle(
-            PENDULUM_PIVOT_X, PENDULUM_PIVOT_Y + PENDULUM_ARM_LENGTH,
-            variant.width, variant.height,
-            { isStatic: true, friction: 0.8, restitution: 0.03, frictionAir: 0.03, label: 'block_' + this.blockIndex }
+        const Matter = Phaser.Physics.Matter.Matter;
+
+        let cells, color, name;
+        if (this.nextBlockShrink) {
+            this.nextBlockShrink = false;
+            cells = [[0, 0]];
+            color = 0xFFFFFF;
+            name = 'tiny';
+        } else {
+            const tetro = this.stages.getNextTetromino();
+            cells = tetro.cells;
+            color = tetro.color;
+            name = tetro.name;
+        }
+
+        const { ax, ay } = cellCenter(cells);
+        const cx = PENDULUM_PIVOT_X, cy = PENDULUM_PIVOT_Y + PENDULUM_ARM_LENGTH;
+
+        const parts = cells.map(([gx, gy]) =>
+            Matter.Bodies.rectangle(
+                cx + (gx - ax) * CELL_SIZE, cy + (gy - ay) * CELL_SIZE,
+                CELL_SIZE - 1, CELL_SIZE - 1
+            )
         );
-        this.swingBlock = { body, width: variant.width, height: variant.height, color, index: this.blockIndex, irregular: variant.irregular };
+        const body = Matter.Body.create({
+            parts, isStatic: true, friction: 0.9, restitution: 0.03, frictionAir: 0.03,
+            label: 'block_' + this.blockIndex
+        });
+        this.matter.world.add(body);
+
+        this.swingBlock = { body, cells, ox: ax, oy: ay, color, index: this.blockIndex, name };
         this.blockIndex++;
     }
 
@@ -167,11 +174,19 @@ class GameScene extends Phaser.Scene {
         this.matter.world.on('collisionstart', (event) => {
             for (const pair of event.pairs) {
                 const labels = [pair.bodyA.label, pair.bodyB.label];
-                const blockBody = labels[0].startsWith('block_') ? pair.bodyA : labels[1].startsWith('block_') ? pair.bodyB : null;
+                // For compound bodies, check parent label
+                const getBlockLabel = (body) => {
+                    if (body.label && body.label.startsWith('block_')) return body;
+                    if (body.parent && body.parent.label && body.parent.label.startsWith('block_')) return body.parent;
+                    return null;
+                };
+                const blockBody = getBlockLabel(pair.bodyA) || getBlockLabel(pair.bodyB);
                 if (!blockBody) continue;
-                const otherLabel = blockBody === pair.bodyA ? pair.bodyB.label : pair.bodyA.label;
+
+                const other = blockBody === pair.bodyA || blockBody === pair.bodyA.parent ? pair.bodyB : pair.bodyA;
+                const otherLabel = other.parent ? other.parent.label : other.label;
                 if (this._isNewlyDropped(blockBody)) {
-                    if (otherLabel === 'platform' || otherLabel.startsWith('block_') || otherLabel === 'static_base' || otherLabel === 'obstacle') {
+                    if (otherLabel === 'platform' || (otherLabel && otherLabel.startsWith('block_')) || otherLabel === 'static_base' || otherLabel === 'obstacle') {
                         this._onBlockLanded(blockBody);
                     }
                 }
@@ -180,30 +195,39 @@ class GameScene extends Phaser.Scene {
     }
 
     _isNewlyDropped(body) {
-        const block = this.droppedBlocks.find(b => b.body === body);
-        return block && !block.settled;
+        return this.droppedBlocks.some(b => (b.body === body || b.body === body.parent) && !b.settled);
     }
 
     _dropBlock() {
         if (!this.swingBlock) return;
         const block = this.swingBlock;
         this.swingBlock = null;
+        const Matter = Phaser.Physics.Matter.Matter;
 
         const pos = { x: block.body.position.x, y: block.body.position.y };
         this.matter.world.remove(block.body);
 
-        // Use per-stage physics values
         const params = this.stages.stageParams;
-        const newBody = this.matter.add.rectangle(
-            pos.x, pos.y, block.width, block.height,
-            { isStatic: false, friction: 0.9, restitution: params.restitution, frictionAir: params.frictionAir,
-              label: 'block_' + block.index }
+        const parts = block.cells.map(([gx, gy]) =>
+            Matter.Bodies.rectangle(
+                pos.x + (gx - block.ox) * CELL_SIZE,
+                pos.y + (gy - block.oy) * CELL_SIZE,
+                CELL_SIZE - 1, CELL_SIZE - 1
+            )
         );
-        block.body = newBody;
+        const newBody = Matter.Body.create({
+            parts, isStatic: false, friction: 0.9,
+            restitution: params.restitution, frictionAir: params.frictionAir,
+            label: 'block_' + block.index
+        });
+        this.matter.world.add(newBody);
+
+        const isGlue = this.nextBlockGlue;
+        this.nextBlockGlue = false;
 
         this.droppedBlocks.push({
-            body: newBody, width: block.width, height: block.height,
-            color: block.color, settled: false, index: block.index
+            body: newBody, cells: block.cells, ox: block.ox, oy: block.oy,
+            color: block.color, settled: false, index: block.index, name: block.name, glue: isGlue
         });
 
         JuiceEffects.emitParticles(this, pos.x, pos.y, 15, block.color, 180, 350);
@@ -217,13 +241,24 @@ class GameScene extends Phaser.Scene {
     }
 
     _onBlockLanded(body) {
-        const blockData = this.droppedBlocks.find(b => b.body === body);
+        // Find matching dropped block (compound body: match by parent or direct)
+        const blockData = this.droppedBlocks.find(b => b.body === body || b.body === body.parent);
         if (!blockData || blockData.settled) return;
         blockData.settled = true;
 
-        const pos = body.position;
+        const Matter = Phaser.Physics.Matter.Matter;
+        // Glue: immediately freeze
+        if (blockData.glue) {
+            Matter.Body.setStatic(blockData.body, true);
+            blockData.body.label = 'static_base';
+        }
+
+        const pos = blockData.body.position;
+        const bounds = blockData.body.bounds;
+        const blockWidth = bounds.max.x - bounds.min.x;
+        const blockCenterX = (bounds.max.x + bounds.min.x) / 2;
         const towerCenterX = GAME_WIDTH / 2;
-        const overhang = Math.abs(pos.x - towerCenterX) - (this.currentPlatformWidth / 2 - blockData.width / 2);
+        const overhang = Math.abs(blockCenterX - towerCenterX) - (this.currentPlatformWidth / 2 - blockWidth / 2);
         const absOverhang = Math.max(0, overhang);
 
         let quality, points;
@@ -257,22 +292,16 @@ class GameScene extends Phaser.Scene {
         if (this.stages.applyEarthquake(this)) audioManager.play('earthquake');
         this._compressBodies();
 
-        if (result === 'stage_clear') {
-            this._onStageClear();
-        }
+        if (result === 'stage_clear') this._onStageClear();
     }
+
+    // --- Stage transitions ---
 
     _onStageClear() {
         this.transitioning = true;
-
-        // Remove pending swing block
-        if (this.swingBlock) {
-            this.matter.world.remove(this.swingBlock.body);
-            this.swingBlock = null;
-        }
+        if (this.swingBlock) { this.matter.world.remove(this.swingBlock.body); this.swingBlock = null; }
         if (this.idleTimer) this.idleTimer.remove();
 
-        // Stage clear bonus
         const bonus = this.stages.currentStage * 500;
         this.score += bonus;
         this.hud.updateScore(this.score);
@@ -280,49 +309,187 @@ class GameScene extends Phaser.Scene {
         this.hud.showStageClearBanner(this.stages.currentStage, bonus);
         audioManager.play('stage_clear');
 
-        this.time.delayedCall(2000, () => {
-            // Clear all blocks
-            for (const b of this.droppedBlocks) {
-                if (b.body) this.matter.world.remove(b.body);
-            }
-            this.droppedBlocks = [];
-            this._clearObstacles();
+        this.time.delayedCall(2000, () => this._showItemSelection(() => this._transitionToNextStage()));
+    }
 
-            // Advance stage
-            this.stages.advanceStage();
-            const params = this.stages.stageParams;
+    _transitionToNextStage() {
+        for (const b of this.droppedBlocks) { if (b.body) this.matter.world.remove(b.body); }
+        this.droppedBlocks = [];
+        this._clearObstacles();
 
-            // Recover some tilt between stages
-            this.targetTilt = Math.max(0, this.targetTilt - 10);
+        this.stages.advanceStage();
+        const params = this.stages.stageParams;
+        this.targetTilt = Math.max(0, this.targetTilt - 10);
+        this._updatePlatformWidth(params.platformWidth);
+        this.pendulumSpeed = params.pendulumSpeed;
+        this._createObstacles(params.obstacles);
+        this._drawObstacles();
 
-            // Apply new stage params
-            this._updatePlatformWidth(params.platformWidth);
-            this.pendulumSpeed = params.pendulumSpeed;
-            this._createObstacles(params.obstacles);
-            this._drawObstacles();
+        if (this.blockGraphics) { this.blockGraphics.destroy(); this.blockGraphics = null; }
+        this.pendulumGraphics.clear();
+        this.ghostGraphics.clear();
+        this.firstBlockLanded = false;
 
-            // Destroy old graphics and reset
-            if (this.blockGraphics) { this.blockGraphics.destroy(); this.blockGraphics = null; }
-            this.pendulumGraphics.clear();
-            this.ghostGraphics.clear();
-            this.firstBlockLanded = false;
+        this.hud.showStageIntroBanner(this.stages.currentStage, params.traits);
+        this.hud.updateStage(this.stages.currentStage, params.traits);
+        this.hud.updateProgress(0);
 
-            // Show stage intro
-            this.hud.showStageIntroBanner(this.stages.currentStage, params.traits);
-            this.hud.updateStage(this.stages.currentStage, params.traits);
-            this.hud.updateProgress(0);
-
-            this.time.delayedCall(1500, () => {
-                this.transitioning = false;
-                this._spawnSwingBlock();
-                this._resetIdleTimer();
-            });
+        this.time.delayedCall(1500, () => {
+            this.transitioning = false;
+            this._spawnSwingBlock();
+            this._resetIdleTimer();
         });
     }
 
+    // --- Item system ---
+
+    _showItemSelection(callback) {
+        const cx = GAME_WIDTH / 2, cy = GAME_HEIGHT / 2;
+        const cont = this.add.container(0, 0).setDepth(250).setScrollFactor(0);
+
+        cont.add(this.add.rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75));
+        cont.add(this.add.text(cx, cy - 180, 'CHOOSE ITEM', {
+            fontSize: '26px', fontStyle: 'bold', color: '#FFD700'
+        }).setOrigin(0.5));
+
+        const allKeys = Object.keys(ITEMS);
+        const shuffled = [...allKeys].sort(() => Math.random() - 0.5);
+        const choices = shuffled.slice(0, 3);
+
+        // Track open tooltip
+        let openTooltip = null;
+
+        choices.forEach((key, i) => {
+            const item = ITEMS[key];
+            const x = cx + (i - 1) * 115;
+            const y = cy - 40;
+
+            // Card
+            const card = this.add.rectangle(x, y, 100, 140, 0x333355).setInteractive();
+            card.setStrokeStyle(2, 0x666688);
+            cont.add(card);
+
+            // Label
+            cont.add(this.add.text(x, y - 30, item.label, {
+                fontSize: '24px', fontStyle: 'bold', color: '#FFFFFF'
+            }).setOrigin(0.5));
+
+            // Name
+            cont.add(this.add.text(x, y + 15, item.name, {
+                fontSize: '14px', fontStyle: 'bold', color: '#E8A838'
+            }).setOrigin(0.5));
+
+            // ? button
+            const helpBtn = this.add.rectangle(x + 38, y - 58, 22, 22, 0x222244).setInteractive();
+            helpBtn.setStrokeStyle(1, 0x888888);
+            const helpTxt = this.add.text(x + 38, y - 58, '?', {
+                fontSize: '14px', fontStyle: 'bold', color: '#AAAAAA'
+            }).setOrigin(0.5);
+            cont.add(helpBtn);
+            cont.add(helpTxt);
+
+            // Tooltip
+            const tooltip = this.add.container(x, y + 85).setVisible(false);
+            const tbg = this.add.rectangle(0, 0, 200, 44, 0x000000, 0.95);
+            const ttxt = this.add.text(0, 0, item.desc, {
+                fontSize: '11px', color: '#FFFFFF', align: 'center', wordWrap: { width: 190 }
+            }).setOrigin(0.5);
+            tooltip.add([tbg, ttxt]);
+            cont.add(tooltip);
+
+            helpBtn.on('pointerdown', (p) => {
+                p.event.stopPropagation();
+                if (openTooltip && openTooltip !== tooltip) openTooltip.setVisible(false);
+                tooltip.setVisible(!tooltip.visible);
+                openTooltip = tooltip.visible ? tooltip : null;
+            });
+
+            card.on('pointerdown', (p) => {
+                p.event.stopPropagation();
+                this.items[key] = (this.items[key] || 0) + 1;
+                this.hud.updateItems(this.items);
+                cont.destroy();
+                audioManager.play('item_use');
+                callback();
+            });
+
+            // "TAP TO SELECT" hint
+            cont.add(this.add.text(x, y + 50, 'TAP', {
+                fontSize: '11px', color: '#888888'
+            }).setOrigin(0.5));
+        });
+    }
+
+    activateItem(key) {
+        if (!this.items[key] || this.items[key] <= 0) return;
+        if (this.gameOver || this.paused || this.transitioning) return;
+
+        this.items[key]--;
+        this.hud.updateItems(this.items);
+        audioManager.play('item_use');
+
+        const Matter = Phaser.Physics.Matter.Matter;
+        switch (key) {
+            case 'glue':
+                this.nextBlockGlue = true;
+                JuiceEffects.screenFlash(this, 0x44FF44, 0.2, 200);
+                break;
+            case 'expand': {
+                if (this.activeEffects.expand) this.activeEffects.expand.remove();
+                this._updatePlatformWidth(this.currentPlatformWidth + 60);
+                this.activeEffects.expand = this.time.delayedCall(10000, () => {
+                    this._updatePlatformWidth(this.stages.stageParams.platformWidth);
+                    delete this.activeEffects.expand;
+                });
+                JuiceEffects.screenFlash(this, 0x4488FF, 0.2, 200);
+                break;
+            }
+            case 'slow': {
+                if (this.activeEffects.slow) this.activeEffects.slow.remove();
+                const orig = this.pendulumSpeed;
+                this.pendulumSpeed *= 0.5;
+                this.activeEffects.slow = this.time.delayedCall(8000, () => {
+                    this.pendulumSpeed = this.stages.stageParams.pendulumSpeed;
+                    delete this.activeEffects.slow;
+                });
+                JuiceEffects.screenFlash(this, 0x44FFFF, 0.2, 200);
+                break;
+            }
+            case 'bomb':
+                this._removeTopBlock();
+                break;
+            case 'skip':
+                if (this.swingBlock) {
+                    this.matter.world.remove(this.swingBlock.body);
+                    this.swingBlock = null;
+                    this._spawnSwingBlock();
+                }
+                break;
+            case 'shrink':
+                this.nextBlockShrink = true;
+                JuiceEffects.screenFlash(this, 0xFFFFFF, 0.15, 150);
+                break;
+        }
+    }
+
+    _removeTopBlock() {
+        const settled = this.droppedBlocks.filter(b => b.settled && b.body && !b.body.isStatic);
+        if (settled.length === 0) return;
+        let top = settled[0];
+        for (const b of settled) {
+            if (b.body.position.y < top.body.position.y) top = b;
+        }
+        const pos = top.body.position;
+        JuiceEffects.emitParticles(this, pos.x, pos.y, 30, 0xFF6600, 360, 400);
+        this.cameras.main.shake(150, 0.005);
+        this.matter.world.remove(top.body);
+        this.droppedBlocks = this.droppedBlocks.filter(b => b !== top);
+    }
+
+    // --- Standard game methods ---
+
     onMiss(pos) {
-        this.noMissStreak = 0;
-        this.perfectStreak = 0;
+        this.noMissStreak = 0; this.perfectStreak = 0;
         this.hud.updateStreak(0);
         this.targetTilt = Math.min(TILT_MAX, this.targetTilt + TILT_PER_MISS);
         JuiceEffects.missJuice(this, pos);
@@ -332,20 +499,23 @@ class GameScene extends Phaser.Scene {
     _triggerGameOver() {
         if (this.gameOver) return;
         this.gameOver = true;
+        // Clear active effects
+        for (const key of Object.keys(this.activeEffects)) {
+            if (this.activeEffects[key]) this.activeEffects[key].remove();
+        }
+        this.activeEffects = {};
+
         JuiceEffects.collapseJuice(this);
         this.time.delayedCall(1200, () => {
             this.matter.world.engine.timing.timeScale = 1;
             this.scene.start('GameOverScene', {
-                score: this.score,
-                blocksLanded: this.stages.totalBlocksLanded,
-                stage: this.stages.currentStage,
-                tilt: this.tilt
+                score: this.score, blocksLanded: this.stages.totalBlocksLanded,
+                stage: this.stages.currentStage, tilt: this.tilt
             });
         });
     }
 
     _startIdleTimer() { this._resetIdleTimer(); }
-
     _resetIdleTimer() {
         if (this.idleTimer) this.idleTimer.remove();
         this.idleTimer = this.time.delayedCall(IDLE_DROP_TIMEOUT, () => {
@@ -372,7 +542,6 @@ class GameScene extends Phaser.Scene {
         this.pauseContainer = this.add.container(0, 0).setDepth(200).setScrollFactor(0);
         this.pauseContainer.add(this.add.rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6));
         this.pauseContainer.add(this.add.text(cx, cy - 80, 'PAUSED', { fontSize: '32px', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5));
-
         const makeBtn = (y, label, color, cb) => {
             const btn = this.add.rectangle(cx, y, 200, 52, color).setInteractive();
             const txt = this.add.text(cx, y, label, { fontSize: '20px', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5);
@@ -400,7 +569,7 @@ class GameScene extends Phaser.Scene {
             const py = PENDULUM_PIVOT_Y + Math.cos(this.pendulumAngle) * PENDULUM_ARM_LENGTH;
             Phaser.Physics.Matter.Matter.Body.setPosition(this.swingBlock.body, { x: px, y: py });
             BlockRenderer.drawPendulum(this, px, py);
-            BlockRenderer.drawGhost(this, px, this.swingBlock.width, this.swingBlock.height);
+            BlockRenderer.drawGhost(this);
         } else {
             this.pendulumGraphics.clear();
             this.ghostGraphics.clear();
@@ -436,9 +605,10 @@ class GameScene extends Phaser.Scene {
     _freezeSettledBlocks() {
         for (const b of this.droppedBlocks) {
             if (!b.body || b.body.isStatic || !b.settled) continue;
-            if (b.body.position.y > PLATFORM_Y + PLATFORM_HEIGHT - 5) {
+            if (b.body.bounds && b.body.bounds.max.y > PLATFORM_Y + PLATFORM_HEIGHT) {
+                const pushUp = b.body.bounds.max.y - PLATFORM_Y - PLATFORM_HEIGHT + 2;
                 Phaser.Physics.Matter.Matter.Body.setPosition(b.body, {
-                    x: b.body.position.x, y: PLATFORM_Y + PLATFORM_HEIGHT - 5
+                    x: b.body.position.x, y: b.body.position.y - pushUp
                 });
                 Phaser.Physics.Matter.Matter.Body.setVelocity(b.body, { x: b.body.velocity.x, y: 0 });
             }
