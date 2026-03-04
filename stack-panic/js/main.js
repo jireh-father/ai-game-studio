@@ -74,9 +74,9 @@ const gameConfig = {
             gravity: { y: 2.5 },
             debug: false,
             enableSleeping: true,
-            positionIterations: 6,
-            velocityIterations: 4,
-            constraintIterations: 2
+            positionIterations: 16,
+            velocityIterations: 10,
+            constraintIterations: 4
         }
     },
     scene: [BootScene, MenuScene, GameScene, GameOverScene],
