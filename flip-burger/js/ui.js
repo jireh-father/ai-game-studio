@@ -41,7 +41,7 @@ class UIScene extends Phaser.Scene {
     game.events.on('scoreChange', s => this.onScore(s));
     game.events.on('livesChange', l => this.updateLives(l));
     game.events.on('comboChange', c => this.onCombo(c));
-    game.events.on('stageChange', s => this.stageText.setText(`STAGE ${s}`));
+    game.events.on('stageChange', s => { if (this.stageText) this.stageText.setText(`STAGE ${s}`); });
     game.events.on('ordersChange', (cur, max) => this.ordersText.setText(`${cur}/${max}`));
     game.events.on('gradePopup', d => this.showGrade(d));
     game.events.on('floatScore', d => this.floatScore(d));
@@ -134,15 +134,17 @@ class UIScene extends Phaser.Scene {
       this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 - 70, 'GAME OVER', { fontSize: '34px', fontFamily: 'Arial Black', color: '#DD2222', fontStyle: 'bold' }).setOrigin(0.5).setDepth(502);
       this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 - 25, `Score: ${d.score}`, { fontSize: '22px', fontFamily: 'Arial', color: CONFIG.SCORE_BROWN }).setOrigin(0.5).setDepth(502);
       this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 + 5, `Best: ${best}`, { fontSize: '16px', fontFamily: 'Arial', color: '#888' }).setOrigin(0.5).setDepth(502);
-      const btn = this.add.rectangle(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 + 60, 200, 55, 0x44CC44, 1).setStrokeStyle(2, 0x228822).setDepth(502).setInteractive();
-      this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 + 60, 'RETRY', { fontSize: '24px', fontFamily: 'Arial Black', color: '#FFF', fontStyle: 'bold' }).setOrigin(0.5).setDepth(503);
-      btn.on('pointerdown', () => {
+      const btn = this.add.rectangle(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 + 60, 200, 55, 0x44CC44, 1).setStrokeStyle(2, 0x228822).setDepth(502);
+      const btnText = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2 + 60, 'RETRY', { fontSize: '24px', fontFamily: 'Arial Black', color: '#FFF', fontStyle: 'bold' }).setOrigin(0.5).setDepth(503).setInteractive();
+      const onRetry = () => {
         Ads.onDeath();
         this.scene.stop('UIScene');
         this.scene.stop('GameScene');
         this.scene.start('GameScene');
         this.scene.start('UIScene');
-      });
+      };
+      btn.setInteractive().on('pointerdown', onRetry);
+      btnText.on('pointerdown', onRetry);
     });
   }
 }

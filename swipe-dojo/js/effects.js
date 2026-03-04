@@ -8,12 +8,12 @@ const GameEffects = {
       this.cameras.main.flash(80, 255, 255, 255, false, null, null, 0.6);
       this.cameras.main.shake(100, 0.004);
       this.time.timeScale = 0;
-      this.time.delayedCall(40, () => { this.time.timeScale = 1; });
+      setTimeout(() => { if (this.time) this.time.timeScale = 1; }, 40);
     } else if (quality === 'good') {
       this.cameras.main.flash(50, 255, 255, 255, false, null, null, 0.3);
       this.cameras.main.shake(80, 0.002);
       this.time.timeScale = 0;
-      this.time.delayedCall(30, () => { this.time.timeScale = 1; });
+      setTimeout(() => { if (this.time) this.time.timeScale = 1; }, 30);
     }
     if (this.combo >= 20) {
       this.cameras.main.setZoom(1.03);
