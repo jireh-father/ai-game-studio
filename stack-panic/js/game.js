@@ -42,6 +42,7 @@ class GameScene extends Phaser.Scene {
         this._setupCollisions();
         this._startIdleTimer();
 
+        this.blockGraphics = null; // Reset so BlockRenderer creates fresh graphics
         this.vignetteGraphics = this.add.graphics().setDepth(90).setScrollFactor(0);
         this.ghostGraphics = this.add.graphics().setDepth(5);
         this.firstBlockLanded = false;
