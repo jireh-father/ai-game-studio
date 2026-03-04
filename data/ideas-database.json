@@ -1,76 +1,31 @@
 {
-  "version": 2,
-  "last_updated": "2026-03-04T19:00:00Z",
+  "version": 4,
+  "last_updated": "2026-03-05T02:00:00Z",
   "ideas": [
-    {
-      "id": "idea-20260304-001",
-      "title": "Gravity Flip Chain",
-      "slug": "gravity-flip-chain",
-      "creator": "spark",
-      "score": 70.9,
-      "status": "passed-backup",
-      "run_id": "run-2026-03-04-001",
-      "mechanic_tags": ["physics", "chain-reaction", "timing", "one-tap", "combo"]
-    },
-    {
-      "id": "idea-20260304-002",
-      "title": "Pulse Weaver",
-      "slug": "pulse-weaver",
-      "creator": "spark",
-      "score": 73.6,
-      "status": "shipped",
-      "run_id": "run-2026-03-04-001",
-      "mechanic_tags": ["chain-reaction", "puzzle", "drag-input", "elemental-combo", "emergent"]
-    },
-    {
-      "id": "idea-20260304-003",
-      "title": "Fridge Tetris",
-      "slug": "fridge-tetris",
-      "creator": "oddball",
-      "score": 71.1,
-      "status": "shipped",
-      "run_id": "run-2026-03-04-001",
-      "mechanic_tags": ["puzzle", "humor", "time-pressure", "grid", "survival"]
-    },
-    {
-      "id": "idea-20260304-004",
-      "title": "Sock Singularity",
-      "slug": "sock-singularity",
-      "creator": "oddball",
-      "score": 69.25,
-      "status": "failed",
-      "run_id": "run-2026-03-04-001",
-      "mechanic_tags": ["humor", "physics", "pattern-recognition", "timing", "absurd"]
-    },
-    {
-      "id": "idea-20260304-005",
-      "title": "Crowd Rush Merge",
-      "slug": "crowd-rush-merge",
-      "creator": "trendsetter",
-      "score": 69.95,
-      "status": "failed",
-      "run_id": "run-2026-03-04-001",
-      "mechanic_tags": ["hyper-casual", "trending", "merge", "runner", "math"]
-    },
-    {
-      "id": "idea-20260304-006",
-      "title": "Gravity Flip Stack",
-      "slug": "gravity-flip-stack",
-      "creator": "trendsetter",
-      "score": null,
-      "status": "duplicate-removed",
-      "run_id": "run-2026-03-04-001",
-      "mechanic_tags": ["trending", "one-tap", "physics", "casual", "infinite"]
-    }
-  ],
-  "mechanic_index": {
-    "physics": ["idea-20260304-001", "idea-20260304-004"],
-    "chain-reaction": ["idea-20260304-001", "idea-20260304-002"],
-    "puzzle": ["idea-20260304-002", "idea-20260304-003"],
-    "humor": ["idea-20260304-003", "idea-20260304-004"],
-    "merge": ["idea-20260304-005"],
-    "runner": ["idea-20260304-005"],
-    "drag-input": ["idea-20260304-002"],
-    "grid": ["idea-20260304-003"]
-  }
+    {"id":"idea-20260304-001","title":"Gravity Flip Chain","slug":"gravity-flip-chain","creator":"spark","score":70.9,"status":"passed-backup","run_id":"run-2026-03-04-001","mechanic_tags":["physics","chain-reaction","timing","one-tap","combo"]},
+    {"id":"idea-20260304-002","title":"Pulse Weaver","slug":"pulse-weaver","creator":"spark","score":73.6,"status":"shipped","run_id":"run-2026-03-04-001","mechanic_tags":["chain-reaction","puzzle","drag-input","elemental-combo","emergent"]},
+    {"id":"idea-20260304-003","title":"Fridge Tetris","slug":"fridge-tetris","creator":"oddball","score":71.1,"status":"shipped","run_id":"run-2026-03-04-001","mechanic_tags":["puzzle","humor","time-pressure","grid","survival"]},
+    {"id":"idea-20260304-004","title":"Sock Singularity","slug":"sock-singularity","creator":"oddball","score":69.25,"status":"failed","run_id":"run-2026-03-04-001","mechanic_tags":["humor","physics","pattern-recognition","timing","absurd"]},
+    {"id":"idea-20260304-005","title":"Crowd Rush Merge","slug":"crowd-rush-merge","creator":"trendsetter","score":69.95,"status":"failed","run_id":"run-2026-03-04-001","mechanic_tags":["hyper-casual","trending","merge","runner","math"]},
+    {"id":"idea-20260304-006","title":"Gravity Flip Stack","slug":"gravity-flip-stack","creator":"trendsetter","score":null,"status":"duplicate-removed","run_id":"run-2026-03-04-001","mechanic_tags":["trending","one-tap","physics","casual","infinite"]},
+    {"id":"idea-20260304-007","title":"Magnet Madness","slug":"magnet-madness","creator":"spark","score":71.9,"status":"passed-backup","run_id":"run-2026-03-04-002","mechanic_tags":["physics","magnet","puzzle"]},
+    {"id":"idea-20260304-008","title":"Shatter Chain","slug":"shatter-chain","creator":"spark","score":77.5,"status":"shipped","run_id":"run-2026-03-04-002","mechanic_tags":["physics","chain-reaction","flick","glass","destruction"]},
+    {"id":"idea-20260304-009","title":"Bounce Architect","slug":"bounce-architect","creator":"spark","score":77.3,"status":"passed-backup","run_id":"run-2026-03-04-002","mechanic_tags":["physics","drawing","puzzle","bounce"]},
+    {"id":"idea-20260304-010","title":"Toaster Launch","slug":"toaster-launch","creator":"oddball","score":72.7,"status":"passed-backup","run_id":"run-2026-03-04-002","mechanic_tags":["physics","humor","launch","trajectory"]},
+    {"id":"idea-20260304-011","title":"Alarm Slap","slug":"alarm-slap","creator":"oddball","score":78.5,"status":"shipped","run_id":"run-2026-03-04-002","mechanic_tags":["reflex","tap","swipe","whack-a-mole","panic"]},
+    {"id":"idea-20260304-012","title":"Pigeon Heist","slug":"pigeon-heist","creator":"oddball","score":73.1,"status":"passed-backup","run_id":"run-2026-03-04-002","mechanic_tags":["humor","stealth","collection","animal"]},
+    {"id":"idea-20260304-013","title":"Dodge Swarm","slug":"dodge-swarm","creator":"trendsetter","score":71.8,"status":"passed-backup","run_id":"run-2026-03-04-002","mechanic_tags":["dodge","swarm","survival","bullet-hell"]},
+    {"id":"idea-20260304-014","title":"Stack Panic","slug":"stack-panic","creator":"trendsetter","score":78.4,"status":"scrapped","run_id":"run-2026-03-04-002","mechanic_tags":["physics","stacking","pendulum","balance"]},
+    {"id":"idea-20260304-015","title":"Slice Storm","slug":"slice-storm","creator":"trendsetter","score":77.5,"status":"passed-backup","run_id":"run-2026-03-04-002","mechanic_tags":["slice","reflex","storm","fruit-ninja"]},
+    {"id":"idea-20260305-005","title":"Magma Flow","slug":"magma-flow","creator":"spark","score":77.9,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["drawing","physics","fluid-simulation","time-pressure","puzzle"]},
+    {"id":"idea-20260305-001","title":"Rope Riot","slug":"rope-riot","creator":"spark","score":75.1,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["physics","drag-input","combat","survival","reflex"]},
+    {"id":"idea-20260305-029","title":"Tidal Rush","slug":"tidal-rush","creator":"trendsetter","score":74.9,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["endless-runner","one-tap","survival","water","trending"]},
+    {"id":"idea-20260305-007","title":"Wrecking Swing","slug":"wrecking-swing","creator":"spark","score":74.8,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["physics","one-tap","timing","destruction","precision"]},
+    {"id":"idea-20260305-010","title":"Spin Clash","slug":"spin-clash","creator":"spark","score":72.4,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["physics","flick","combat","survival","momentum"]},
+    {"id":"idea-20260305-011","title":"Escalator Chaos","slug":"escalator-chaos","creator":"oddball","score":71.3,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["swipe","sorting","crowd","time-pressure","humor"]},
+    {"id":"idea-20260305-021","title":"Noodle Lasso","slug":"noodle-lasso","creator":"trendsetter","score":71.3,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["trending","hyper-casual","one-drag","physics","food-humor"]},
+    {"id":"idea-20260305-026","title":"Swipe Dojo","slug":"swipe-dojo","creator":"trendsetter","score":71.2,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["rhythm","reflex","combat","swipe","trending"]},
+    {"id":"idea-20260305-016","title":"Spam Call Smash","slug":"spam-call-smash","creator":"oddball","score":70.8,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["reflex","pattern-recognition","humor","tap","sorting"]},
+    {"id":"idea-20260305-030","title":"Flip Burger","slug":"flip-burger","creator":"trendsetter","score":69.6,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["timing","reflex","food","hyper-casual","trending"]}
+  ]
 }
