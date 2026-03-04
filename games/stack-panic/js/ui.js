@@ -362,8 +362,43 @@ class HUDManager {
         });
     }
 
+    updateItems(items) {
+        // Clear old item buttons
+        if (this.itemContainer) this.itemContainer.destroy();
+        this.itemContainer = this.scene.add.container(0, 0).setDepth(100).setScrollFactor(0);
+
+        const keys = Object.keys(ITEMS);
+        const hasAny = keys.some(k => items[k] > 0);
+        if (!hasAny) return;
+
+        const available = keys.filter(k => items[k] > 0);
+        const btnW = 52, btnH = 44, gap = 6;
+        const totalW = available.length * (btnW + gap) - gap;
+        const startX = (GAME_WIDTH - totalW) / 2 + btnW / 2;
+        const y = GAME_HEIGHT - 36;
+
+        available.forEach((key, i) => {
+            const x = startX + i * (btnW + gap);
+            const bg = this.scene.add.rectangle(x, y, btnW, btnH, 0x333355, 0.9).setInteractive();
+            bg.setStrokeStyle(1, 0x666688);
+            const label = this.scene.add.text(x, y - 8, ITEMS[key].label, {
+                fontSize: '13px', fontStyle: 'bold', color: '#FFFFFF'
+            }).setOrigin(0.5);
+            const count = this.scene.add.text(x, y + 12, `x${items[key]}`, {
+                fontSize: '11px', color: '#E8A838'
+            }).setOrigin(0.5);
+            this.itemContainer.add([bg, label, count]);
+
+            bg.on('pointerdown', (p) => {
+                p.event.stopPropagation();
+                this.scene.activateItem(key);
+            });
+        });
+    }
+
     destroy() {
         this.container.destroy();
+        if (this.itemContainer) this.itemContainer.destroy();
         this.tiltBg.destroy();
         this.tiltFill.destroy();
     }
