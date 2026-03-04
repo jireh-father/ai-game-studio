@@ -1,5 +1,5 @@
-// Stack Panic - Core Game Scene (Pendulum, Physics, Blocks, Tilt)
-// Rendering in render.js, Audio/Milestones in stages.js
+// Stack Panic - Core Game Scene (Pendulum, Physics, Blocks, Tilt, Stages)
+// Rendering in render.js, Audio/StageManager in stages.js
 
 class GameScene extends Phaser.Scene {
     constructor() { super('GameScene'); }
@@ -15,37 +15,45 @@ class GameScene extends Phaser.Scene {
         this.noMissStreak = 0;
         this.gameOver = false;
         this.paused = false;
+        this.transitioning = false;
         this.lastTapTime = 0;
         this.blockIndex = 0;
         this.droppedBlocks = [];
+        this.obstacleObjects = [];
 
-        // Managers
-        this.milestones = new MilestoneManager();
+        // Stage manager
+        this.stages = new StageManager();
         this.hud = new HUDManager(this);
 
         // Continue from rewarded ad
         if (data && data.continueGame && data.prevData) {
             this.score = data.prevData.score || 0;
-            this.milestones.blocksLanded = data.prevData.blocksLanded || 0;
-            this.milestones.currentMilestone = Math.floor(this.milestones.blocksLanded / 10) + 1;
-            this.milestones.params = getMilestoneParams(this.milestones.currentMilestone);
+            this.stages.totalBlocksLanded = data.prevData.blocksLanded || 0;
+            this.stages.currentStage = data.prevData.stage || 1;
+            this.stages.stageParams = generateStage(this.stages.currentStage);
+            this.stages.blocksLandedInStage = data.prevData.blocksLandedInStage || 0;
             this.tilt = 0;
             this.targetTilt = 0;
             this.hud.updateScore(this.score);
-            this.hud.updateMilestone(this.milestones.currentMilestone);
         }
 
         this._drawBackground();
         this._createPlatform();
+        this._createObstacles(this.stages.stageParams.obstacles);
         this._createPendulum();
         this._setupInput();
         this._setupCollisions();
         this._startIdleTimer();
 
-        this.blockGraphics = null; // Reset so BlockRenderer creates fresh graphics
+        this.blockGraphics = null;
         this.vignetteGraphics = this.add.graphics().setDepth(90).setScrollFactor(0);
         this.ghostGraphics = this.add.graphics().setDepth(5);
+        this.obstacleGraphics = this.add.graphics().setDepth(7);
         this.firstBlockLanded = false;
+
+        this.hud.updateStage(this.stages.currentStage, this.stages.stageParams.traits);
+        this.hud.updateProgress(this.stages.getProgress());
+        this._drawObstacles();
     }
 
     _drawBackground() {
@@ -57,7 +65,7 @@ class GameScene extends Phaser.Scene {
     }
 
     _createPlatform() {
-        this.currentPlatformWidth = this.milestones.params.platformWidth;
+        this.currentPlatformWidth = this.stages.stageParams.platformWidth;
         this.platform = this.matter.add.rectangle(
             GAME_WIDTH / 2, PLATFORM_Y + PLATFORM_HEIGHT / 2,
             this.currentPlatformWidth, PLATFORM_HEIGHT,
@@ -77,7 +85,6 @@ class GameScene extends Phaser.Scene {
     }
 
     _updatePlatformWidth(newWidth) {
-        if (Math.abs(this.currentPlatformWidth - newWidth) < 1) return;
         this.currentPlatformWidth = newWidth;
         this.matter.world.remove(this.platform);
         this.platform = this.matter.add.rectangle(
@@ -88,9 +95,45 @@ class GameScene extends Phaser.Scene {
         this._drawPlatformVisual();
     }
 
+    _createObstacles(obstacleConfigs) {
+        for (const obs of obstacleConfigs) {
+            const body = this.matter.add.rectangle(
+                obs.x, PLATFORM_Y - obs.height / 2,
+                obs.width, obs.height,
+                { isStatic: true, friction: 0.9, label: 'obstacle' }
+            );
+            this.obstacleObjects.push({ body, x: obs.x, width: obs.width, height: obs.height });
+        }
+    }
+
+    _drawObstacles() {
+        if (!this.obstacleGraphics) return;
+        this.obstacleGraphics.clear();
+        for (const obs of this.obstacleObjects) {
+            this.obstacleGraphics.fillStyle(COLORS.obstacle);
+            this.obstacleGraphics.fillRoundedRect(
+                obs.x - obs.width / 2, PLATFORM_Y - obs.height,
+                obs.width, obs.height, 2
+            );
+            this.obstacleGraphics.fillStyle(COLORS.obstacleShadow);
+            this.obstacleGraphics.fillRect(
+                obs.x - obs.width / 2, PLATFORM_Y - 3,
+                obs.width, 3
+            );
+        }
+    }
+
+    _clearObstacles() {
+        for (const obs of this.obstacleObjects) {
+            this.matter.world.remove(obs.body);
+        }
+        this.obstacleObjects = [];
+        if (this.obstacleGraphics) this.obstacleGraphics.clear();
+    }
+
     _createPendulum() {
         this.pendulumAngle = 0;
-        this.pendulumSpeed = this.milestones.params.pendulumSpeed;
+        this.pendulumSpeed = this.stages.stageParams.pendulumSpeed;
         this.pendulumTime = 0;
         this.swingBlock = null;
         this.pendulumGraphics = this.add.graphics().setDepth(10);
@@ -98,13 +141,13 @@ class GameScene extends Phaser.Scene {
     }
 
     _spawnSwingBlock() {
-        if (this.gameOver) return;
-        const variant = this.milestones.getBlockVariant();
+        if (this.gameOver || this.transitioning) return;
+        const variant = this.stages.getBlockVariant();
         const color = getBlockColor(this.blockIndex);
         const body = this.matter.add.rectangle(
             PENDULUM_PIVOT_X, PENDULUM_PIVOT_Y + PENDULUM_ARM_LENGTH,
             variant.width, variant.height,
-            { isStatic: true, friction: 0.8, restitution: 0.05, frictionAir: 0.01, label: 'block_' + this.blockIndex }
+            { isStatic: true, friction: 0.8, restitution: 0.03, frictionAir: 0.03, label: 'block_' + this.blockIndex }
         );
         this.swingBlock = { body, width: variant.width, height: variant.height, color, index: this.blockIndex, irregular: variant.irregular };
         this.blockIndex++;
@@ -112,7 +155,7 @@ class GameScene extends Phaser.Scene {
 
     _setupInput() {
         this.input.on('pointerdown', () => {
-            if (this.gameOver || this.paused) return;
+            if (this.gameOver || this.paused || this.transitioning) return;
             const now = Date.now();
             if (now - this.lastTapTime < TAP_COOLDOWN) return;
             this.lastTapTime = now;
@@ -128,7 +171,7 @@ class GameScene extends Phaser.Scene {
                 if (!blockBody) continue;
                 const otherLabel = blockBody === pair.bodyA ? pair.bodyB.label : pair.bodyA.label;
                 if (this._isNewlyDropped(blockBody)) {
-                    if (otherLabel === 'platform' || otherLabel.startsWith('block_') || otherLabel === 'static_base') {
+                    if (otherLabel === 'platform' || otherLabel.startsWith('block_') || otherLabel === 'static_base' || otherLabel === 'obstacle') {
                         this._onBlockLanded(blockBody);
                     }
                 }
@@ -146,12 +189,14 @@ class GameScene extends Phaser.Scene {
         const block = this.swingBlock;
         this.swingBlock = null;
 
-        // Destroy static pendulum body, create fresh dynamic body at same position
         const pos = { x: block.body.position.x, y: block.body.position.y };
         this.matter.world.remove(block.body);
+
+        // Use per-stage physics values
+        const params = this.stages.stageParams;
         const newBody = this.matter.add.rectangle(
             pos.x, pos.y, block.width, block.height,
-            { isStatic: false, friction: 0.9, restitution: 0.03, frictionAir: 0.03,
+            { isStatic: false, friction: 0.9, restitution: params.restitution, frictionAir: params.frictionAir,
               label: 'block_' + block.index }
         );
         block.body = newBody;
@@ -197,26 +242,80 @@ class GameScene extends Phaser.Scene {
         this.noMissStreak++;
         if (this.noMissStreak % 5 === 0) { points += SCORE_STREAK_BONUS; audioManager.play('streak'); }
 
-        const milestoneChanged = this.milestones.onBlockLanded(quality);
-        if (milestoneChanged) {
-            this.hud.showMilestoneBanner(this.milestones.currentMilestone);
-            audioManager.play('milestone');
-            this.pendulumSpeed = this.milestones.params.pendulumSpeed;
-            this._updatePlatformWidth(this.milestones.params.platformWidth);
-        }
+        const result = this.stages.onBlockLanded(quality);
 
-        if (quality === 'perfect') this.targetTilt = Math.max(0, this.targetTilt - this.milestones.params.tiltRecovery);
-        else if (quality === 'great') this.targetTilt = Math.max(0, this.targetTilt - this.milestones.params.tiltRecovery * 0.5);
+        if (quality === 'perfect') this.targetTilt = Math.max(0, this.targetTilt - this.stages.stageParams.tiltRecovery);
+        else if (quality === 'great') this.targetTilt = Math.max(0, this.targetTilt - this.stages.stageParams.tiltRecovery * 0.5);
 
         this.score += points;
         this.hud.updateScore(this.score);
         this.hud.updateStreak(this.perfectStreak);
-        this.hud.updateMilestone(this.milestones.currentMilestone);
+        this.hud.updateProgress(this.stages.getProgress());
 
         JuiceEffects.landingJuice(this, quality, pos, points, blockData);
         if (!this.firstBlockLanded) { this.firstBlockLanded = true; JuiceEffects.firstBlockImpact(this, pos); }
-        if (this.milestones.applyEarthquake(this)) audioManager.play('earthquake');
+        if (this.stages.applyEarthquake(this)) audioManager.play('earthquake');
         this._compressBodies();
+
+        if (result === 'stage_clear') {
+            this._onStageClear();
+        }
+    }
+
+    _onStageClear() {
+        this.transitioning = true;
+
+        // Remove pending swing block
+        if (this.swingBlock) {
+            this.matter.world.remove(this.swingBlock.body);
+            this.swingBlock = null;
+        }
+        if (this.idleTimer) this.idleTimer.remove();
+
+        // Stage clear bonus
+        const bonus = this.stages.currentStage * 500;
+        this.score += bonus;
+        this.hud.updateScore(this.score);
+
+        this.hud.showStageClearBanner(this.stages.currentStage, bonus);
+        audioManager.play('stage_clear');
+
+        this.time.delayedCall(2000, () => {
+            // Clear all blocks
+            for (const b of this.droppedBlocks) {
+                if (b.body) this.matter.world.remove(b.body);
+            }
+            this.droppedBlocks = [];
+            this._clearObstacles();
+
+            // Advance stage
+            this.stages.advanceStage();
+            const params = this.stages.stageParams;
+
+            // Recover some tilt between stages
+            this.targetTilt = Math.max(0, this.targetTilt - 10);
+
+            // Apply new stage params
+            this._updatePlatformWidth(params.platformWidth);
+            this.pendulumSpeed = params.pendulumSpeed;
+            this._createObstacles(params.obstacles);
+            this._drawObstacles();
+
+            // Reset graphics
+            this.blockGraphics = null;
+            this.firstBlockLanded = false;
+
+            // Show stage intro
+            this.hud.showStageIntroBanner(this.stages.currentStage, params.traits);
+            this.hud.updateStage(this.stages.currentStage, params.traits);
+            this.hud.updateProgress(0);
+
+            this.time.delayedCall(1500, () => {
+                this.transitioning = false;
+                this._spawnSwingBlock();
+                this._resetIdleTimer();
+            });
+        });
     }
 
     onMiss(pos) {
@@ -225,7 +324,7 @@ class GameScene extends Phaser.Scene {
         this.hud.updateStreak(0);
         this.targetTilt = Math.min(TILT_MAX, this.targetTilt + TILT_PER_MISS);
         JuiceEffects.missJuice(this, pos);
-        if (this.milestones.onMiss()) this._triggerGameOver();
+        if (this.stages.onMiss()) this._triggerGameOver();
     }
 
     _triggerGameOver() {
@@ -235,8 +334,10 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(1200, () => {
             this.matter.world.engine.timing.timeScale = 1;
             this.scene.start('GameOverScene', {
-                score: this.score, blocksLanded: this.milestones.blocksLanded,
-                milestone: this.milestones.currentMilestone, tilt: this.tilt
+                score: this.score,
+                blocksLanded: this.stages.totalBlocksLanded,
+                stage: this.stages.currentStage,
+                tilt: this.tilt
             });
         });
     }
@@ -246,7 +347,7 @@ class GameScene extends Phaser.Scene {
     _resetIdleTimer() {
         if (this.idleTimer) this.idleTimer.remove();
         this.idleTimer = this.time.delayedCall(IDLE_DROP_TIMEOUT, () => {
-            if (!this.gameOver && this.swingBlock) this._dropBlock();
+            if (!this.gameOver && !this.transitioning && this.swingBlock) this._dropBlock();
         });
     }
 
@@ -286,12 +387,12 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (this.gameOver || this.paused) return;
+        if (this.gameOver || this.paused || this.transitioning) return;
         const dt = delta / 1000;
 
         if (this.swingBlock) {
             this.pendulumTime += dt * this.pendulumSpeed;
-            const windDrift = this.milestones.getWindDrift();
+            const windDrift = this.stages.getWindDrift();
             this.pendulumAngle = Math.sin(this.pendulumTime) * PENDULUM_MAX_ANGLE;
             const px = PENDULUM_PIVOT_X + Math.sin(this.pendulumAngle) * PENDULUM_ARM_LENGTH + windDrift;
             const py = PENDULUM_PIVOT_Y + Math.cos(this.pendulumAngle) * PENDULUM_ARM_LENGTH;
@@ -330,6 +431,18 @@ class GameScene extends Phaser.Scene {
         if (this.tilt >= TILT_MAX - 1) this._triggerGameOver();
     }
 
+    _freezeSettledBlocks() {
+        for (const b of this.droppedBlocks) {
+            if (!b.body || b.body.isStatic || !b.settled) continue;
+            if (b.body.position.y > PLATFORM_Y + PLATFORM_HEIGHT - 5) {
+                Phaser.Physics.Matter.Matter.Body.setPosition(b.body, {
+                    x: b.body.position.x, y: PLATFORM_Y + PLATFORM_HEIGHT - 5
+                });
+                Phaser.Physics.Matter.Matter.Body.setVelocity(b.body, { x: b.body.velocity.x, y: 0 });
+            }
+        }
+    }
+
     _compressBodies() {
         const dynamicBlocks = this.droppedBlocks.filter(b => b.body && !b.body.isStatic && b.settled);
         if (dynamicBlocks.length > MAX_PHYSICS_BODIES) {
@@ -338,19 +451,6 @@ class GameScene extends Phaser.Scene {
             for (const block of toCompress) {
                 Phaser.Physics.Matter.Matter.Body.setStatic(block.body, true);
                 block.body.label = 'static_base';
-            }
-        }
-    }
-
-    _freezeSettledBlocks() {
-        for (const b of this.droppedBlocks) {
-            if (!b.body || b.body.isStatic || !b.settled) continue;
-            // Prevent blocks from phasing below platform
-            if (b.body.position.y > PLATFORM_Y + PLATFORM_HEIGHT - 5) {
-                Phaser.Physics.Matter.Matter.Body.setPosition(b.body, {
-                    x: b.body.position.x, y: PLATFORM_Y + PLATFORM_HEIGHT - 5
-                });
-                Phaser.Physics.Matter.Matter.Body.setVelocity(b.body, { x: b.body.velocity.x, y: 0 });
             }
         }
     }
