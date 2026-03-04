@@ -301,8 +301,10 @@ class GameScene extends Phaser.Scene {
             this._createObstacles(params.obstacles);
             this._drawObstacles();
 
-            // Reset graphics
-            this.blockGraphics = null;
+            // Destroy old graphics and reset
+            if (this.blockGraphics) { this.blockGraphics.destroy(); this.blockGraphics = null; }
+            this.pendulumGraphics.clear();
+            this.ghostGraphics.clear();
             this.firstBlockLanded = false;
 
             // Show stage intro
