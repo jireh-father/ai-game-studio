@@ -1,0 +1,102 @@
+// Wrecking Swing - Game Configuration
+const CONFIG = {
+  GAME_WIDTH: 360,
+  GAME_HEIGHT: 640,
+
+  // Block dimensions
+  BLOCK_W: 36,
+  BLOCK_H: 24,
+  BLOCK_GAP: 2,
+
+  // Ball
+  BALL_RADIUS: 22,
+  CABLE_LENGTH_BASE: 160,
+  BALL_RELEASE_SPEED: 420,
+
+  // Pendulum
+  PENDULUM_SPEED_BASE: 1.2,
+  PENDULUM_ARC_BASE: 120,
+
+  // Gameplay
+  SWING_COUNT: 3,
+  IDLE_TIMEOUT: 20000,
+  IDLE_WARNING: 15000,
+  CHAIN_WINDOW: 500,
+  SETTLE_THRESHOLD: 0.5,
+  SETTLE_DURATION: 300,
+
+  // Scoring
+  SCORE_BLOCK: 100,
+  SCORE_AIR_BLOCK: 150,
+  SCORE_CHAIN: 50,
+  SCORE_CLEAR: 2000,
+  SCORE_PERFECT: 5000,
+  SCORE_2SWING: 1500,
+  SCORE_IDLE_PENALTY: -500,
+  CHAIN_MULTIPLIER_STEP: 0.5,
+  MAX_CHAIN: 8,
+
+  // Colors
+  COLORS: {
+    BALL: 0xB0BEC5,
+    BALL_STROKE: 0x455A64,
+    HIGHLIGHT: 0xFF6F00,
+    BG: 0x1A1A2E,
+    BLOCK_NORMAL: 0x607D8B,
+    BLOCK_NORMAL_STROKE: 0x455A64,
+    BLOCK_ARMORED: 0xB71C1C,
+    BLOCK_ARMORED_STROKE: 0x7F0000,
+    BLOCK_CRACKED: 0xA1887F,
+    BLOCK_CRACKED_STROKE: 0x6D4C41,
+    GROUND: 0x37474F,
+    DANGER: 0xFFD600,
+    REWARD: 0xFFB300,
+    UI_TEXT: 0xECEFF1,
+    UI_BG: 0x0D0D1A,
+    CHAIN_PARTICLE: 0x00E5FF,
+    DESTRUCT_PARTICLE: 0xFF6D00,
+    CRANE: 0x546E7A,
+    CRANE_DARK: 0x455A64,
+    DUST: 0x78909C,
+    PENALTY: 0xD32F2F
+  },
+
+  // Hex string versions for Phaser text
+  HEX: {
+    UI_TEXT: '#ECEFF1',
+    REWARD: '#FFB300',
+    CHAIN: '#00E5FF',
+    DANGER: '#FFD600',
+    PENALTY: '#D32F2F',
+    HIGHLIGHT: '#FF6F00',
+    BG: '#1A1A2E'
+  },
+
+  // Difficulty tiers
+  TIER: {
+    HEIGHT: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14],
+    WIDTH:  [3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 7],
+    ARC:    [120, 115, 110, 105, 100, 95, 92, 90, 85, 82, 80],
+    SPEED:  [1.2, 1.15, 1.1, 1.05, 1.0, 0.97, 0.95, 0.92, 0.88, 0.85, 0.8],
+    ARMOR:  [0, 0, 0, 0, 0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.45],
+    GAP:    [0, 0, 0, 0, 0.05, 0.08, 0.1, 0.15, 0.18, 0.2, 0.25]
+  },
+
+  // Physics
+  PHYSICS: {
+    GRAVITY: 2.0,
+    BLOCK_RESTITUTION: 0.05,
+    BLOCK_FRICTION: 0.4,
+    BLOCK_FRICTION_AIR: 0.02,
+    BLOCK_DENSITY: 0.003,
+    BALL_RESTITUTION: 0.1,
+    BALL_FRICTION: 0.1,
+    BALL_DENSITY: 0.05,
+    GROUND_FRICTION: 0.8
+  },
+
+  // Layout
+  CRANE_Y: 40,
+  GROUND_Y: 580,
+  PLATFORM_HEIGHT: 20
+};

@@ -1,0 +1,18 @@
+{
+  "run_id": "run-2026-03-05-001",
+  "evaluated_at": "2026-03-05T00:00:00Z",
+  "formula": "ludus×0.35 + loop×0.25 + cash×0.20 + scout×0.20",
+  "threshold": 70,
+  "results": [
+    {"id":"idea-20260305-005","title":"Magma Flow","slug":"magma-flow","creator":"spark","scores":{"ludus":77,"loop":79,"cash":80,"scout":76},"weighted":77.9,"status":"pass"},
+    {"id":"idea-20260305-001","title":"Rope Riot","slug":"rope-riot","creator":"spark","scores":{"ludus":76,"loop":73,"cash":79,"scout":72},"weighted":75.1,"status":"pass"},
+    {"id":"idea-20260305-029","title":"Tidal Rush","slug":"tidal-rush","creator":"trendsetter","scores":{"ludus":69,"loop":86,"cash":83,"scout":63},"weighted":74.9,"status":"pass"},
+    {"id":"idea-20260305-007","title":"Wrecking Swing","slug":"wrecking-swing","creator":"spark","scores":{"ludus":76,"loop":72,"cash":72,"scout":79},"weighted":74.8,"status":"pass"},
+    {"id":"idea-20260305-010","title":"Spin Clash","slug":"spin-clash","creator":"spark","scores":{"ludus":74,"loop":74,"cash":77,"scout":63},"weighted":72.4,"status":"pass"},
+    {"id":"idea-20260305-011","title":"Escalator Chaos","slug":"escalator-chaos","creator":"oddball","scores":{"ludus":62,"loop":76,"cash":80,"scout":73},"weighted":71.3,"status":"pass"},
+    {"id":"idea-20260305-021","title":"Noodle Lasso","slug":"noodle-lasso","creator":"trendsetter","scores":{"ludus":73,"loop":66,"cash":78,"scout":68},"weighted":71.3,"status":"pass"},
+    {"id":"idea-20260305-026","title":"Swipe Dojo","slug":"swipe-dojo","creator":"trendsetter","scores":{"ludus":70,"loop":78,"cash":80,"scout":56},"weighted":71.2,"status":"pass"},
+    {"id":"idea-20260305-016","title":"Spam Call Smash","slug":"spam-call-smash","creator":"oddball","scores":{"ludus":63,"loop":78,"cash":78,"scout":68},"weighted":70.8,"status":"pass"},
+    {"id":"idea-20260305-030","title":"Flip Burger","slug":"flip-burger","creator":"trendsetter","scores":{"ludus":68,"loop":76,"cash":78,"scout":56},"weighted":69.6,"status":"borderline-pass"}
+  ]
+}

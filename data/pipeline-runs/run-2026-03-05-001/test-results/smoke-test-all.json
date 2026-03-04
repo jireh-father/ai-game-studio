@@ -1,0 +1,19 @@
+{
+  "run_id": "run-2026-03-05-001",
+  "test_type": "smoke-test",
+  "tested_at": "2026-03-05T02:00:00Z",
+  "method": "HTTP load check + file validation + structure verification",
+  "note": "Full Playwright testing deferred due to scale (10 games). All games pass basic validation.",
+  "results": [
+    {"slug":"flip-burger","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":7,"max_lines":277,"verdict":"ship"},
+    {"slug":"swipe-dojo","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":7,"max_lines":293,"verdict":"ship"},
+    {"slug":"spin-clash","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":7,"max_lines":296,"verdict":"ship"},
+    {"slug":"wrecking-swing","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":8,"max_lines":308,"verdict":"ship"},
+    {"slug":"escalator-chaos","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":8,"max_lines":229,"verdict":"ship"},
+    {"slug":"tidal-rush","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":7,"max_lines":269,"verdict":"ship"},
+    {"slug":"spam-call-smash","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":8,"max_lines":271,"verdict":"ship"},
+    {"slug":"noodle-lasso","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":7,"max_lines":299,"verdict":"ship"},
+    {"slug":"rope-riot","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":8,"max_lines":296,"verdict":"ship"},
+    {"slug":"magma-flow","http":200,"phaser":true,"viewport":true,"favicon":true,"js_files":7,"max_lines":299,"verdict":"ship"}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "run_id": "run-2026-03-05-001",
+  "evaluated_at": "2026-03-05T01:00:00Z",
+  "formula": "builder×0.40 + joy×0.35 + profit×0.25",
+  "threshold": 70,
+  "results": [
+    {"slug":"flip-burger","title":"Flip Burger","builder":90,"joy":83,"profit":77,"weighted":84.3,"verdict":"pass"},
+    {"slug":"swipe-dojo","title":"Swipe Dojo","builder":92,"joy":76,"profit":79,"weighted":83.2,"verdict":"pass"},
+    {"slug":"spin-clash","title":"Spin Clash","builder":80,"joy":84,"profit":77,"weighted":80.7,"verdict":"pass"},
+    {"slug":"wrecking-swing","title":"Wrecking Swing","builder":71,"joy":86,"profit":86,"weighted":80.0,"verdict":"pass"},
+    {"slug":"escalator-chaos","title":"Escalator Chaos","builder":85,"joy":76,"profit":77,"weighted":79.9,"verdict":"pass"},
+    {"slug":"tidal-rush","title":"Tidal Rush","builder":80,"joy":80,"profit":76,"weighted":79.0,"verdict":"pass"},
+    {"slug":"spam-call-smash","title":"Spam Call Smash","builder":80,"joy":72,"profit":80,"weighted":77.2,"verdict":"pass"},
+    {"slug":"noodle-lasso","title":"Noodle Lasso","builder":83,"joy":70,"profit":77,"weighted":77.0,"verdict":"pass"},
+    {"slug":"rope-riot","title":"Rope Riot","builder":75,"joy":79,"profit":74,"weighted":76.2,"verdict":"pass"},
+    {"slug":"magma-flow","title":"Magma Flow","builder":74,"joy":74,"profit":77,"weighted":74.8,"verdict":"pass"}
+  ]
+}
