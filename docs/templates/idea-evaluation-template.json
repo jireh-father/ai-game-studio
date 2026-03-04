@@ -1,0 +1,15 @@
+{
+  "idea_id": "",
+  "judge": "",
+  "judge_weight": 0,
+  "criteria": [
+    { "name": "", "score": 0, "weight": 0, "reasoning": "" }
+  ],
+  "category_score": 0,
+  "weighted_score": 0,
+  "verdict": "pass|fail",
+  "strengths": [],
+  "concerns": [],
+  "suggestions": [],
+  "reasoning": ""
+}

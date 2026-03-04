@@ -1,0 +1,37 @@
+{
+  "game_slug": "",
+  "tester": "",
+  "tester_weight": 0,
+  "play_duration_minutes": 0,
+  "stages_reached": 0,
+  "deaths_count": 0,
+  "play_timeline": [],
+  "emotion_log": [],
+  "screenshots": [],
+  "console_errors": [],
+  "bugs": [
+    {
+      "bug_id": "",
+      "severity": "blocker|major|minor|cosmetic",
+      "category": "crash|logic|ui|performance|ad-integration",
+      "description": "",
+      "reproduction_steps": [],
+      "expected": "",
+      "actual": "",
+      "console_errors": [],
+      "affected_file": "",
+      "suggested_fix": ""
+    }
+  ],
+  "criteria": [
+    { "name": "", "score": 0, "weight": 0, "reasoning": "" }
+  ],
+  "category_score": 0,
+  "weighted_score": 0,
+  "verdict": "ship|revise|scrap",
+  "overall_impression": "",
+  "strengths": [],
+  "weaknesses": [],
+  "must_fix": [],
+  "nice_to_fix": []
+}

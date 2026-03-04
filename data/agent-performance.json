@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "last_updated": "2026-03-04T00:00:00Z",
+  "agents": {
+    "spark": { "ideas_generated": 0, "ideas_passed": 0, "avg_score": 0, "runs": [] },
+    "oddball": { "ideas_generated": 0, "ideas_passed": 0, "avg_score": 0, "runs": [] },
+    "trendsetter": { "ideas_generated": 0, "ideas_passed": 0, "avg_score": 0, "runs": [] },
+    "professor-ludus": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "dr-loop": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "cash": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "scout": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "architect": { "plans_created": 0, "plans_passed": 0, "avg_score": 0, "runs": [] },
+    "builder": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "joy": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "profit": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
+    "developer": { "games_developed": 0, "games_shipped": 0, "bugs_fixed": 0, "avg_test_score": 0, "runs": [] },
+    "player-one": { "tests_conducted": 0, "bugs_found": 0, "avg_score_given": 0, "runs": [] },
+    "bugcatcher": { "tests_conducted": 0, "bugs_found": 0, "avg_score_given": 0, "runs": [] },
+    "adcheck": { "tests_conducted": 0, "bugs_found": 0, "avg_score_given": 0, "runs": [] },
+    "shipper": { "deployments": 0, "successful": 0, "runs": [] }
+  },
+  "meta_leader_decisions": []
+}
