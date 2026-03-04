@@ -5,7 +5,8 @@ const GAME_WIDTH = 390;
 const GAME_HEIGHT = 844;
 
 // Tower / Platform
-const PLATFORM_WIDTH = 200;
+const PLATFORM_START_WIDTH = 280;
+const PLATFORM_MIN_WIDTH = 120;
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_Y = 720;
 
@@ -91,10 +92,11 @@ function getMilestoneParams(milestone) {
     const m = Math.max(1, milestone);
     const pendulumSpeed = Math.min(PENDULUM_BASE_SPEED * (1 + m * 0.08), PENDULUM_BASE_SPEED * 3.5);
     const blockWidth = Math.max(BLOCK_MIN_WIDTH, BLOCK_BASE_WIDTH - (m * 2));
+    const platformWidth = Math.max(PLATFORM_MIN_WIDTH, PLATFORM_START_WIDTH - (m - 1) * 20);
     const earthquakeChance = m <= 3 ? 0 : Math.min(0.4, (m - 3) * 0.04);
     const windDrift = m <= 5 ? 0 : Math.min(25, (m - 5) * 3);
     const irregularChance = m <= 2 ? 0 : Math.min(0.6, (m - 2) * 0.08);
     const tiltRecovery = Math.max(2, 8 / m);
 
-    return { pendulumSpeed, blockWidth, earthquakeChance, windDrift, irregularChance, tiltRecovery };
+    return { pendulumSpeed, blockWidth, platformWidth, earthquakeChance, windDrift, irregularChance, tiltRecovery };
 }

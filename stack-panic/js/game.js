@@ -57,16 +57,35 @@ class GameScene extends Phaser.Scene {
     }
 
     _createPlatform() {
+        this.currentPlatformWidth = this.milestones.params.platformWidth;
         this.platform = this.matter.add.rectangle(
             GAME_WIDTH / 2, PLATFORM_Y + PLATFORM_HEIGHT / 2,
-            PLATFORM_WIDTH, PLATFORM_HEIGHT,
+            this.currentPlatformWidth, PLATFORM_HEIGHT,
             { isStatic: true, friction: 0.9, label: 'platform' }
         );
         this.platformVis = this.add.graphics();
+        this._drawPlatformVisual();
+    }
+
+    _drawPlatformVisual() {
+        const w = this.currentPlatformWidth;
+        this.platformVis.clear();
         this.platformVis.fillStyle(COLORS.platform);
-        this.platformVis.fillRoundedRect(GAME_WIDTH / 2 - PLATFORM_WIDTH / 2, PLATFORM_Y, PLATFORM_WIDTH, PLATFORM_HEIGHT, 4);
+        this.platformVis.fillRoundedRect(GAME_WIDTH / 2 - w / 2, PLATFORM_Y, w, PLATFORM_HEIGHT, 4);
         this.platformVis.fillStyle(COLORS.platformHighlight);
-        this.platformVis.fillRoundedRect(GAME_WIDTH / 2 - PLATFORM_WIDTH / 2, PLATFORM_Y, PLATFORM_WIDTH, 5, 2);
+        this.platformVis.fillRoundedRect(GAME_WIDTH / 2 - w / 2, PLATFORM_Y, w, 5, 2);
+    }
+
+    _updatePlatformWidth(newWidth) {
+        if (Math.abs(this.currentPlatformWidth - newWidth) < 1) return;
+        this.currentPlatformWidth = newWidth;
+        this.matter.world.remove(this.platform);
+        this.platform = this.matter.add.rectangle(
+            GAME_WIDTH / 2, PLATFORM_Y + PLATFORM_HEIGHT / 2,
+            newWidth, PLATFORM_HEIGHT,
+            { isStatic: true, friction: 0.9, label: 'platform' }
+        );
+        this._drawPlatformVisual();
     }
 
     _createPendulum() {
@@ -159,7 +178,7 @@ class GameScene extends Phaser.Scene {
 
         const pos = body.position;
         const towerCenterX = GAME_WIDTH / 2;
-        const overhang = Math.abs(pos.x - towerCenterX) - (PLATFORM_WIDTH / 2 - blockData.width / 2);
+        const overhang = Math.abs(pos.x - towerCenterX) - (this.currentPlatformWidth / 2 - blockData.width / 2);
         const absOverhang = Math.max(0, overhang);
 
         let quality, points;
@@ -183,6 +202,7 @@ class GameScene extends Phaser.Scene {
             this.hud.showMilestoneBanner(this.milestones.currentMilestone);
             audioManager.play('milestone');
             this.pendulumSpeed = this.milestones.params.pendulumSpeed;
+            this._updatePlatformWidth(this.milestones.params.platformWidth);
         }
 
         if (quality === 'perfect') this.targetTilt = Math.max(0, this.targetTilt - this.milestones.params.tiltRecovery);
