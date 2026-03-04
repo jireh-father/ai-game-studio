@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="screen-orientation" content="portrait">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Alarm Slap</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='14' cy='14' r='8' fill='%23F5C518' stroke='%23222' stroke-width='2'/%3E%3Ccircle cx='50' cy='14' r='8' fill='%23F5C518' stroke='%23222' stroke-width='2'/%3E%3Ccircle cx='32' cy='36' r='24' fill='%23F5C518' stroke='%23222' stroke-width='3'/%3E%3Ccircle cx='32' cy='36' r='18' fill='%23FFFDE7' stroke='%23222' stroke-width='1.5'/%3E%3Cline x1='32' y1='36' x2='32' y2='22' stroke='%23222' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='32' y1='36' x2='44' y2='30' stroke='%23222' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='36' r='2.5' fill='%23222'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Prevent default touch behaviors (scrolling, zooming)
+    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+  </script>
+</head>
+<body>
+  <div id="game-container"></div>
+  <div id="rotate-overlay">
+    <div class="rotate-message">
+      <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="5" width="30" height="50" rx="4" fill="none" stroke="white" stroke-width="3"/>
+        <path d="M 10 30 A 20 20 0 0 1 50 30" fill="none" stroke="white" stroke-width="2" stroke-dasharray="4,3"/>
+        <polygon points="50,30 45,24 45,36" fill="white"/>
+      </svg>
+      <p>Please rotate to portrait mode</p>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/ads.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
