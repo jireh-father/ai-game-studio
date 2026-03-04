@@ -1,0 +1,42 @@
+[
+  {
+    "id": "idea-20260304-001",
+    "title": "Gravity Flip Chain",
+    "slug": "gravity-flip-chain",
+    "one_liner": "Flip gravity at the perfect moment to create unstoppable chain reactions that clear the board.",
+    "elevator_pitch": "Each stage is filled with colored blocks arranged in precarious towers. A single tap flips gravity — sending everything flying upward — but the real trick is timing secondary flips mid-air to smash specific blocks into each other. Chain reactions score multipliers, and every stage adds new gravity-sensitive elements like bouncy orbs, sticky blocks, and momentum boosters.",
+    "core_mechanic": "Tap-to-flip gravity with mid-air combo chains",
+    "secondary_mechanics": ["momentum preservation", "color-match chain bonuses", "mid-air collision combos"],
+    "keywords": ["gravity", "chain reaction", "physics", "timing"],
+    "mechanic_tags": ["physics", "chain-reaction", "timing", "one-tap", "combo"],
+    "target_session_length": "1-3 min",
+    "infinite_stage_design": "Each stage adds more block types, tighter flip windows, and multi-axis gravity (left/right flips unlock at stage 10). Combo requirements scale up — later stages demand 5+ chain hits to pass.",
+    "difficulty_curve": "Early stages reward any flip; mid-game requires timed double-flips; late stages introduce anti-gravity zones that resist the flip, forcing players to use environmental bounces.",
+    "visual_style": "Minimalist neon SVG blocks on a dark grid — each block type has a distinct geometric shape and glow color. Gravity flip triggers a screen-edge flash effect.",
+    "sound_concept": "Deep bass whomp on gravity flip, crystalline chimes for each chain hit, escalating pitch for combo multipliers.",
+    "monetization_hooks": ["continue after fail with ad watch", "unlock special gravity modes"],
+    "viral_hooks": ["shareable combo replay GIFs", "daily challenge with global chain leaderboard"],
+    "creator": "spark",
+    "created_at": "2026-03-04T00:00:00Z"
+  },
+  {
+    "id": "idea-20260304-002",
+    "title": "Pulse Weaver",
+    "slug": "pulse-weaver",
+    "one_liner": "Draw shockwave paths through a living ecosystem where every ripple transforms what it touches.",
+    "elevator_pitch": "Players drag a finger to draw a shockwave line across the screen. As the pulse travels, it converts enemies into allies, walls into bridges, and hazards into power sources based on what it touches in sequence. The order of transformation matters — hitting a fire block before a water block creates steam that opens hidden paths. Every stage is a puzzle of 'what order should my pulse hit things?'",
+    "core_mechanic": "Drag-to-draw shockwave path with sequential transformation",
+    "secondary_mechanics": ["element combination cascades", "ally recruitment", "path geometry optimization"],
+    "keywords": ["shockwave", "transformation", "sequencing", "elements"],
+    "mechanic_tags": ["chain-reaction", "puzzle", "drag-input", "elemental-combo", "emergent"],
+    "target_session_length": "1-3 min",
+    "infinite_stage_design": "New element types introduce every 5 stages (ice, lightning, void). Combo recipes multiply — players must memorize and discover 3-element combinations. Later stages have moving targets requiring predictive path drawing.",
+    "difficulty_curve": "Tutorial stages have one obvious path. Mid-game introduces elements that cancel each other. Late-game stages have time-limited pulses that disappear if the path is too long, forcing compact efficient routes.",
+    "visual_style": "Organic cell-like SVG shapes on a light background that visibly react and morph as the shockwave passes — colors bleed and blend between elements. The drawn path glows and fades like bioluminescence.",
+    "sound_concept": "Sine wave tone that shifts pitch as the pulse transforms elements — fire is brassy, water is fluid and resonant, void is subharmonic. Successful combo triggers a harmonic chord.",
+    "monetization_hooks": ["unlock additional element types", "hint system for complex stages"],
+    "viral_hooks": ["screenshot of your most elegant single-stroke solution", "challenge friends with custom stage codes"],
+    "creator": "spark",
+    "created_at": "2026-03-04T00:00:00Z"
+  }
+]

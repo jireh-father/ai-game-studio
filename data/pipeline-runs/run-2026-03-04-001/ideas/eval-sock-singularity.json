@@ -1,0 +1,164 @@
+{
+  "idea_id": "idea-20260304-004",
+  "title": "Sock Singularity",
+  "slug": "sock-singularity",
+  "evaluated_at": "2026-03-04",
+
+  "judges": {
+    "professor_ludus": {
+      "weight": 0.35,
+      "criteria": {
+        "mechanics_depth": {
+          "weight": 0.25,
+          "score": 6,
+          "reasoning": "Core tap-to-boost in physics environment is simple but layered with pattern recognition and control reversal from static zones. However, the mechanic ceiling is moderate — it doesn't evolve structurally, just in visual difficulty. Compared to best-in-class mobile physics games (Cut the Rope, Where's My Water?), the depth is lighter."
+        },
+        "infinite_stage_potential": {
+          "weight": 0.25,
+          "score": 8,
+          "reasoning": "The infinite stage design is genuinely well-conceived. Progressive pattern differentiation (stripes→polka dots→near-identical greys) creates a natural difficulty ladder that scales on a visual axis. The Lost Sock Dimension boss concept is strong. Adding clothing obstruction objects expands the design space meaningfully."
+        },
+        "originality": {
+          "weight": 0.20,
+          "score": 8,
+          "reasoning": "Sock-in-a-dryer is a genuinely fresh physical setting. No known game exploits this metaphor. The combination of physics tumbling + visual pattern matching is unusual and creative. Loses some points because pattern-matching mini-games exist (e.g., matching card games), but the context is original."
+        },
+        "learning_curve": {
+          "weight": 0.15,
+          "score": 7,
+          "reasoning": "Early stage with 4 socks and obvious patterns is a solid onboarding ramp. Static zones introducing control inversion is well-timed as a mid-game complication. Risk: control inversion can frustrate new players without clear telegraphing. Overall the curve is logical."
+        },
+        "accessibility": {
+          "weight": 0.15,
+          "score": 7,
+          "reasoning": "Tap-to-boost is immediately intuitive on mobile. 1-3 min sessions respect player time. Later visual discrimination (two shades of grey) may create accessibility issues for color-impaired players, but early stages are wide open. SVG rendering of sock patterns should be feasible."
+        }
+      },
+      "category_score": null,
+      "weighted_sum": null
+    },
+
+    "dr_loop": {
+      "weight": 0.25,
+      "criteria": {
+        "flow_state": {
+          "weight": 0.30,
+          "score": 7,
+          "reasoning": "The combination of physics momentum and visual scanning creates a dual-attention loop that is genuinely engaging. The time-pressure of the dryer cycle adds urgency. Risk: if socks are too hard to distinguish, frustration breaks flow. If too easy, boredom sets in. The design acknowledges this — calibration will be key in implementation."
+        },
+        "addiction_loop": {
+          "weight": 0.30,
+          "score": 6,
+          "reasoning": "One-more-cycle pull is there (classic 'just one more try' structure). However, the core loop lacks a strong variable reward mechanism — you find your sock or you don't. Without collectibles, surprise drops, or meta-progression, the loop may plateau after 10-15 sessions. Could be strong with meta layer added."
+        },
+        "shareability": {
+          "weight": 0.20,
+          "score": 7,
+          "reasoning": "The absurdist premise is instantly communicable and meme-friendly ('I spent 4 hours trying to reunite socks in a dryer'). The humor angle gives it social media legs. Score screenshots comparing sock patterns could be shareable. Loses points vs viral-by-design games (Wordle, Flappy Bird) that have built-in share mechanics."
+        },
+        "emotional_arc": {
+          "weight": 0.20,
+          "score": 7,
+          "reasoning": "The sock reunion narrative is genuinely charming and low-stakes emotionally. Success feels satisfying (reunion!) and failure is funny rather than punishing. The Lost Sock Dimension boss adds narrative climax. Emotional range is narrow but positive — won't alienate but won't deeply hook either."
+        }
+      },
+      "category_score": null,
+      "weighted_sum": null
+    },
+
+    "cash": {
+      "weight": 0.20,
+      "criteria": {
+        "ad_suitability": {
+          "weight": 0.30,
+          "score": 7,
+          "reasoning": "1-3 min sessions are ideal for interstitial ads between cycles. The dryer cycle end/start is a natural ad break point. Rewarded video ('Continue with Slow-Mo') fits the mechanic well. The humor tone is brand-safe for most advertisers. Mobile web ad integration is straightforward."
+        },
+        "session_length": {
+          "weight": 0.25,
+          "score": 8,
+          "reasoning": "1-3 min per session is the sweet spot for mobile casual monetization — long enough for a rewarded ad, short enough to play on a commute. Cycle structure means natural stopping points don't feel abrupt. High marks here."
+        },
+        "retention_potential": {
+          "weight": 0.25,
+          "score": 6,
+          "reasoning": "Stage progression with increasing visual difficulty drives D1/D3 retention reasonably well. Boss stages add milestone events. However, without meta-progression (collection, achievements, cosmetics), D7+ retention is uncertain. The novelty of the premise carries early retention but needs structural hooks for medium-term."
+        },
+        "iap_opportunity": {
+          "weight": 0.20,
+          "score": 5,
+          "reasoning": "IAP is limited in the current design. Possible vectors: cosmetic sock skins (cute, works for the audience), 'Premium Sock Collection' unlocks, or removing the time limit. However, the core fantasy (find your sock) doesn't naturally monetize as strongly as games with power progression or social competition. Below average IAP ceiling."
+        }
+      },
+      "category_score": null,
+      "weighted_sum": null
+    },
+
+    "scout": {
+      "weight": 0.20,
+      "criteria": {
+        "market_gap": {
+          "weight": 0.30,
+          "score": 8,
+          "reasoning": "Physics-based casual with visual pattern recognition in an absurdist domestic setting is genuinely unoccupied market space. The sock metaphor is universally relatable (everyone has lost a sock) and untapped. No direct competitor identified. Indirect competitors: casual physics games, matching games — but this hybrid is novel."
+        },
+        "viral_potential": {
+          "weight": 0.25,
+          "score": 7,
+          "reasoning": "The premise is inherently tweetable. 'I just played a game where I'm a sock trying to find its pair' reads perfectly on social. Stage 20 'two shades of grey' screenshot potential is high — people will post to complain about difficulty. Lacks a built-in social mechanic (leaderboard, challenge-a-friend) that would amplify organic spread."
+        },
+        "competitive_edge": {
+          "weight": 0.25,
+          "score": 6,
+          "reasoning": "The physics engine quality and pattern art will determine competitive edge significantly. If sock patterns are beautifully designed and physics feel satisfying, this has a real edge. The humor tone is a differentiator. Risk: a larger studio could clone this concept quickly if it shows traction. Moat is shallow but the execution bar is also low for entry."
+        },
+        "trend_alignment": {
+          "weight": 0.20,
+          "score": 7,
+          "reasoning": "Absurdist casual games are performing well in 2025-2026 (Buckshot Roulette, Budget Cuts-style humor, odd-job simulators). Domestic/mundane-made-dramatic is a trending aesthetic. The 'cozy chaos' genre is growing. Sock Singularity fits this trend well without being a cynical trend-chaser — the concept is genuinely fun."
+        }
+      },
+      "category_score": null,
+      "weighted_sum": null
+    }
+  },
+
+  "score_calculation": {
+    "professor_ludus": {
+      "weighted_sum": 0.25*6 + 0.25*8 + 0.20*8 + 0.15*7 + 0.15*7,
+      "raw": 7.20,
+      "category_score": 72.0
+    },
+    "dr_loop": {
+      "weighted_sum": 0.30*7 + 0.30*6 + 0.20*7 + 0.20*7,
+      "raw": 6.70,
+      "category_score": 67.0
+    },
+    "cash": {
+      "weighted_sum": 0.30*7 + 0.25*8 + 0.25*6 + 0.20*5,
+      "raw": 6.60,
+      "category_score": 66.0
+    },
+    "scout": {
+      "weighted_sum": 0.30*8 + 0.25*7 + 0.25*6 + 0.20*7,
+      "raw": 7.05,
+      "category_score": 70.5
+    },
+    "final_weighted_score": 69.25,
+    "formula": "ludus(72.0)×0.35 + loop(67.0)×0.25 + cash(66.0)×0.20 + scout(70.5)×0.20 = 25.2 + 16.75 + 13.2 + 14.1 = 69.25"
+  },
+
+  "final_score": 69.25,
+  "verdict": "FAIL",
+  "verdict_margin": -0.75,
+  "pass_threshold": 70,
+
+  "summary": "Sock Singularity is a charming, original concept with a strong premise and solid infinite-stage design. It clears the gate on originality (8) and market gap (8) but is dragged below threshold by a weaker addiction loop (6) and limited IAP ceiling (5). The core loop lacks a variable reward mechanism that would sustain medium-to-long-term retention. Cash monetization potential is the weakest pillar. The concept is borderline (69.25, gate 70) — a strong meta-progression layer or built-in social mechanic could push it over. As designed, it is a FAIL by 0.75 points.",
+
+  "recommendations_if_revised": [
+    "Add meta-progression: sock collection album with rare variant unlocks",
+    "Add social mechanic: daily challenge with shared seed so friends compare scores",
+    "Design a 'wardrobe' cosmetic system for IAP",
+    "Ensure color-blind mode for late-stage pattern discrimination"
+  ]
+}

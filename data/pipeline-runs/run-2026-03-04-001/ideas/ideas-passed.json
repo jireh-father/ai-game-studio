@@ -1,0 +1,5 @@
+[
+  { "id": "idea-20260304-002", "title": "Pulse Weaver", "slug": "pulse-weaver", "score": 73.6, "selected": true },
+  { "id": "idea-20260304-003", "title": "Fridge Tetris", "slug": "fridge-tetris", "score": 71.1, "selected": true },
+  { "id": "idea-20260304-001", "title": "Gravity Flip Chain", "slug": "gravity-flip-chain", "score": 70.9, "selected": false, "note": "backup" }
+]

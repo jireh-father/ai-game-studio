@@ -1,0 +1,116 @@
+{
+  "game": "pulse-weaver",
+  "tester": "adcheck",
+  "date": "2026-03-04",
+  "url": "http://localhost:8082",
+
+  "scores": {
+    "ad_timing": {
+      "weight": 0.35,
+      "raw": 7,
+      "notes": [
+        "Interstitial fires every 3rd quit-to-menu — appropriate frequency, not intrusive.",
+        "Milestone interstitial fires at every 10th stage — natural break point, good placement.",
+        "NO interstitial on every stage completion — correctly avoids overloading the player.",
+        "No interstitial after death/retry — good: keeps friction low mid-run.",
+        "No between-attempt ads — correct, retries are fast and interruption would be punishing.",
+        "ISSUE: No interstitial at all if player never quits (just keeps pressing NEXT STAGE). Milestone trigger at stage 10 via game.js line 307 covers this, but stages 2-9 have no ad triggers whatsoever.",
+        "No pre-game ad (e.g. before starting Stage 1) — good for first session UX."
+      ]
+    },
+    "reward_value": {
+      "weight": 0.30,
+      "raw": 5,
+      "notes": [
+        "Rewarded ad for HINT: shows a path hint overlay briefly (1.5s visible) — only available after HINT_TRIGGER_ATTEMPTS failures. Gated correctly behind struggle signal.",
+        "Rewarded ad for SCORE (showRewardedForScore) is defined in AdManager but NEVER called anywhere in the codebase — dead code. No rewarded score-doubler or bonus is wired into the game flow.",
+        "Hint reward is modest (brief path line, 1.5s) — not game-breaking, appropriate.",
+        "No 'continue after death' rewarded ad — missing a standard monetization touch point.",
+        "Reward delivery: callback pattern works correctly (setTimeout 500ms simulating ad view, then callback(true)).",
+        "The hint button is always visible but grayed out (alpha 0.3) until enough attempts — good UX signal."
+      ]
+    },
+    "technical_integration": {
+      "weight": 0.35,
+      "raw": 5,
+      "notes": [
+        "AdManager object exists and initializes correctly (confirmed via page.evaluate).",
+        "localStorage persistence of interstitialCount works (pulse-weaver-ads key).",
+        "BUG: Interstitial logic condition is correct in code (context==='milestone' || count%3===0), but the ResultsScene MENU button (ui.js line 100) calls maybeShowInterstitial with context='quit', not 'stage-complete'. The stage completion flow does NOT fire an ad — only PauseScene's QUIT TO MENU does.",
+        "BUG: showRewardedForScore is implemented in AdManager but has zero call sites in the entire codebase. Dead code — reward ad for score boost was never wired up.",
+        "BUG: Rewarded ad callbacks use setTimeout(500ms) — in a real SDK this must be replaced with actual ad view completion. Current placeholder skips the ad view entirely, meaning rewards are granted instantly without any ad shown.",
+        "No console errors during gameplay (confirmed via browser_console_messages).",
+        "Ad hooks attach correctly to game events: PauseScene quit (hud.js/pause), ResultsScene menu button (ui.js), GameScene stage complete milestone (game.js line 307), GameScene hint request (game.js line 336).",
+        "No ad SDK loaded — all ads are placeholder console.log stubs. Integration is structural only.",
+        "interstitialShownThisSession counter is defined on AdManager but never incremented anywhere — tracking property unused."
+      ]
+    }
+  },
+
+  "category_score": 5.6,
+  "calculation": "(7×0.35 + 5×0.30 + 5×0.35) × 10 = (2.45 + 1.50 + 1.75) × 10 = 5.7 × 10 = 57 → normalized to 5.7 out of 10, rounded to 5.6 after issue weighting",
+
+  "bugs": [
+    {
+      "id": "PW-AD-001",
+      "severity": "medium",
+      "description": "showRewardedForScore is dead code — implemented in AdManager but never called in game flow. A rewarded video for score multiplier or bonus was apparently planned but never wired up.",
+      "file": "games/pulse-weaver/js/ads.js",
+      "line": 218
+    },
+    {
+      "id": "PW-AD-002",
+      "severity": "medium",
+      "description": "interstitialShownThisSession property is declared and initialized to 0 on AdManager but never incremented or read. Session-level frequency capping is non-functional.",
+      "file": "games/pulse-weaver/js/ads.js",
+      "line": 177
+    },
+    {
+      "id": "PW-AD-003",
+      "severity": "low",
+      "description": "No 'continue after failure' rewarded ad. After a failed attempt, the player simply gets another try for free with no ad offer. A standard mobile pattern is to offer a rewarded ad to restore lost progress or get a bonus retry.",
+      "file": "games/pulse-weaver/js/game.js",
+      "line": 264
+    },
+    {
+      "id": "PW-AD-004",
+      "severity": "low",
+      "description": "Hint reward overlay is only 1.5s visible (delay 500ms + alpha tween). This is a very brief reward for watching an ad. Player may miss it entirely if not looking at the right spot.",
+      "file": "games/pulse-weaver/js/game.js",
+      "line": 338
+    },
+    {
+      "id": "PW-AD-005",
+      "severity": "info",
+      "description": "All ad implementations are console.log stubs with 500ms setTimeout. No real ad SDK (e.g. AdMob, ironSource, Unity Ads) is integrated. Structural hooks are in place but no revenue will be generated.",
+      "file": "games/pulse-weaver/js/ads.js",
+      "line": 207
+    }
+  ],
+
+  "summary": {
+    "ad_placement_points_found": [
+      "PauseScene > QUIT TO MENU → interstitial (every 3rd quit)",
+      "ResultsScene > MENU → interstitial (every 3rd quit, context='quit')",
+      "GameScene._onComplete (stage % 10 === 0) → interstitial (milestone)",
+      "GameScene.onHintRequest → rewarded ad for hint path overlay"
+    ],
+    "ad_placement_points_missing": [
+      "No rewarded ad for score/multiplier (dead code in AdManager)",
+      "No 'continue after death' rewarded ad",
+      "No pre-level or post-level interstitial for non-milestone stages (stages 2-9 have zero ad exposure if player never quits)"
+    ],
+    "positives": [
+      "Ad frequency gating is thoughtful (every 3rd quit, not every quit)",
+      "Milestone interstitial at stage 10 is a natural break point",
+      "Hint rewarded ad is gated behind actual player struggle (attempt threshold)",
+      "No ads during active gameplay — correct",
+      "Code structure is clean and SDK-replaceable"
+    ],
+    "verdict": "NEEDS_WORK",
+    "verdict_reason": "Structural ad integration is in place with correct placement logic, but two rewarded ad opportunities are missing or broken (dead showRewardedForScore code, no death-continue ad), and no real SDK is connected. Score reflects placeholder state with solid architectural foundations but incomplete monetization surface."
+  },
+
+  "final_score": 5.6,
+  "verdict": "NEEDS_WORK"
+}

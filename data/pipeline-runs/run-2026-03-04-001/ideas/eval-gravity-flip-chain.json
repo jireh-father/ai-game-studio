@@ -1,0 +1,153 @@
+{
+  "idea_id": "idea-20260304-001",
+  "title": "Gravity Flip Chain",
+  "slug": "gravity-flip-chain",
+  "evaluated_at": "2026-03-04",
+
+  "judges": {
+    "professor_ludus": {
+      "weight": 0.35,
+      "criteria": {
+        "mechanics_depth": {
+          "weight": 0.25,
+          "score": 7,
+          "rationale": "Gravity flip is a well-understood mechanic, but layering mid-air secondary flips, momentum preservation, multi-axis gravity, and anti-gravity zones creates genuine depth. The skill ceiling is real — timing chains require spatial reasoning and reaction speed. Docked points because the base mechanic (flip gravity) is not novel; depth comes from accumulation rather than a truly fresh system."
+        },
+        "infinite_stage_potential": {
+          "weight": 0.25,
+          "score": 8,
+          "rationale": "The design explicitly describes a strong scaling path: new block types, tighter flip windows, multi-axis gravity unlocking at stage 10, combo requirements rising. Anti-gravity zones as late-game hazards provide genuine mechanical novelty over time. This is a solid infinite-stage framework. Slight deduction for potential player burnout if the color-match logic becomes tedious without visual variety."
+        },
+        "originality": {
+          "weight": 0.20,
+          "score": 5,
+          "rationale": "Gravity flip exists in many games (VVVVVV, Gravity Guy, numerous mobile clones). Adding mid-air chain combos and color-matching is incremental, not transformative. The multi-axis expansion is interesting but not groundbreaking. Against the best mobile games benchmark, this is a competent remix, not a fresh invention."
+        },
+        "learning_curve": {
+          "weight": 0.15,
+          "score": 8,
+          "rationale": "One-tap entry point is excellent for onboarding. Complexity layers in gradually — the description maps this well. Early: any flip works. Mid: timed double-flips. Late: environmental bounces. This is textbook good curve design. Nearly full marks."
+        },
+        "accessibility": {
+          "weight": 0.15,
+          "score": 9,
+          "rationale": "Single-tap, mobile-native, visual block physics — extremely accessible. No complex controls. Works on any touch screen. Color-match may create minor issues for color-blind players (unaddressed), but overall extremely accessible."
+        }
+      },
+      "category_score": null,
+      "calculation": "(7×0.25 + 8×0.25 + 5×0.20 + 8×0.15 + 9×0.15) × 10"
+    },
+
+    "dr_loop": {
+      "weight": 0.25,
+      "criteria": {
+        "flow_state": {
+          "weight": 0.30,
+          "score": 7,
+          "rationale": "Physics-based chain reactions naturally create flow when they go right — the visual and audio feedback of blocks smashing in sequence is inherently satisfying. Timing-based mechanics support flow well. However, missed chains that feel random (due to physics unpredictability in a mobile web context) can break flow hard. Rated 7 because physics fidelity on mobile web SVG may be inconsistent."
+        },
+        "addiction_loop": {
+          "weight": 0.30,
+          "score": 8,
+          "rationale": "Core loop is tight: set up → tap → watch chain → score multiplier → next stage. The 'just one more tap' quality of timing mechanics is well-established. Chain multipliers create variable reward reinforcement. The 1-3 minute sessions are ideal for compulsive replaying. Strong loop."
+        },
+        "shareability": {
+          "weight": 0.20,
+          "score": 7,
+          "rationale": "Chain reaction moments are visually impressive and shareable — a perfect 8-chain combo would look great as a short clip. The mechanic is explainable in one sentence. However, without a native share mechanism or score leaderboard, organic sharing depends on the implementation. Potential is there; realization is implementation-dependent."
+        },
+        "emotional_arc": {
+          "weight": 0.20,
+          "score": 6,
+          "rationale": "Tension (will the flip connect?) → release (chain fires!) is a solid emotional beat. But across many stages, this arc risks becoming monotonous without narrative or aesthetic variety. No mention of a meta-story, character, or world-building to sustain emotional investment over sessions. Functional but shallow emotionally."
+        }
+      },
+      "category_score": null,
+      "calculation": "(7×0.30 + 8×0.30 + 7×0.20 + 6×0.20) × 10"
+    },
+
+    "cash": {
+      "weight": 0.20,
+      "criteria": {
+        "ad_suitability": {
+          "weight": 0.30,
+          "score": 8,
+          "rationale": "1-3 minute sessions are ad-friendly. Natural break points between stages make interstitial ad placement non-intrusive. The 'watch an ad to continue after a failed chain' mechanic is a natural fit. Rewarded video for extra flips or continues is obvious. High ad suitability."
+        },
+        "session_length": {
+          "weight": 0.25,
+          "score": 9,
+          "rationale": "1-3 minutes is the sweet spot for mobile ad monetization and casual retention. Short enough to replay many times in a sitting, long enough per session for meaningful engagement and ad impressions. Excellent."
+        },
+        "retention_potential": {
+          "weight": 0.25,
+          "score": 7,
+          "rationale": "Infinite stage scaling with unlocking mechanics (multi-axis gravity at stage 10) creates medium-term retention hooks. No daily challenge, streak, or meta-progression system mentioned — these omissions leave retention potential on the table. Strong core, weak meta layer."
+        },
+        "iap_opportunity": {
+          "weight": 0.20,
+          "score": 6,
+          "rationale": "Obvious IAP hooks: extra flip attempts, stage skips, cosmetic block skins, ad removal. However, with no explicit meta-currency or collection mechanic described, the IAP ecosystem feels underdeveloped. Could work but would need design investment to realize."
+        }
+      },
+      "category_score": null,
+      "calculation": "(8×0.30 + 9×0.25 + 7×0.25 + 6×0.20) × 10"
+    },
+
+    "scout": {
+      "weight": 0.20,
+      "criteria": {
+        "market_gap": {
+          "weight": 0.30,
+          "score": 5,
+          "rationale": "Gravity flip games are established. Chain reaction puzzle games (e.g., Zen Pinball, various block-breakers) are established. The combination is less crowded but not absent. On mobile web specifically, there may be less direct competition, but the genre is not underserved on native mobile, which sets player expectations high."
+        },
+        "viral_potential": {
+          "weight": 0.25,
+          "score": 7,
+          "rationale": "A perfect max-chain run would be genuinely shareable. The mechanic is demonstrable in seconds. 'Can you beat my chain score?' is a natural social hook. Viral potential exists but is execution-dependent — needs satisfying visual feedback and easy sharing UI."
+        },
+        "competitive_edge": {
+          "weight": 0.25,
+          "score": 6,
+          "rationale": "Multi-axis gravity and anti-gravity zones are interesting differentiators, but they come late in the design (stage 10+). The early game differentiates less. Against best-in-class mobile physics games, the edge is moderate. The mobile web SVG constraint may actually limit physics fidelity compared to native competitors."
+        },
+        "trend_alignment": {
+          "weight": 0.20,
+          "score": 7,
+          "rationale": "One-tap, short-session, chain-reaction games align with current casual mobile trends (2025-2026). Physics-based satisfying destruction remains popular (see viral ball-drop and stacking games). The trend is right even if not cutting-edge."
+        }
+      },
+      "category_score": null,
+      "calculation": "(5×0.30 + 7×0.25 + 6×0.25 + 7×0.20) × 10"
+    }
+  },
+
+  "scores": {
+    "professor_ludus": {
+      "raw": 72.5,
+      "weighted": 25.375,
+      "breakdown": "7×0.25 + 8×0.25 + 5×0.20 + 8×0.15 + 9×0.15 = 7.25 → ×10 = 72.5"
+    },
+    "dr_loop": {
+      "raw": 71.0,
+      "weighted": 17.75,
+      "breakdown": "7×0.30 + 8×0.30 + 7×0.20 + 6×0.20 = 7.10 → ×10 = 71.0"
+    },
+    "cash": {
+      "raw": 76.5,
+      "weighted": 15.3,
+      "breakdown": "8×0.30 + 9×0.25 + 7×0.25 + 6×0.20 = 7.65 → ×10 = 76.5"
+    },
+    "scout": {
+      "raw": 62.5,
+      "weighted": 12.5,
+      "breakdown": "5×0.30 + 7×0.25 + 6×0.25 + 7×0.20 = 6.25 → ×10 = 62.5"
+    },
+    "final_weighted_score": 70.925
+  },
+
+  "verdict": "PASS",
+
+  "summary": "Gravity Flip Chain passes the 70-point gate at 70.9. Its strongest dimensions are session design (Cash: 76.5) and core loop quality (Dr. Loop: 71.0, Professor Ludus: 72.5). The weakest link is market differentiation (Scout: 62.5), driven by an established genre without a sufficiently distinctive hook in the early game. The multi-axis gravity system is a genuine differentiator but arrives too late in progression to drive acquisition. Recommended to proceed with development, but prioritize: (1) distinctive visual identity to stand out in screenshots/thumbnails, (2) a meta-progression layer for retention, (3) the multi-axis gravity teased earlier to sharpen the competitive edge."
+}

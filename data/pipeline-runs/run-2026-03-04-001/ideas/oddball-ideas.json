@@ -1,0 +1,42 @@
+[
+  {
+    "id": "idea-20260304-001",
+    "title": "Fridge Tetris",
+    "slug": "fridge-tetris",
+    "one_liner": "You are a leftover container fighting for survival in a fridge that keeps filling up with new groceries.",
+    "elevator_pitch": "Every Tuesday, your human goes grocery shopping and dumps new items into the fridge. You play as a sentient leftover tupperware that must shuffle, squeeze, and rotate other items to avoid being pushed to the back — the graveyard of forgotten food. Survive long enough and you might actually get eaten (victory!).",
+    "core_mechanic": "Drag-to-rearrange items in a grid to keep your container visible in the front row",
+    "secondary_mechanics": ["item expiry pressure", "new grocery wave events", "smell meter that triggers human inspection"],
+    "keywords": ["fridge", "leftovers", "survival", "grocery", "food"],
+    "mechanic_tags": ["puzzle", "humor", "time-pressure", "grid", "survival"],
+    "target_session_length": "1-3 min",
+    "infinite_stage_design": "Each stage is a new grocery shopping trip — items get weirder and larger (a whole watermelon on stage 10), fridge sections unlock (freezer = slippery chaos), and eventually a second fridge appears requiring split attention.",
+    "difficulty_curve": "Early stages have 3-4 small items. By stage 5, condiment armies invade the door shelf. By stage 15, the human starts meal prepping and fills 80% of the fridge in one wave.",
+    "visual_style": "Clean cutaway-view fridge with colorful cartoon food items, each with expressive faces. Tupperware protagonist has googly eyes and a worried expression.",
+    "sound_concept": "Satisfying squish/slide sounds for rearranging. Dramatic grocery-bag-rustling fanfare for each new wave. A faint 'noooo' when pushed to the back.",
+    "monetization_hooks": ["unlock fancier leftover containers as skins", "special 'organic grocery' wave that costs coins to skip"],
+    "viral_hooks": ["share your 'fridge chaos' screenshot", "relatable to anyone who has ever done groceries"],
+    "creator": "oddball",
+    "created_at": "2026-03-04T00:00:00Z"
+  },
+  {
+    "id": "idea-20260304-002",
+    "title": "Sock Singularity",
+    "slug": "sock-singularity",
+    "one_liner": "You are a lone sock tumbling through the dryer, desperately trying to reunite with your match before the cycle ends.",
+    "elevator_pitch": "Inside a spinning dryer, socks, shirts, and rogue receipts tumble in chaotic orbits. You control your sock by tilting and tapping to navigate toward your matching sock while avoiding static-charged imposters that look almost-but-not-quite like your match. Every load of laundry is a new level with more socks that all start looking suspiciously similar.",
+    "core_mechanic": "Tap to boost your sock's trajectory toward the matching sock in a physics-driven tumbling environment",
+    "secondary_mechanics": ["pattern-matching to identify the true pair", "static electricity zones that reverse controls", "time limit per dryer cycle"],
+    "keywords": ["laundry", "socks", "matching", "chaos", "physics"],
+    "mechanic_tags": ["humor", "physics", "pattern-recognition", "timing", "absurd"],
+    "target_session_length": "1-3 min",
+    "infinite_stage_design": "Each load adds more socks with increasingly subtle pattern differences (stage 1: stripes vs polka dots; stage 20: two slightly different shades of grey). New clothing items join to obstruct (hoodies with dangly strings, inside-out jeans). Boss levels: The Lost Sock Dimension where ALL socks are mismatched.",
+    "difficulty_curve": "Early cycles are slow with 4 socks and obvious patterns. Speed increases each cycle. By stage 8, socks have near-identical patterns requiring split-second visual discrimination. By stage 12, the dryer door wobbles open briefly giving a single-frame glimpse of your match.",
+    "visual_style": "Warm tumble-dryer orange interior. Socks are chunky cartoon characters with stripe/dot/argyle patterns. Satisfying tumble physics with slight motion blur on fast items.",
+    "sound_concept": "Muffled thumping dryer rhythm as background beat. Soft fabric 'whoosh' for sock movement. Triumphant 'snap' when pairs reunite. Sad trombone if the cycle ends and you're still single.",
+    "monetization_hooks": ["premium sock pattern packs (designer socks as collectibles)", "'Wrinkle Shield' powerup that slows dryer for 5 seconds"],
+    "viral_hooks": ["'This is literally my life' relatability factor", "share your longest single-sock streak"],
+    "creator": "oddball",
+    "created_at": "2026-03-04T00:00:00Z"
+  }
+]

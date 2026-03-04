@@ -1,0 +1,144 @@
+{
+  "game_slug": "pulse-weaver",
+  "evaluated_at": "2026-03-04",
+  "gdd_path": "data/pipeline-runs/run-2026-03-04-001/plans/pulse-weaver.md",
+
+  "judges": {
+    "builder": {
+      "weight": 0.40,
+      "criteria": {
+        "implementability": {
+          "weight": 0.30,
+          "score": 7,
+          "notes": "6 JS files each ≤300 lines is plausible for simpler modules (config, main, ui, ads) but game.js and stages.js are extremely dense. game.js must handle: Catmull-Rom spline smoothing, arc-length parameterization for pulse travel, element blob rendering, particle system, combo detection (window-based), HUD management, and all transform animations — all within 300 lines. stages.js must contain 50 hand-authored stages plus BFS solvability validation and proc-gen. Both will almost certainly exceed 300 lines. Pulse splitting (Crystal/Prism combos creating 4 independent sub-pulses) adds significant complexity not reflected in the line estimate. However, the modular split is sound and the logic is well-specified."
+        },
+        "performance": {
+          "weight": 0.25,
+          "score": 7,
+          "notes": "60fps mobile target is achievable with Phaser WebGL renderer. Blob shape uses 8-point cubic spline — cheap. Particle cap at 64 is responsible. Background drift (8 ghost cells) is trivial. The risk is the Catmull-Rom arc-length parameterization running every update frame plus BFS on stage load for proc-gen stages (51+) — BFS with 10 retries at 100ms each could block the main thread for up to 1 second. This needs to be async/worker or memoized. Full-screen radial flash on 3-element combo may cause a frame spike. Overall performance is likely fine on mid-range devices but not guaranteed."
+        },
+        "modularity": {
+          "weight": 0.25,
+          "score": 8,
+          "notes": "Excellent separation of concerns: config (constants), stages (data+gen), ads (audio+monetization), ui (all screens), game (core loop). Dependencies are clearly directional. No circular imports apparent. The choice to house audio synthesis in ads.js is a minor smell (separation of concerns) but doesn't break functionality. HUD as a class managed by GameScene rather than its own Scene is a pragmatic choice that works."
+        },
+        "maintainability": {
+          "weight": 0.20,
+          "score": 8,
+          "notes": "Transformation grammar table (Section 9.5) is complete and precise — a developer can implement it directly. Constants are isolated in config.js. Local storage schema is explicitly defined. Color palette is fully enumerated with hex values. CDN pinned to specific version (3.80.1). The combo system (3-element combinations, split pulses, pulse direction reversal from Singularity) introduces stateful complexity that will be hard to extend without regression, but for the spec as given it is manageable."
+        }
+      },
+      "category_score": null,
+      "reasoning": "Strong architectural design with clear module boundaries and complete specs. Main risk is game.js/stages.js line count and BFS performance on main thread. Pulse splitting is a significant complexity spike. The transformation grammar is complete and implementable."
+    },
+
+    "joy": {
+      "weight": 0.35,
+      "criteria": {
+        "first_impression": {
+          "weight": 0.25,
+          "score": 8,
+          "notes": "The bioluminescent visual style is immediately distinctive and attractive. The one-liner ('Draw shockwave paths through a living ecosystem where every ripple transforms what it touches') communicates the fantasy instantly. Stage 1 is genuinely elegant — two elements, draw through them, done. The core gesture (drag-to-draw) is universally understood. A bored commuter would tap this."
+        },
+        "core_loop_satisfaction": {
+          "weight": 0.30,
+          "score": 8,
+          "notes": "The draw → fail → analyze → retry cycle is well-designed. Failure is zero-friction (instant retry). The 'aha' moment of discovering combo order is well-articulated. The bioluminescent trail means even failed attempts feel visually rewarding. The harmonic chord on 3-element combos is a strong 'juice' moment. Screen shake is not explicitly specified (notable omission for mobile games). Particle bursts, scale bounce, color lerp on transform — all specified. The pulse travel at 200px/s gives satisfying feedback during play."
+        },
+        "replayability": {
+          "weight": 0.25,
+          "score": 7,
+          "notes": "28-slot Recipe Book as completionist driver is strong. 3-star system per stage drives replay. Proc-gen at Stage 51+ extends infinite play. Every-5th rest stage + every-10th Symphony Stage adds variety. However, the 1–3 minute session target is tight for ad revenue optimization. Session 20 vs Session 1: the element introduction cadence is well-paced (new element every 5 stages through Stage 30+). The Recipe Book discovery arc genuinely differentiates early/late sessions."
+        },
+        "difficulty_curve": {
+          "weight": 0.20,
+          "score": 8,
+          "notes": "Mathematical difficulty scaling is explicitly specified: element counts, target ratios, path length limits, time limits, moving target counts — all specified per stage range. Rest stage every 5th stage is a proven rhythm. The tutorial stages (1–5) are pedagogically excellent — each introduces exactly one new concept. The difficulty dip diagram is provided. Moving targets at Stage 31+ is a smart complexity injection that requires new skill (predictive drawing). Stage 36–50 requiring 3-element combos is a satisfying mastery test."
+        }
+      },
+      "category_score": null,
+      "reasoning": "Strong fun design. The core fantasy is clear, the juice is largely specified (minor: no screen shake callout), the difficulty ramp is mathematical and well-paced. The Recipe Book creates a genuine secondary engagement loop. The main weakness is that pulse splitting (Crystal combo) and direction reversal (Singularity) may feel non-intuitive to casual players."
+    },
+
+    "profit": {
+      "weight": 0.25,
+      "criteria": {
+        "ad_integration": {
+          "weight": 0.35,
+          "score": 8,
+          "notes": "4 distinct ad placements specified: interstitial after quit-to-menu (every 3rd), interstitial at milestone stages (10, 20, 30...), rewarded for hint path, rewarded for recipe unlock, rewarded for score multiplier, banner on menu/results. That is 5 total placements — more than the minimum 2 per session. Ad-free zones (active gameplay, stage intro, stage complete animation) are explicitly defined — this shows awareness of user experience. Rewarded ad value is genuine (actual game hint), not artificial friction."
+        },
+        "session_economy": {
+          "weight": 0.35,
+          "score": 7,
+          "notes": "1–3 min session target is low — typical mobile puzzle sessions should target 5–8 min for better RPM. However, the spec notes 5–10 stages per session and 3–5 minutes average, which is better. No IAP means 100% ad-dependent revenue. Rewarded ads are optional enhancements, not gates — this is good for retention but limits monetization ceiling. Stage milestones at every 10th stage create natural interstitial triggers. The no-lives system means no artificial play-time extension, which hurts DAU-based ad revenue but improves retention (no churn from frustration gates)."
+        },
+        "launch_readiness": {
+          "weight": 0.30,
+          "score": 9,
+          "notes": "Extremely complete spec for a shippable game: all screens defined, all animations specified, all audio described with frequencies, colorblind accessibility, reduce-motion support, iOS Audio fix documented, browser compatibility matrix, localStorage schema, CDN version pinned, file structure defined, module responsibilities explicit, 5 hand-authored tutorial stages with optimal paths. This is one of the most complete GDDs reviewed. A developer could start coding immediately."
+        }
+      },
+      "category_score": null,
+      "reasoning": "Strong launch readiness and ad integration design. Session length is on the lower end for optimal ad revenue but the multiple ad touchpoints compensate. No IAP is a revenue ceiling limitation but an acceptable design decision for casual mobile puzzle."
+    }
+  },
+
+  "score_calculation": {
+    "builder": {
+      "implementability": 7,
+      "performance": 7,
+      "modularity": 8,
+      "maintainability": 8,
+      "raw": "(7 * 0.30) + (7 * 0.25) + (8 * 0.25) + (8 * 0.20)",
+      "category_score": 74.5
+    },
+    "joy": {
+      "first_impression": 8,
+      "core_loop_satisfaction": 8,
+      "replayability": 7,
+      "difficulty_curve": 8,
+      "raw": "(8 * 0.25) + (8 * 0.30) + (7 * 0.25) + (8 * 0.20)",
+      "category_score": 77.5
+    },
+    "profit": {
+      "ad_integration": 8,
+      "session_economy": 7,
+      "launch_readiness": 9,
+      "raw": "(8 * 0.35) + (7 * 0.35) + (9 * 0.30)",
+      "category_score": 79.5
+    },
+    "final_score": {
+      "formula": "74.5 * 0.40 + 77.5 * 0.35 + 79.5 * 0.25",
+      "builder_contribution": 29.8,
+      "joy_contribution": 27.125,
+      "profit_contribution": 19.875,
+      "total": 76.9
+    }
+  },
+
+  "verdict": "DEVELOP",
+  "final_score": 76.9,
+  "gate_threshold": 70,
+
+  "strengths": [
+    "Exceptional launch readiness — one of the most complete and implementable GDDs. A developer can start coding immediately.",
+    "Transformation grammar table is complete, precise, and covers all edge cases including 3-element combos and pulse splitting.",
+    "Excellent tutorial stage design — each of stages 1–5 teaches exactly one concept through play.",
+    "Mathematical difficulty scaling specified throughout (element counts, target ratios, path limits, time limits per stage range).",
+    "Audio fully specified with Web Audio API — no external library dependency, no audio file assets.",
+    "Ad placements are well-designed: 5 touchpoints, clear ad-free zones, rewarded ads with genuine value.",
+    "Accessibility thoughtfully addressed: colorblind shapes, reduce-motion, one-handed play.",
+    "CDN pinned to specific version. localStorage schema fully defined. All module responsibilities explicit."
+  ],
+
+  "risks": [
+    "game.js and stages.js will almost certainly exceed 300 lines — the spec packs too much into both. Developer should be prepared to split or accept overrun.",
+    "BFS solvability check on proc-gen stages (51+) may block main thread — needs async treatment or web worker.",
+    "Pulse splitting (Crystal → Prism: 4 sub-pulses) and Singularity (direction reversal) are significant implementation complexity not fully reflected in line estimates.",
+    "No screen shake specified — a standard mobile game juice element for combo feedback. Minor omission.",
+    "Session target of 1–3 minutes is low for ad revenue optimization; mitigation is multiple ad types per session."
+  ],
+
+  "revision_notes": null
+}

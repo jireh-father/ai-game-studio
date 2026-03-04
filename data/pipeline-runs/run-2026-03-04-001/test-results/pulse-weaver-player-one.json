@@ -1,0 +1,86 @@
+{
+  "game": "pulse-weaver",
+  "tester": "player-one",
+  "test_date": "2026-03-04",
+  "url": "http://localhost:8082",
+  "stages_reached": 11,
+  "high_score": 8178,
+
+  "scores": {
+    "fun_factor": {
+      "weight": 0.30,
+      "raw": 7.5,
+      "notes": "The core mechanic of drawing a shockwave path and watching it cascade through elements is genuinely satisfying. The combo discovery system (Steam, Blizzard, Plasma) gives real 'aha' moments. However, the puzzle nature means if you get stuck it stalls engagement. The order-matters mechanic is clever but not immediately intuitive."
+    },
+    "difficulty_balance": {
+      "weight": 0.25,
+      "raw": 7.0,
+      "notes": "Stages 1-5 ramp very smoothly — ideal tutorial pacing. Stage 6 introduces Ice and requires a path covering 3 spread targets which felt like a fair jump. Stage 9 required a retry (5 targets including fire/water/ice across wide spread). Difficulty curve is solid for stages 1-10. The hint system (unlocks at 5 attempts) adds a nice safety net."
+    },
+    "addiction": {
+      "weight": 0.25,
+      "raw": 7.0,
+      "notes": "Strong 'just one more stage' pull in stages 1-6. The score count-up animation, star ratings, and NEW RECIPE banners all reinforce dopamine loops. The recipe discovery mechanic (Steam, Blizzard, Plasma, Melt...) is a compelling collection driver. However without leaderboard or social hooks, long-session retention would need more variety."
+    },
+    "polish": {
+      "weight": 0.20,
+      "raw": 8.5,
+      "notes": "Excellent visual polish for a canvas game: smooth pulse trail with glow, particle bursts on element hit, animated target rings, score count-up, combo ring explosions, stage intro overlay, results panel slide-in. Zero console errors across 10 stages. The dark blue + aqua teal palette is cohesive and clean. Music and SFX are functional procedural audio. One minor issue: rotating device detection shows overlay but game works fine in forced portrait viewport."
+    }
+  },
+
+  "category_score": 7.5,
+  "calculation": "(7.5 * 0.30 + 7.0 * 0.25 + 7.0 * 0.25 + 8.5 * 0.20) * 10 = (2.25 + 1.75 + 1.75 + 1.70) * 10 = 7.45 * 10 = 74.5",
+  "final_score": 74.5,
+
+  "bugs_found": [
+    {
+      "severity": "minor",
+      "description": "Portrait-only enforcement via CSS overlay blocks gameplay in landscape but the game still renders behind the overlay. On a real mobile device rotation this works correctly, but in browser testing the orientation check fires on wider viewports even when the game is fully playable.",
+      "reproducible": true,
+      "steps": "Load game at viewport width > height (landscape) — rotate overlay blocks entire screen"
+    },
+    {
+      "severity": "minor",
+      "description": "Server running on localhost:8082 occasionally causes browser to navigate to localhost:8083 when multiple tabs are open — likely a cross-tab script interference from Playwright session management, not a game bug.",
+      "reproducible": "intermittent",
+      "steps": "Open multiple tabs to different game ports simultaneously"
+    }
+  ],
+
+  "positive_observations": [
+    "Core mechanic is unique and tactile — path drawing feels physical and responsive",
+    "Combo system with 10 two-element and 3 three-element combos gives strong depth",
+    "Star rating (1/2/3 based on attempts + speed) rewards mastery",
+    "Stage intro animation (800ms auto-fade) is unobtrusive and professional",
+    "Results screen shows 'NEW: [Recipe]!' for first discoveries — excellent positive feedback",
+    "Attempt counter + hint system at attempt 5 prevents frustration loops",
+    "No crashes, memory leaks, or console errors across all 10 tested stages",
+    "Ad placeholder fires correctly at milestone (stage 10) — integration-ready",
+    "Recipe Book and Stage Select menus are well-implemented",
+    "Score combo multiplier adds competitive depth"
+  ],
+
+  "concerns": [
+    "Onboarding: Stage 1 has no explicit tutorial text explaining Fire+Water=Steam — relies on player discovery which may frustrate less patient players",
+    "Path drawing minimum length (50px) can feel finicky on small screens — accidental taps show tooltip instead of drawing",
+    "Order-matters mechanic (fire→water=Steam vs water→fire=Cancelled) has no in-game explanation before stage 1",
+    "Procedural stages 11+ untested — element distribution and solvability not verified",
+    "No undo/cancel gesture once pulse is launched"
+  ],
+
+  "verdict": "ship",
+  "verdict_reasoning": "Pulse Weaver is a polished, mechanically sound puzzle game with a genuinely novel core mechanic. The combo discovery system creates organic 'aha' moments, the visual feedback is excellent, and there are zero critical bugs across 10 stages. The main risk is new player onboarding — the order-matters rule needs at least a one-line hint in stage 1. With that small fix it is ready to ship. The foundation supports strong long-term expansion with more element types and 3-element combos.",
+
+  "play_session": {
+    "stages_completed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "stages_1star": [6],
+    "stages_2star": [],
+    "stages_3star": [1, 2, 3, 4, 5, 7, 8, 10],
+    "recipes_discovered": ["Steam", "Blizzard"],
+    "total_attempts_stage6": 5,
+    "retry_flow_tested": true,
+    "hint_system_visible": true,
+    "ad_milestone_fired": true
+  }
+}

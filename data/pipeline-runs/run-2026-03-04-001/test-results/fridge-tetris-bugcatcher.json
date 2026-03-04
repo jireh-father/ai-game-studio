@@ -1,0 +1,145 @@
+{
+  "tester": "bugcatcher",
+  "game": "fridge-tetris",
+  "tested_at": "2026-03-04",
+  "url": "http://localhost:8081/",
+  "test_environment": {
+    "viewport": "390x844 (portrait forced)",
+    "browser": "Chromium via Playwright",
+    "phaser_version": "3.60.0"
+  },
+
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "severity": "major",
+      "title": "Desktop orientation detection blocks game entirely",
+      "description": "Game uses window.screen.orientation.type to detect orientation. In a desktop browser (even with portrait viewport 390x844), screen.orientation.type reports 'landscape-primary', causing the rotate-overlay to permanently block game access. Game is unplayable on desktop without JS injection to hide the overlay.",
+      "steps_to_reproduce": [
+        "Open game in desktop browser at default viewport (e.g. 1280x720)",
+        "Observe 'Please rotate your phone to portrait mode' overlay",
+        "Resize browser to portrait dimensions (390x844)",
+        "Overlay remains visible - screen.orientation still reports landscape-primary"
+      ],
+      "expected": "Game detects portrait viewport via window.innerWidth < window.innerHeight comparison",
+      "actual": "Uses screen.orientation API which reflects physical screen, not browser viewport",
+      "impact": "All desktop users cannot play the game"
+    },
+    {
+      "id": "BUG-002",
+      "severity": "major",
+      "title": "Repeated 'Texture key already in use' errors on every wave transition",
+      "description": "Phaser fires 'Texture key already in use' errors for item_milk, item_yogurt, item_vegetable, item_juice, item_cheese, item_frozen on each wave. textures.addBase64() is async - the textures.exists() guard passes before texture is fully registered, causing re-registration attempts on the same keys. Results in 'Cannot read properties of null (reading source)' uncaught TypeErrors.",
+      "console_errors_observed": [
+        "Texture key already in use: item_milk",
+        "Texture key already in use: item_yogurt",
+        "Texture key already in use: item_vegetable",
+        "Texture key already in use: item_juice",
+        "Texture key already in use: item_cheese",
+        "Texture key already in use: item_frozen",
+        "Uncaught TypeError: Cannot read properties of null (reading 'source') (x10)"
+      ],
+      "total_console_errors": 21,
+      "root_cause": "Race condition in _preloadTextures/_spawnItem: textures.exists() check is synchronous but addBase64() is async, allowing duplicate registration",
+      "location": "games/fridge-tetris/js/game.js lines 90-108",
+      "impact": "Console spam, potential rendering failures, items may show as broken black squares"
+    },
+    {
+      "id": "BUG-003",
+      "severity": "major",
+      "title": "Broken texture rendering - black boxes with green borders in grid",
+      "description": "After multiple game restarts (start->play->die->retry spam), game items render as black rectangles with green borders instead of their proper SVG images. Directly caused by BUG-002 texture key conflicts breaking the Phaser texture cache.",
+      "steps_to_reproduce": [
+        "Play game to game-over",
+        "Click 'Play Again'",
+        "Dismiss ad prompt",
+        "Navigate back to menu and play again",
+        "After 2-3 restart cycles, black boxes appear in the game grid"
+      ],
+      "expected": "All fridge items render with their correct SVG artwork",
+      "actual": "Items render as black filled rectangles with green debug borders",
+      "impact": "Core visual experience broken after multiple plays, items unidentifiable"
+    },
+    {
+      "id": "BUG-004",
+      "severity": "minor",
+      "title": "Broken image/black box visible on main menu screen",
+      "description": "A black box with green border appears below the SHOP button on the main menu. Appears to be a mis-placed canvas element or broken asset preview on the menu scene.",
+      "impact": "Visual glitch on menu, but does not block gameplay"
+    },
+    {
+      "id": "BUG-005",
+      "severity": "cosmetic",
+      "title": "favicon.ico 404 error",
+      "description": "Server returns 404 for /favicon.ico. Minor but adds noise to console.",
+      "impact": "Console noise only"
+    },
+    {
+      "id": "BUG-006",
+      "severity": "minor",
+      "title": "Game starts mid-session when overlay is bypassed (Wave 3 on first load)",
+      "description": "When the rotate overlay is forcibly hidden via JS, the game appears to already be running at Wave 3 with score 250, suggesting the game loop starts behind the overlay rather than waiting for proper initialization. May indicate state management issue between menu and game scenes.",
+      "impact": "If orientation detection is fixed, first-load experience may skip early waves or enter inconsistent state"
+    }
+  ],
+
+  "bug_counts": {
+    "blocker": 0,
+    "major": 3,
+    "minor": 2,
+    "cosmetic": 1
+  },
+
+  "scoring": {
+    "bug_severity_score": {
+      "weight": 0.35,
+      "raw": 2.0,
+      "calculation": "max(0, 10 - (0*4 + 3*2 + 2*1 + 1*0.5)) = max(0, 10 - 8.5) = 1.5",
+      "weighted": 0.525
+    },
+    "performance": {
+      "weight": 0.25,
+      "raw": 7,
+      "notes": "Game runs smoothly once loaded. Wave transitions are fast. Score increments responsively. No frame drops detected during rapid interaction. Load time acceptable. Docked for texture errors causing processing overhead each wave.",
+      "weighted": 1.75
+    },
+    "console_cleanliness": {
+      "weight": 0.20,
+      "raw": 2,
+      "notes": "21 console errors total across session. Repeated uncaught TypeErrors and Phaser texture key errors on every wave. Completely unclean.",
+      "weighted": 0.4
+    },
+    "edge_case_handling": {
+      "weight": 0.20,
+      "raw": 5,
+      "notes": "Ad prompts appear correctly on continue/retry. Idle behavior stable (game ran to wave 9 while idle). Game-over flow works. However orientation detection completely fails for desktop env. Restart spam causes visual breakage.",
+      "weighted": 1.0
+    }
+  },
+
+  "final_score": 37,
+  "score_calculation": "(0.525 + 1.75 + 0.4 + 1.0) * 10 = 3.675 * 10 = 36.75 ≈ 37",
+
+  "verdict": "FAIL",
+  "verdict_summary": "Fridge Tetris has a critical desktop orientation detection bug that makes the game unplayable without JS hacks, combined with a persistent texture loading race condition that causes console errors and visual breakage (black boxes) after multiple play cycles. The core mechanic works once the orientation barrier is bypassed, but the texture system is fundamentally broken. These issues require fixes before release.",
+
+  "what_works": [
+    "Core drag-and-drop grid mechanic functions",
+    "Wave progression system works correctly",
+    "Score tracking and NEW RECORD detection work",
+    "Game-over screen and retry flow functional",
+    "Ad prompt integration present and non-blocking",
+    "Combo system ('x4 COMBO!') triggers correctly",
+    "Idle stability - game runs without crashing when left unattended",
+    "POWER-UP button present in UI",
+    "SMELL meter visible and updating"
+  ],
+
+  "priority_fixes": [
+    "FIX-1 [CRITICAL]: Replace screen.orientation check with window.innerWidth < window.innerHeight for orientation detection",
+    "FIX-2 [HIGH]: Fix texture key race condition - use Phaser loader queue or check textures.get(key)?.source before addBase64, or pre-register all textures once in a true preload phase",
+    "FIX-3 [HIGH]: Fix broken texture rendering on restart (black boxes) - likely fixed by FIX-2",
+    "FIX-4 [LOW]: Remove or reposition stray canvas element from main menu",
+    "FIX-5 [LOW]: Add favicon.ico"
+  ]
+}

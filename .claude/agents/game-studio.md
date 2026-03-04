@@ -126,8 +126,64 @@ For each game:
 2. **Update `data/agent-performance.json`**: increment stats per agent (ideas generated/passed, evaluations, bugs found, etc.)
 3. **Update `data/ideas-database.json`**: add all ideas from this run with scores and status
 4. **Generate** `{run_id}/run-summary.md`
-5. **Shutdown**: `SendMessage(type: "shutdown_request")` to all agents → `TeamDelete`
-6. Slack: "🏁 완료! {N}개 요청 → {shipped}개 배포, {scrapped}개 폐기"
+5. **Generate HTML pipeline report** → `{run_id}/report.html`
+   - 셀프 호스팅 가능한 단일 HTML 파일 (CSS/JS 인라인)
+   - 포함 내용:
+     - 파이프라인 개요: Run ID, 날짜, 요청 게임 수, 최종 결과
+     - Phase별 타임라인 (아이디어 → 검증 → 기획 → 개발 → 테스트 → 배포)
+     - 아이디어 목록 + 심사 점수표 (통과/탈락 표시)
+     - GDD 기획 요약 + 기획 심사 점수표
+     - 테스트 결과 + 버그 리포트 요약
+     - 배포된 게임 링크 (gh-pages URL)
+     - 각 에이전트 성과 요약
+   - 디자인: 다크 테마, 반응형, 카드 레이아웃, 접이식 섹션
+6. **Shutdown**: `SendMessage(type: "shutdown_request")` to all agents → `TeamDelete`
+7. Slack: "🏁 완료! {N}개 요청 → {shipped}개 배포, {scrapped}개 폐기\n📊 파이프라인 리포트: {report_url}"
+   - `report_url` = gh-pages 배포된 report.html URL, 또는 로컬 파일 경로
+
+---
+
+## Phase 9: Retrospective (회고)
+
+파이프라인 완료 후, 각 역할 에이전트와 1:1 회고 대화를 진행하여 프로세스를 자동 개선한다.
+
+### 9.1 회고 진행
+
+1. **역할별 회고 에이전트 생성** — 아래 역할군별로 1개씩 에이전트 생성 (병렬):
+   - `retro-ideators`: 아이디어 생성 과정 회고 (Spark, Oddball, Trendsetter 관점)
+   - `retro-judges`: 심사 과정 회고 (Idea Judges + Plan Judges 관점)
+   - `retro-dev`: 개발 과정 회고 (Developer 관점)
+   - `retro-test`: 테스트 과정 회고 (Testers 관점)
+   - `retro-deploy`: 배포 과정 회고 (Shipper 관점)
+
+2. **각 회고 에이전트에게 전달할 컨텍스트**:
+   - 해당 역할의 `.md` 프롬프트 파일
+   - 이번 런의 결과 데이터 (점수, 통과/탈락, 버그 리포트 등)
+   - `data/agent-performance.json` 누적 성과
+   - 이전 회고 기록 (있으면): `data/retrospectives/`
+
+3. **회고 에이전트의 임무**:
+   - 이번 런에서 잘된 점 (Keep)
+   - 문제가 있었던 점 (Problem)
+   - 다음 런에서 시도할 개선 (Try)
+   - **구체적인 프롬프트 수정 제안** — 어떤 `.md` 파일의 어떤 부분을 어떻게 바꿀지
+
+### 9.2 개선 적용
+
+1. **오케스트레이터가 모든 회고 결과를 수집**
+2. **개선 제안을 분류**:
+   - `auto-apply`: 명확하고 안전한 개선 (예: 점수 기준 조정, 평가 기준 명확화, 체크리스트 추가)
+   - `review-needed`: 구조적 변경이나 리스크가 있는 개선 (예: 새 에이전트 추가, 파이프라인 순서 변경)
+3. **`auto-apply` 개선을 즉시 적용** — 해당 `agents/*.md` 파일을 직접 수정
+4. **`review-needed`는 제안만 기록** → `{run_id}/retrospective/pending-improvements.json`
+
+### 9.3 저장
+
+- 회고 결과 → `{run_id}/retrospective/retro-{role}.json`
+- 적용된 개선 목록 → `{run_id}/retrospective/applied-improvements.json`
+- 보류된 개선 목록 → `{run_id}/retrospective/pending-improvements.json`
+- 누적 회고 히스토리 → `data/retrospectives/history.json` (append)
+- Slack: "🔄 회고 완료! {auto_count}개 자동 개선 적용, {pending_count}개 검토 필요"
 
 ---
 
@@ -148,6 +204,8 @@ For each game:
 | Meta leader prompts | `agents/meta-leaders/{name}.md` |
 | GDD template | `docs/templates/game-design-doc-template.md` |
 | Game output | `games/{slug}/` |
+| Retrospectives | `data/retrospectives/` |
+| Run retrospective | `data/pipeline-runs/{run_id}/retrospective/` |
 
 ---
 

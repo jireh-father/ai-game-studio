@@ -1,0 +1,116 @@
+{
+  "game": "fridge-tetris",
+  "round": 2,
+  "test_date": "2026-03-04",
+  "tester": "combined-qa (player-one × 0.35 + bugcatcher × 0.40 + adcheck × 0.25)",
+  "server_url": "http://localhost:8083",
+  "server_note": "Port 8081 had a conflict — two processes both bound to 8081 (serve fridge-tetris PID 296136 and http-server pulse-weaver PID 1182504). Pulse-weaver process won. Testing done on port 8083 (python -m http.server spawned from games/fridge-tetris/).",
+
+  "bug_verification": {
+    "bug1_texture_race_condition": {
+      "status": "FIXED",
+      "evidence": "BootScene pre-registers ALL textures exactly once before any game scene runs (main.js:87-131). GameScene._spawnItem checks textures.exists() and falls back to item_milk (game.js:94). GameScene._spawnPlayer uses pre-registered key directly (game.js:78). No _preloadTextures async calls during scene restarts. Visual confirmation: game screenshot on Wave 2 shows yogurt, broccoli/vegetable, milk, cheese, player character all rendered with correct colors — zero black rectangles.",
+      "visual_proof": "game-scene-1.png — full-color items visible on first launch",
+      "playthrough_cycles_observed": 1,
+      "warnings_seen": "None — console showed 0 warnings / 0 errors during gameplay"
+    },
+
+    "bug2_orientation_detection": {
+      "status": "NOT FIXED",
+      "evidence": "main.js:53-65 — checkOrientation() still uses a simple width > height check with no desktop/UA detection. Resizing to 1280×800 (desktop landscape) shows 'Please rotate your device to portrait mode' blocker. Desktop users at any landscape resolution are completely blocked from playing.",
+      "visual_proof": "desktop-view.png — full-screen dark overlay with landscape blocker text at 1280×800",
+      "expected_fix": "Should check navigator.userAgent for mobile device OR use screen.orientation.type OR add a desktop bypass when no touch screen is detected (e.g. !('ontouchstart' in window))"
+    },
+
+    "bug3_black_box_on_menu": {
+      "status": "FIXED",
+      "evidence": "Title screen screenshot (ft-title-correct.png / ft-menu-clean.png) shows clean layout: 'FRIDGE TETRIS' title text, tagline, BEST score, PLAY / DAILY CHALLENGE / SHOP buttons, and animated mascot character all render correctly. No broken image elements. Favicon uses inline SVG data URI (index.html:9) — no external image load that could fail.",
+      "visual_proof": "ft-menu-clean.png — clean title screen, no broken images"
+    },
+
+    "bug4_smell_blocker_ad": {
+      "status": "FIXED (code-confirmed)",
+      "evidence": "ui.js:108-119 — HUD power-up button calls AdManager.showRewardedSmellBlocker(waveNumber, onRewarded, onDeclined). On reward: sets scene.smellBlocked = 3, shows 'SMELL BLOCKED! 3 waves' text. ads.js:37-46 — showRewardedSmellBlocker shows _showRewardedPlaceholder with 'Watch ad for Smell Blocker?' prompt; on Watch Ad click shows rewarded ad overlay then calls onRewarded. Full flow: button tap → ad prompt → watch → reward → blocker activated.",
+      "note": "Browser interaction was unstable due to port conflict; code audit confirms correct implementation. SMELL button visible in HUD at top-right of game screenshot."
+    },
+
+    "bug5_gameOverCount_reset": {
+      "status": "FIXED",
+      "evidence": "ads.js:57-60 — resetRun() sets gameOverCount = 0 and continueUsedThisRun = false. This is called in: MenuScene PLAY button (ui.js:207), GameOverScene PLAY AGAIN button (ui.js:323). Each new game starts with a fresh ad counter. The interstitial fires every 3rd gameover (ads.js:15) and counter resets on new game start, preventing stale count carryover."
+    },
+
+    "bug6_favicon_404": {
+      "status": "FIXED",
+      "evidence": "index.html:9 uses inline SVG data URI as favicon: <link rel='icon' href='data:image/svg+xml,...'>. No external favicon.ico request is made. Network request log confirms zero 404 errors on page load."
+    }
+  },
+
+  "remaining_issues": [
+    {
+      "id": "bug2_orientation_not_fixed",
+      "severity": "HIGH",
+      "description": "Landscape blocker still shows on desktop. checkOrientation() in main.js:57 only checks window.innerWidth > window.innerHeight with no device/touch detection. All desktop users at standard landscape resolutions are blocked from playing.",
+      "fix_suggestion": "In checkOrientation(), add a desktop bypass: if (!('ontouchstart' in window) && !/Mobi|Android/i.test(navigator.userAgent)) { overlay.style.display = 'none'; return; }"
+    },
+    {
+      "id": "port_conflict",
+      "severity": "LOW",
+      "description": "Two processes bound to port 8081 simultaneously — serve (fridge-tetris) and http-server (pulse-weaver). This caused test instability. Should be resolved in deployment configuration.",
+      "fix_suggestion": "Assign unique ports per game in the dev/test pipeline."
+    }
+  ],
+
+  "scoring": {
+    "perspective_weights": {
+      "player_one": 0.35,
+      "bugcatcher": 0.40,
+      "adcheck": 0.25
+    },
+    "criteria": {
+      "fun_factor": {
+        "weight": 0.15,
+        "score_raw": 7.5,
+        "notes": "Core fridge-organizing mechanic is clever and visually clear. Wave progression works. Drag-to-swap feels responsive. Slight concern: new players blocked on desktop reduces reach."
+      },
+      "bug_severity": {
+        "weight": 0.35,
+        "score_raw": 5.5,
+        "notes": "5 of 6 bugs fixed (texture race, black box menu, smell blocker ad, gameOverCount reset, favicon). 1 critical bug remains: desktop orientation blocker (bug2) — this blocks ALL desktop users, a significant audience."
+      },
+      "performance": {
+        "weight": 0.20,
+        "score_raw": 8.0,
+        "notes": "Phaser 3.60, WebGL renderer. No jank observed. Bounce/tween animations smooth. Timer bar updates each frame. Score pop-ups and combo badge all lightweight. Audio via WebAudioContext (no file loading). No memory leaks spotted in code."
+      },
+      "console_cleanliness": {
+        "weight": 0.15,
+        "score_raw": 9.0,
+        "notes": "0 errors, 0 warnings on load and during gameplay. Only Phaser banner log present. AdManager.trackAdEvent logs [AdEvent] entries on ad interactions (expected behavior, not errors)."
+      },
+      "ad_integration": {
+        "weight": 0.15,
+        "score_raw": 8.0,
+        "notes": "All four ad hooks present and functional: showInterstitial (every 3rd gameover), showRewardedContinue (one per run), showRewardedDoublePoints (post-gameover), showRewardedSmellBlocker (10-wave cooldown). resetRun() called correctly on new game. Placeholder UI uses DOM overlays — clean, non-blocking."
+      }
+    },
+    "category_score_calculation": {
+      "formula": "sum(criterion_score × weight) × 10",
+      "calculation": "(7.5×0.15) + (5.5×0.35) + (8.0×0.20) + (9.0×0.15) + (8.0×0.15) = 1.125 + 1.925 + 1.600 + 1.350 + 1.200 = 7.200",
+      "category_score": 72.0
+    },
+    "weighted_tester_scores": {
+      "player_one_score": 7.0,
+      "bugcatcher_score": 6.0,
+      "adcheck_score": 8.0,
+      "formula": "player_one×0.35 + bugcatcher×0.40 + adcheck×0.25",
+      "calculation": "(7.0×0.35) + (6.0×0.40) + (8.0×0.25) = 2.45 + 2.40 + 2.00 = 6.85",
+      "final_score": 6.85
+    }
+  },
+
+  "verdict": "PARTIAL PASS",
+  "summary": "5 of 6 reported bugs are confirmed fixed. The texture race condition fix (BootScene pre-registration) is the most significant improvement — all items render with correct colors. Menu is clean, favicon works, smell blocker ad flow is properly wired, and ad counters reset correctly on new game. FAIL condition: Bug #2 (orientation detection) remains broken — desktop users at landscape viewport dimensions (e.g. 1280×800) are blocked with a 'rotate your phone' overlay. This needs a simple UA/touch detection bypass before the game can be considered fully desktop-playable. Final score: 6.85/10.",
+
+  "pass": false,
+  "pass_condition_failed": "bug2_orientation_detection — desktop landscape blocker not fixed"
+}

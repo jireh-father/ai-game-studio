@@ -1,0 +1,149 @@
+{
+  "idea_id": "idea-20260304-005",
+  "title": "Crowd Rush Merge",
+  "slug": "crowd-rush-merge",
+  "evaluated_at": "2026-03-04",
+  "judges": {
+    "professor_ludus": {
+      "weight": 0.35,
+      "criteria": {
+        "mechanics_depth": {
+          "weight": 0.25,
+          "score": 6,
+          "notes": "The core merge-while-running loop is clever but mechanically shallow. Gate math (add/multiply/divide) adds a layer but is borrowed wholesale from Count Masters. Merging same-numbered runners is reminiscent of 2048 but in motion — the real-time constraint elevates it slightly. However, there is no emergent complexity: the player swipe input is one-dimensional (left/right), merge is automatic on collision, and gates are pass/fail binary. Compared to best-in-class (Monument Valley, Alto's Odyssey), the mechanics ceiling is low."
+        },
+        "infinite_stage_potential": {
+          "weight": 0.25,
+          "score": 7,
+          "notes": "The escalation design is well-specified: gate type progression (add → multiply/divide → subtract), lane narrowing, enemy crowds, boss gates. This gives genuine infinite runway. The divide/enemy mechanic that shrinks crowd size creates tension reversals. Weakness: at scale, all stages become 'hit the right number gate' which may feel repetitive without more mechanical variety."
+        },
+        "originality": {
+          "weight": 0.20,
+          "score": 5,
+          "notes": "Count Masters already does numbered crowd running. Merge games (Merge Mansion, 2048) are saturated. The fusion is the novel element, but the fusion is straightforward concatenation of two existing systems rather than a genuinely new mechanic. The merge-while-running real-time constraint is the only true innovation. Originality score is penalized because the components are both genre-defining incumbents with massive download bases."
+        },
+        "learning_curve": {
+          "weight": 0.15,
+          "score": 8,
+          "notes": "Excellent onboarding potential. Stage 1-3 with add gates only and wide lanes means new players grasp the loop instantly. Progressive introduction of gate types mirrors the best hyper-casual difficulty ramps. Mobile web context with touch-only swipe is immediately intuitive."
+        },
+        "accessibility": {
+          "weight": 0.15,
+          "score": 9,
+          "notes": "One-thumb swipe controls. No reading required (numbers are universal). Short 1-2 min sessions fit commute play. No complex UI. Ideal for broad demographic reach."
+        },
+        "category_score": 69.75,
+        "calculation": "(6×0.25 + 7×0.25 + 5×0.20 + 8×0.15 + 9×0.15) × 10 = (1.5 + 1.75 + 1.0 + 1.2 + 1.35) × 10 = 6.8 × 10 = 68.0"
+      },
+      "raw_weighted_sum": 6.80,
+      "category_score": 68.0
+    },
+    "dr_loop": {
+      "weight": 0.25,
+      "criteria": {
+        "flow_state": {
+          "weight": 0.30,
+          "score": 7,
+          "notes": "The real-time merge mechanic creates moment-to-moment engagement. Seeing your crowd grow as you merge runners triggers a satisfying number-growth feedback loop. Lane navigation adds micro-decisions. However, the auto-runner format means the player is always slightly passive — the game moves forward whether you act perfectly or not, which can break deep flow. Enemy crowd collisions that shrink numbers create anxiety spikes that can disrupt flow if too frequent."
+        },
+        "addiction_loop": {
+          "weight": 0.30,
+          "score": 8,
+          "notes": "Crowd runner games have proven addiction loops (Count Masters 100M+ downloads). The merge layer adds a secondary dopamine hit (number doubling) on top of the crowd growth hit. Boss gates with high thresholds create tension-then-release cycles. The 'just one more run' instinct is strong because runs are short and each failure is immediately understandable ('I needed 500, I had 340'). Progress is visible numerically, which is highly satisfying."
+        },
+        "shareability": {
+          "weight": 0.20,
+          "score": 6,
+          "notes": "Crowd size numbers hitting boss gates are visually satisfying moments worth clipping. However, the SVG/mobile-web visual constraint means the 'wow' moments may not be visually polished enough to drive organic sharing. Count Masters' satisfying crowd crush animations drive sharing — replicating that in SVG is feasible but challenging. Score: moderate shareability."
+        },
+        "emotional_arc": {
+          "weight": 0.20,
+          "score": 7,
+          "notes": "Clear emotional journey per run: anticipation (will I merge enough?) → tension (enemy crowd approaching) → relief/triumph (boss gate cleared) or frustration (fell short). The numerical feedback makes failure comprehensible rather than arbitrary, which preserves emotional investment even on loss. Boss gate finales per stage give a meaningful climax."
+        },
+        "raw_weighted_sum": 7.10,
+        "category_score": 71.0,
+        "calculation": "(7×0.30 + 8×0.30 + 6×0.20 + 7×0.20) × 10 = (2.1 + 2.4 + 1.2 + 1.4) × 10 = 7.1 × 10 = 71.0"
+      }
+    },
+    "cash": {
+      "weight": 0.20,
+      "criteria": {
+        "ad_suitability": {
+          "weight": 0.30,
+          "score": 9,
+          "notes": "Hyper-casual runner is the gold standard ad-supported genre. 1-2 min sessions create natural interstitial ad breaks at run end/start. Rewarded video ('double your crowd size') fits the merge growth mechanic perfectly. Banner ads fit during run results screen. Interstitial frequency can be high without destroying UX because runs are self-contained. Ad fill rates for this genre are top-tier."
+        },
+        "session_length": {
+          "weight": 0.25,
+          "score": 9,
+          "notes": "1-2 minutes is the ideal hyper-casual session length. Short enough to pick up anywhere, long enough to deliver a complete emotional arc. Players can chain multiple sessions easily. Infinite runner means no hard session end — players choose when to stop (or lose), which increases average session time above the stated target."
+        },
+        "retention_potential": {
+          "weight": 0.25,
+          "score": 6,
+          "notes": "D1 retention for crowd runner genre is solid (~35-40%), but D7 and D30 drop sharply for pure hyper-casual. The merge layer adds a 'number growth' progression hook that pure crowd runners lack, which could improve D7/D30. However, without meta-game (collection, upgrades, cosmetics) there is no long-term retention driver. The infinite stage design helps but does not substitute for meta-game loops."
+        },
+        "iap_opportunity": {
+          "weight": 0.20,
+          "score": 5,
+          "notes": "Limited IAP surface in pure hyper-casual. Possible: 'remove ads' ($2.99), cosmetic crowd skins, 'start with bigger crowd'. None of these are compelling IAP drivers. The merge mechanic could support 'power merge' boosts but these feel pay-to-win in a skill game. IAP ARPU for this genre is typically <$0.05, so monetization is ad-dependent."
+        },
+        "raw_weighted_sum": 7.45,
+        "category_score": 74.5,
+        "calculation": "(9×0.30 + 9×0.25 + 6×0.25 + 5×0.20) × 10 = (2.7 + 2.25 + 1.5 + 1.0) × 10 = 7.45 × 10 = 74.5"
+      }
+    },
+    "scout": {
+      "weight": 0.20,
+      "criteria": {
+        "market_gap": {
+          "weight": 0.30,
+          "score": 7,
+          "notes": "The pitch correctly identifies that crowd runner + real-time merge has not been fused in a single product at scale. Count Masters does numbered crowds but no merge mechanic. Merge games don't have crowd running. The gap is real but narrow — both genres are individually saturated, and competitors could clone this concept quickly if it shows traction. Web/mobile context means no App Store gatekeeping, which is an advantage for speed to market."
+        },
+        "viral_potential": {
+          "weight": 0.25,
+          "score": 7,
+          "notes": "The 'big number crush gate' moment is inherently shareable. Crowd runner games go viral on TikTok/YouTube Shorts because the crowd visuals are satisfying. The merge layer adds 'number goes up' dopamine that is documented to drive sharing (see 2048 virality). However, SVG-based visuals may limit the visual polish needed for organic social spread. Score tempered by technical constraint."
+        },
+        "competitive_edge": {
+          "weight": 0.25,
+          "score": 5,
+          "notes": "The competitive edge is thin. The fusion concept is easily understood and immediately replicable. Count Masters could add a merge mechanic in a minor update. The window for first-mover advantage in mobile web is short. No proprietary technology or hard-to-replicate systems. The edge is solely 'first to ship this specific fusion' which is a time-limited advantage."
+        },
+        "trend_alignment": {
+          "weight": 0.20,
+          "score": 8,
+          "notes": "Crowd runner and merge are both documented top-performing genres in 2024-2025. The math gate mechanic aligns with the 'learning disguised as fun' trend. Hyper-casual is recovering market share in 2025-2026 after a mid-cycle slump. The idea is well-timed for current market conditions."
+        },
+        "raw_weighted_sum": 6.75,
+        "category_score": 67.5,
+        "calculation": "(7×0.30 + 7×0.25 + 5×0.25 + 8×0.20) × 10 = (2.1 + 1.75 + 1.25 + 1.6) × 10 = 6.75 × 10 = 67.5"
+      }
+    }
+  },
+  "final_score_calculation": {
+    "ludus": { "score": 68.0, "weight": 0.35, "contribution": 23.80 },
+    "loop":  { "score": 71.0, "weight": 0.25, "contribution": 17.75 },
+    "cash":  { "score": 74.5, "weight": 0.20, "contribution": 14.90 },
+    "scout": { "score": 67.5, "weight": 0.20, "contribution": 13.50 },
+    "weighted_total": 69.95
+  },
+  "final_score": 69.95,
+  "verdict": "FAIL",
+  "verdict_reason": "Final score 69.95 is below the 70-point pass threshold by 0.05 points. The idea is strong in addiction loop and monetization (proven genre combination), but is held back by limited mechanics depth, thin competitive edge, and low originality scores. The fusion concept is valid but both components are individually saturated. The idea is borderline and worth reconsidering with a stronger meta-game hook or visual differentiation strategy.",
+  "borderline_note": "Score of 69.95 is within 0.5 points of the gate. The idea can be escalated for human review or conditionally approved if the dev team can propose a meta-game retention layer (e.g., character/crowd collection, persistent upgrade tree) that addresses the D7+ retention weakness.",
+  "strengths": [
+    "Proven genre combination with documented download numbers",
+    "Excellent ad monetization fit (hyper-casual interstitial + rewarded video)",
+    "Strong addiction loop and emotional arc per run",
+    "Clear infinite stage escalation design"
+  ],
+  "weaknesses": [
+    "Both source genres are individually saturated — competitive moat is thin",
+    "No meta-game layer for long-term retention",
+    "SVG/mobile-web technical constraint limits visual 'wow' moments that drive sharing",
+    "Mechanics ceiling is low — no emergent complexity"
+  ]
+}

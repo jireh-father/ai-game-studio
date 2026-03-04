@@ -1,0 +1,153 @@
+{
+  "idea_id": "idea-20260304-003",
+  "title": "Fridge Tetris",
+  "slug": "fridge-tetris",
+  "evaluated_at": "2026-03-04",
+
+  "judges": {
+    "professor_ludus": {
+      "weight": 0.35,
+      "criteria": {
+        "mechanics_depth": {
+          "weight": 0.25,
+          "score": 6,
+          "reasoning": "Drag-to-rearrange on a grid is familiar and functional, but the core is essentially a spatial puzzle with light survival pressure. The 'keep item in front row' constraint is clever but limited — it's a single win condition without many branching strategies. Secondary mechanics (expiry, smell meter, grocery waves) add meaningful depth, but they feel like modifiers to a thin core rather than compounding systems. Doesn't approach the mechanical richness of Threes or Tetris itself."
+        },
+        "infinite_stage_potential": {
+          "weight": 0.25,
+          "score": 8,
+          "reasoning": "The infinite stage design is genuinely strong. Escalation from small items → condiment armies → full watermelons → freezer zone → second fridge is well-paced and imaginative. Each new grocery 'trip' as a wave event maps cleanly to a stage structure. The split-attention dual-fridge mechanic at high stages is a meaningful difficulty jump. Solid runway for 20+ stages before feeling repetitive."
+        },
+        "originality": {
+          "weight": 0.20,
+          "score": 8,
+          "reasoning": "Sentient leftover container surviving in a fridge is a genuinely fresh premise. Playing as the food item being displaced — not the human organizing — is an inversion that works. Grid rearrangement as survival (not scoring) flips puzzle conventions. The 'get eaten = victory' win condition is memorable and original. Loses points because the underlying mechanic is fundamentally spatial arrangement, a very established genre."
+        },
+        "learning_curve": {
+          "weight": 0.15,
+          "score": 7,
+          "reasoning": "The premise teaches itself: keep your container visible. A player can understand the goal in 10 seconds. Item expiry and smell meter add complexity that arrives gradually. Risk is that condiment wave events may feel chaotic before players have internalized the grid logic. Needs clear visual feedback on what 'the back' means spatially."
+        },
+        "accessibility": {
+          "weight": 0.15,
+          "score": 8,
+          "reasoning": "Touch drag on a grid is highly accessible. No complex gestures, no precision timing required. Fridge items are universally recognizable icons — no learning of game-specific symbols. Humor makes it approachable for non-gamers. SVG rendering suits stylized food items well."
+        }
+      },
+      "category_score": null,
+      "calculation": "(6×0.25 + 8×0.25 + 8×0.20 + 7×0.15 + 8×0.15) × 10",
+      "category_score_value": 72.5
+    },
+
+    "dr_loop": {
+      "weight": 0.25,
+      "criteria": {
+        "flow_state": {
+          "weight": 0.30,
+          "score": 6,
+          "reasoning": "The game has potential for flow but faces structural challenges. Drag-rearrange puzzles can achieve flow when the solution space is tight and feedback is immediate. However, the 'wave event' interruptions (grocery trips) break continuous engagement with hard resets. Between waves, there may be dead time. The smell meter is a good tension mechanic but needs tight tuning to avoid frustration spikes instead of flow."
+        },
+        "addiction_loop": {
+          "weight": 0.30,
+          "score": 7,
+          "reasoning": "The core loop is clean: survive wave → next grocery trip → new arrangement challenge. 'One more wave' psychology is present. The escalating weirdness of items (whole watermelon, meal prep hauls) creates anticipation for what comes next. Victory condition of 'getting eaten' is unusual enough to drive curiosity. The smell meter adds a timer-like urgency that prevents passive play. Missing: strong score/leaderboard hook to pull players back after sessions."
+        },
+        "shareability": {
+          "weight": 0.20,
+          "score": 8,
+          "reasoning": "The premise is immediately shareable as a concept: 'I played a game where I'm a leftover trying not to be forgotten in the fridge.' This maps directly to universal human experience. Screenshots of chaotic fridge states (stage 10 with a watermelon wedged in) have meme potential. 'I survived 8 grocery trips' is a naturally funny thing to tell someone. High organic word-of-mouth ceiling."
+        },
+        "emotional_arc": {
+          "weight": 0.20,
+          "score": 7,
+          "reasoning": "The emotional journey from anxious leftover → triumphant eaten tupperware is genuinely charming. There's real pathos in the 'graveyard of forgotten food' framing — players who've found month-old leftovers will feel this. Victory (getting eaten) as release is a satisfying emotional payoff. The smell meter triggering 'human inspection' creates dread that resolves into either relief or comedic failure. Loses points for not having a strong loss state moment — being 'pushed to the back' needs more emotional weight."
+        }
+      },
+      "category_score_value": 70.0,
+      "calculation": "(6×0.30 + 7×0.30 + 8×0.20 + 7×0.20) × 10"
+    },
+
+    "cash": {
+      "weight": 0.20,
+      "criteria": {
+        "ad_suitability": {
+          "weight": 0.30,
+          "score": 7,
+          "reasoning": "Wave-based structure with clear inter-wave pauses is ideal for rewarded video ads ('Watch an ad to slow down the next grocery trip'). Interstitial ads fit naturally between grocery shopping events. The humor tone is brand-safe and broad. Fridge/food imagery is adjacent to grocery, meal-kit, and food delivery advertisers who pay well. However, the 1-3 minute session ceiling limits total ad inventory per user per day."
+        },
+        "session_length": {
+          "weight": 0.25,
+          "score": 8,
+          "reasoning": "1-3 minutes is the sweet spot for mobile casual. Short enough to play in a queue or during a break, long enough to show an ad. The wave structure naturally extends sessions — players want to see the next grocery trip. Infinite stage design means sessions can extend to 10+ minutes for engaged players without feeling padded."
+        },
+        "retention_potential": {
+          "weight": 0.25,
+          "score": 6,
+          "reasoning": "Retention is the biggest risk. Without metagame progression (unlockable fridges, container skins, fridge customization), there's no extrinsic reason to return after novelty wears off. The escalating stage content provides some day-1 to day-3 retention, but day-7 and day-30 are weak without systems. Leaderboard or daily challenge modes could address this but aren't in the current spec."
+        },
+        "iap_opportunity": {
+          "weight": 0.20,
+          "score": 5,
+          "reasoning": "The premise has cute IAP hooks (premium container skins — bento box, vintage pyrex, designer tupperware) but they're cosmetic-only in a game where you play AS the container. 'Remove expiry pressure' or 'extra shelf space' power IAPs risk unbalancing. The niche humor audience may not be large enough for significant IAP revenue. Monetization story is underdeveloped."
+        }
+      },
+      "category_score_value": 65.5,
+      "calculation": "(7×0.30 + 8×0.25 + 6×0.25 + 5×0.20) × 10"
+    },
+
+    "scout": {
+      "weight": 0.20,
+      "criteria": {
+        "market_gap": {
+          "weight": 0.30,
+          "score": 8,
+          "reasoning": "Fridge organization games don't meaningfully exist. The closest competitors are generic grid puzzles and color-sort games. Playing as the food item (not the organizer) is a gap in the market. The survival framing vs. optimization framing is a meaningful differentiation from 'organize your fridge' simulation games. This niche is genuinely open."
+        },
+        "viral_potential": {
+          "weight": 0.25,
+          "score": 8,
+          "reasoning": "The relatable premise ('we all have forgotten leftovers') drives organic sharing. TikTok/YouTube short potential is real — 'I played a game where I'm the sad leftover in your fridge' is an immediately clickable hook. The escalating chaos of late-game stages (watermelon invasion) produces shareable moments. The humor register matches what currently goes viral in casual gaming content."
+        },
+        "competitive_edge": {
+          "weight": 0.25,
+          "score": 7,
+          "reasoning": "Technically simple enough to execute well in the mobile web SVG constraint. The unique premise provides a moat against generic clones — the brand identity IS the premise. Competitors would need to explicitly copy the 'sentient leftover' angle rather than just copying mechanics. However, if it gains traction, the core mechanic (grid rearrangement) is trivially replicable by anyone."
+        },
+        "trend_alignment": {
+          "weight": 0.20,
+          "score": 7,
+          "reasoning": "Relatable-mundane humor games are trending (Powerwash Simulator, Unpacking, I am a Bread). 'Cozy chaos' is a growing aesthetic in casual games. Food content consistently over-performs on social media. The anthropomorphized household object angle fits current animation/content trends. Doesn't chase a hot mechanic trend, but the theme is trend-aligned."
+        }
+      },
+      "category_score_value": 75.5,
+      "calculation": "(8×0.30 + 8×0.25 + 7×0.25 + 7×0.20) × 10"
+    }
+  },
+
+  "final_scoring": {
+    "professor_ludus": { "score": 72.5, "weight": 0.35, "weighted": 25.375 },
+    "dr_loop":         { "score": 70.0, "weight": 0.25, "weighted": 17.5 },
+    "cash":            { "score": 65.5, "weight": 0.20, "weighted": 13.1 },
+    "scout":           { "score": 75.5, "weight": 0.20, "weighted": 15.1 }
+  },
+
+  "final_weighted_score": 71.075,
+  "gate_threshold": 70,
+  "verdict": "PASS",
+
+  "summary": "Fridge Tetris passes with a score of 71.1. Its strongest assets are a genuinely original premise, strong viral/shareability potential, and a well-designed infinite stage escalation. The weakest area is monetization — IAP story is thin and long-term retention systems are absent. The core mechanic (grid rearrangement) is proven but not deep; the game lives or dies on its premise and humor execution. Recommend proceeding to planning with explicit design work on: (1) metagame retention loop, (2) loss state emotional impact, (3) inter-wave pacing to protect flow state.",
+
+  "key_risks": [
+    "Novelty wears off without metagame progression systems",
+    "Inter-wave dead time may break flow state",
+    "Core mechanic is replicable — brand identity must be strong from day one"
+  ],
+
+  "key_strengths": [
+    "Universally relatable premise with immediate emotional hook",
+    "Original player perspective inversion (you ARE the leftover)",
+    "Strong infinite stage design with varied escalation",
+    "High organic shareability and social content potential",
+    "Clear market gap — no meaningful competitors in this niche"
+  ]
+}

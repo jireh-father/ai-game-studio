@@ -1,0 +1,94 @@
+{
+  "tester": "player-one",
+  "game": "fridge-tetris",
+  "test_date": "2026-03-04",
+  "session_summary": {
+    "waves_reached": 18,
+    "max_score": 4660,
+    "playthroughs": 3,
+    "max_combo": 17
+  },
+  "scores": {
+    "fun_factor": {
+      "weight": 0.30,
+      "raw": 7,
+      "notes": "Genuinely fun premise - organizing a fridge is relatable and the escalating grocery waves create real tension. Combo system (x6, x12, x17 combos observed) is satisfying. However, passive auto-advance undermines active player agency - too much happens without input."
+    },
+    "difficulty_balance": {
+      "weight": 0.25,
+      "raw": 6,
+      "notes": "Difficulty ramps naturally as fridge fills up. Early waves are calm, later waves (10+) get chaotic. However the 'Watch Ad to Continue' interrupt at mid-game feels abrupt and breaks flow. The difficulty felt auto-pilotable for first 5 waves with minimal interaction."
+    },
+    "addiction": {
+      "weight": 0.25,
+      "raw": 7,
+      "notes": "Strong 'one more run' pull - the NEW RECORD display and combo escalation are motivating. Death screen shows wave reached and fridge points earned which creates clear progression goals. High score persistence works. The 'GROCERY RUN!' announcements add excitement."
+    },
+    "polish": {
+      "weight": 0.20,
+      "raw": 4,
+      "notes": "Critical polish issue: on 2nd+ playthrough all item textures break (black squares with green outlines). 57 console errors by end of testing, all 'Texture key already in use' errors. First playthrough looks good with clean item art (juice, milk, yogurt, cheese, vegetables). GROCERY RUN! wave announcement is nice. Smell meter UI is clear. Game over screen is clean."
+    }
+  },
+  "final_score": 61,
+  "score_calculation": "(7 * 0.30 + 6 * 0.25 + 7 * 0.25 + 4 * 0.20) * 10 = (2.1 + 1.5 + 1.75 + 0.8) * 10 = 6.15 * 10 = 61",
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "severity": "major",
+      "title": "Texture key collision on game restart - all item sprites render as black broken squares",
+      "description": "On 2nd playthrough (and beyond), Phaser throws 'Texture key already in use' errors for every item type (item_milk, item_yogurt, item_vegetable, item_juice, item_cheese, item_frozen, item_condiment, item_hot, item_watermelon). The textures fail to load, rendering all affected items as black squares with green outlines. First play is unaffected. Root cause: game scene is re-creating textures that were already registered in Phaser's texture manager without first destroying/removing them.",
+      "steps": "1. Play game until death. 2. Click PLAY AGAIN. 3. Observe fridge items render as black squares from Wave 1.",
+      "impact": "Makes the game visually broken for every replay. Core gameplay experience destroyed after first death.",
+      "screenshot": "fridge-tetris-wave4-broken-textures.png"
+    },
+    {
+      "id": "BUG-002",
+      "severity": "minor",
+      "title": "Broken image placeholder on title screen",
+      "description": "The title screen shows a black rectangle with a diagonal line (broken image placeholder) at the bottom of the screen below the SHOP button. Likely a missing image asset or incorrect path for a decorative element.",
+      "steps": "1. Load game for first time. 2. Observe black box below SHOP button.",
+      "impact": "Visual polish issue on first impression / title screen.",
+      "screenshot": "fridge-tetris-portrait.png"
+    },
+    {
+      "id": "BUG-003",
+      "severity": "minor",
+      "title": "Favicon 404 error on load",
+      "description": "HTTP 404 for /favicon.ico on every page load.",
+      "steps": "1. Open game. 2. Check browser console.",
+      "impact": "Minor console noise, no gameplay impact."
+    },
+    {
+      "id": "BUG-004",
+      "severity": "cosmetic",
+      "title": "Landscape mode shows 'Please rotate your phone' before portrait resize",
+      "description": "Default desktop viewport shows landscape orientation message with no game content. The game requires portrait orientation to function.",
+      "steps": "1. Open game in default desktop browser size. 2. Observe rotation message.",
+      "impact": "Non-issue for mobile players; desktop players need to resize browser to portrait. No fallback for desktop.",
+      "screenshot": "fridge-tetris-title.png"
+    }
+  ],
+  "positive_observations": [
+    "Strong thematic coherence - fridge organizing concept is novel and relatable",
+    "Combo system escalates satisfyingly (x6, x12, x17 observed in one session)",
+    "Wave announcement 'GROCERY RUN!' creates urgency and excitement",
+    "New item types introduced over time (yogurt, vegetables, juice, cheese, condiment, frozen, watermelon, leftovers) keeps variety fresh",
+    "Smell meter as a pressure mechanic is clever and visible",
+    "Tupperware/container as the 'player character' to protect is unique",
+    "Game over text 'THE HUMAN FORGOT YOU...' is charming and thematic",
+    "Score persistence and NEW RECORD display provides good motivation",
+    "Fridge Points economy with SHOP creates meta-progression hook",
+    "DAILY CHALLENGE mode is a great retention feature"
+  ],
+  "negative_observations": [
+    "BUG-001 texture crash on replay is a game-breaking bug that must be fixed before ship",
+    "Passive gameplay - game auto-advances without player needing to drag much in early waves",
+    "Drag mechanics unclear - no tutorial or onboarding explaining how to move items",
+    "Ad prompt appears mid-game which breaks immersion unexpectedly",
+    "No clear feedback when tupperware leaves front column (the actual lose condition)"
+  ],
+  "verdict": "revise",
+  "verdict_rationale": "Fridge Tetris has a genuinely fun and novel premise with satisfying escalation mechanics. The first playthrough is engaging and reaches a good difficulty arc by wave 10+. However, the texture-crash-on-replay bug (BUG-001) is a game-breaking major issue that makes every subsequent playthrough visually broken. This alone prevents shipping. Fix the Phaser texture management in game restart, address the missing title screen asset, and add basic drag onboarding. With those fixes, this would be a solid 7/10 mobile game worth shipping.",
+  "ship_recommendation": "revise - fix BUG-001 (texture crash on replay) as blocker before any release"
+}
