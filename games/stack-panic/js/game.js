@@ -84,8 +84,7 @@ class GameScene extends Phaser.Scene {
         const body = this.matter.add.rectangle(
             PENDULUM_PIVOT_X, PENDULUM_PIVOT_Y + PENDULUM_ARM_LENGTH,
             variant.width, variant.height,
-            { isStatic: false, friction: 0.8, restitution: 0.05, frictionAir: 0.01, label: 'block_' + this.blockIndex,
-              collisionFilter: { group: -1, mask: 0 } }
+            { isStatic: true, friction: 0.8, restitution: 0.05, frictionAir: 0.01, label: 'block_' + this.blockIndex }
         );
         this.swingBlock = { body, width: variant.width, height: variant.height, color, index: this.blockIndex, irregular: variant.irregular };
         this.blockIndex++;
@@ -127,16 +126,21 @@ class GameScene extends Phaser.Scene {
         const block = this.swingBlock;
         this.swingBlock = null;
 
-        block.body.collisionFilter.mask = 0xFFFFFFFF;
-        block.body.collisionFilter.group = 0;
-        Phaser.Physics.Matter.Matter.Body.setVelocity(block.body, { x: 0, y: 0 });
+        // Destroy static pendulum body, create fresh dynamic body at same position
+        const pos = { x: block.body.position.x, y: block.body.position.y };
+        this.matter.world.remove(block.body);
+        const newBody = this.matter.add.rectangle(
+            pos.x, pos.y, block.width, block.height,
+            { isStatic: false, friction: 0.8, restitution: 0.05, frictionAir: 0.01,
+              label: 'block_' + block.index }
+        );
+        block.body = newBody;
 
         this.droppedBlocks.push({
-            body: block.body, width: block.width, height: block.height,
+            body: newBody, width: block.width, height: block.height,
             color: block.color, settled: false, index: block.index
         });
 
-        const pos = block.body.position;
         JuiceEffects.emitParticles(this, pos.x, pos.y, 15, block.color, 180, 350);
         this.cameras.main.shake(120, 0.003);
         audioManager.play('drop_whoosh');
@@ -271,7 +275,6 @@ class GameScene extends Phaser.Scene {
             const px = PENDULUM_PIVOT_X + Math.sin(this.pendulumAngle) * PENDULUM_ARM_LENGTH + windDrift;
             const py = PENDULUM_PIVOT_Y + Math.cos(this.pendulumAngle) * PENDULUM_ARM_LENGTH;
             Phaser.Physics.Matter.Matter.Body.setPosition(this.swingBlock.body, { x: px, y: py });
-            Phaser.Physics.Matter.Matter.Body.setVelocity(this.swingBlock.body, { x: 0, y: 0 });
             BlockRenderer.drawPendulum(this, px, py);
             BlockRenderer.drawGhost(this, px, this.swingBlock.width, this.swingBlock.height);
         } else {
