@@ -1,6 +1,76 @@
 {
-  "version": 1,
-  "last_updated": "2026-03-04T00:00:00Z",
-  "ideas": [],
-  "mechanic_index": {}
+  "version": 2,
+  "last_updated": "2026-03-04T19:00:00Z",
+  "ideas": [
+    {
+      "id": "idea-20260304-001",
+      "title": "Gravity Flip Chain",
+      "slug": "gravity-flip-chain",
+      "creator": "spark",
+      "score": 70.9,
+      "status": "passed-backup",
+      "run_id": "run-2026-03-04-001",
+      "mechanic_tags": ["physics", "chain-reaction", "timing", "one-tap", "combo"]
+    },
+    {
+      "id": "idea-20260304-002",
+      "title": "Pulse Weaver",
+      "slug": "pulse-weaver",
+      "creator": "spark",
+      "score": 73.6,
+      "status": "shipped",
+      "run_id": "run-2026-03-04-001",
+      "mechanic_tags": ["chain-reaction", "puzzle", "drag-input", "elemental-combo", "emergent"]
+    },
+    {
+      "id": "idea-20260304-003",
+      "title": "Fridge Tetris",
+      "slug": "fridge-tetris",
+      "creator": "oddball",
+      "score": 71.1,
+      "status": "shipped",
+      "run_id": "run-2026-03-04-001",
+      "mechanic_tags": ["puzzle", "humor", "time-pressure", "grid", "survival"]
+    },
+    {
+      "id": "idea-20260304-004",
+      "title": "Sock Singularity",
+      "slug": "sock-singularity",
+      "creator": "oddball",
+      "score": 69.25,
+      "status": "failed",
+      "run_id": "run-2026-03-04-001",
+      "mechanic_tags": ["humor", "physics", "pattern-recognition", "timing", "absurd"]
+    },
+    {
+      "id": "idea-20260304-005",
+      "title": "Crowd Rush Merge",
+      "slug": "crowd-rush-merge",
+      "creator": "trendsetter",
+      "score": 69.95,
+      "status": "failed",
+      "run_id": "run-2026-03-04-001",
+      "mechanic_tags": ["hyper-casual", "trending", "merge", "runner", "math"]
+    },
+    {
+      "id": "idea-20260304-006",
+      "title": "Gravity Flip Stack",
+      "slug": "gravity-flip-stack",
+      "creator": "trendsetter",
+      "score": null,
+      "status": "duplicate-removed",
+      "run_id": "run-2026-03-04-001",
+      "mechanic_tags": ["trending", "one-tap", "physics", "casual", "infinite"]
+    }
+  ],
+  "mechanic_index": {
+    "physics": ["idea-20260304-001", "idea-20260304-004"],
+    "chain-reaction": ["idea-20260304-001", "idea-20260304-002"],
+    "puzzle": ["idea-20260304-002", "idea-20260304-003"],
+    "humor": ["idea-20260304-003", "idea-20260304-004"],
+    "merge": ["idea-20260304-005"],
+    "runner": ["idea-20260304-005"],
+    "drag-input": ["idea-20260304-002"],
+    "grid": ["idea-20260304-003"]
+  }
 }

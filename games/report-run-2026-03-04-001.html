@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Game Studio — Pipeline Report run-2026-03-04-001</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --bg-card: #161b22;
+    --bg-card2: #1c2128;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --link: #58a6ff;
+    --green: #3fb950;
+    --green-bg: #0f2419;
+    --yellow: #d29922;
+    --yellow-bg: #2b1e00;
+    --red: #f85149;
+    --red-bg: #2a0c0c;
+    --blue: #58a6ff;
+    --blue-bg: #0d2045;
+    --purple: #bc8cff;
+    --orange: #e3b341;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 0 16px 64px;
+  }
+
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* ─── HEADER ─── */
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 0 24px;
+    margin-bottom: 32px;
+  }
+  .site-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 8px;
+  }
+  .site-header .meta {
+    color: var(--muted);
+    font-size: 13px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .site-header .meta span { display: flex; align-items: center; gap: 6px; }
+  .site-header .meta .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .kpi-card .kpi-val {
+    font-size: 32px;
+    font-weight: 700;
+    color: #e6edf3;
+    line-height: 1;
+  }
+  .kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ─── SECTION ─── */
+  .section {
+    margin-bottom: 40px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--blue-bg);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ─── TIMELINE ─── */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    padding: 0 0 24px 20px;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -19px; top: 4px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card);
+  }
+  .tl-item.done::before { background: var(--green); border-color: var(--green); }
+  .tl-item.skip::before { background: var(--muted); }
+  .tl-item .tl-phase {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .tl-item .tl-title {
+    font-weight: 600;
+    color: #e6edf3;
+    font-size: 14px;
+  }
+  .tl-item .tl-desc {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .tl-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tl-badge.done { background: var(--green-bg); color: var(--green); }
+  .tl-badge.skip { background: #1c2128; color: var(--muted); }
+
+  /* ─── CARDS ─── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card-title {
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 4px;
+    font-size: 15px;
+  }
+  .card-subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .card-body {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .tag {
+    display: inline-block;
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 2px 2px 0 0;
+  }
+
+  /* ─── SCORE TABLE ─── */
+  .score-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .score-table th {
+    background: var(--bg-card2);
+    color: var(--muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .score-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-table tr:hover td { background: var(--bg-card2); }
+  .score-table .game-name { font-weight: 600; color: #e6edf3; }
+  .score-table .rank { color: var(--muted); font-size: 12px; }
+
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .badge.pass    { background: var(--green-bg); color: var(--green); border: 1px solid #1e4a2a; }
+  .badge.fail    { background: var(--red-bg);   color: var(--red);   border: 1px solid #4a1a1a; }
+  .badge.ship    { background: #0d2045;          color: var(--blue);  border: 1px solid #1a3a6e; }
+  .badge.develop { background: #1c1c2a;          color: var(--purple);border: 1px solid #3a2a5a; }
+  .badge.revise  { background: var(--yellow-bg); color: var(--yellow);border: 1px solid #4a3a00; }
+  .badge.backup  { background: #1c2128;          color: var(--muted); border: 1px solid var(--border); }
+
+  .score-num {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .score-num.green { color: var(--green); }
+  .score-num.yellow { color: var(--yellow); }
+  .score-num.red { color: var(--red); }
+
+  /* ─── DETAILS/SUMMARY ─── */
+  details {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  summary {
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    font-weight: 600;
+    color: #e6edf3;
+    list-style: none;
+    gap: 12px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: '▸';
+    color: var(--muted);
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  details[open] summary::after { transform: rotate(90deg); }
+  details[open] summary { border-bottom: 1px solid var(--border); }
+  .details-body { padding: 16px; }
+
+  .summary-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .summary-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  /* ─── BUG ITEMS ─── */
+  .bug-list { display: flex; flex-direction: column; gap: 10px; }
+  .bug-item {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    border-left-width: 3px;
+  }
+  .bug-item.major    { border-left-color: var(--red); }
+  .bug-item.minor    { border-left-color: var(--yellow); }
+  .bug-item.cosmetic { border-left-color: var(--muted); }
+  .bug-item.fixed    { border-left-color: var(--green); opacity: 0.75; }
+  .bug-item .bug-title { font-weight: 600; color: #e6edf3; margin-bottom: 4px; font-size: 13px; }
+  .bug-item .bug-desc  { color: var(--muted); font-size: 12px; }
+
+  .sev-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+  .sev-major    { background: var(--red-bg); color: var(--red); }
+  .sev-minor    { background: var(--yellow-bg); color: var(--yellow); }
+  .sev-cosmetic { background: #1c2128; color: var(--muted); }
+  .sev-fixed    { background: var(--green-bg); color: var(--green); }
+
+  /* ─── SCORE BREAKDOWN ─── */
+  .score-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .score-item {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .score-item-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .score-item-val { font-size: 22px; font-weight: 700; color: #e6edf3; }
+  .score-item-weight { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--bg-card2);
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--blue);
+  }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.yellow { background: var(--yellow); }
+  .progress-fill.red { background: var(--red); }
+
+  /* ─── DEPLOY CARDS ─── */
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .deploy-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .deploy-card-header {
+    background: linear-gradient(135deg, #1a2332 0%, #0d1a2d 100%);
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .deploy-card-header .game-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e6edf3;
+    margin-bottom: 6px;
+  }
+  .deploy-card-header .game-tagline {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .deploy-card-body { padding: 16px; }
+  .deploy-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue-bg);
+    border: 1px solid #1a3a6e;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--blue);
+    font-size: 13px;
+    word-break: break-all;
+    margin-bottom: 12px;
+  }
+  .deploy-link-icon { flex-shrink: 0; font-size: 16px; }
+  .deploy-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .deploy-stat {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .deploy-stat-val { font-size: 18px; font-weight: 700; color: var(--green); }
+  .deploy-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ─── TESTER ROW ─── */
+  .tester-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .tester-card {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .tester-name { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  .tester-score { font-size: 24px; font-weight: 700; color: #e6edf3; }
+  .tester-verdict { margin-top: 4px; }
+
+  /* ─── MISC ─── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  .list-plain { list-style: none; }
+  .list-plain li {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    gap: 8px;
+  }
+  .list-plain li:last-child { border-bottom: none; }
+  .list-plain li::before { content: '•'; color: var(--blue); flex-shrink: 0; }
+
+  .risks-list li::before { color: var(--yellow); }
+  .strengths-list li::before { color: var(--green); }
+
+  .inline-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px; height: 22px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+
+  .final-score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 8px 0;
+  }
+  .final-score-big { font-size: 36px; font-weight: 800; color: #e6edf3; }
+
+  .note-box {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .round-badge {
+    display: inline-block;
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <h1>AI Game Studio &mdash; 파이프라인 리포트</h1>
+  <div class="meta">
+    <span><span class="dot"></span>완료</span>
+    <span>Run ID: <strong>run-2026-03-04-001</strong></span>
+    <span>날짜: <strong>2026-03-04</strong></span>
+    <span>요청: <strong>2개</strong></span>
+    <span>배포: <strong>2개</strong></span>
+  </div>
+</header>
+
+<!-- KPI -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-val">6</div>
+    <div class="kpi-label">아이디어 생성</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-val">5</div>
+    <div class="kpi-label">중복제거 후 후보</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-val">3</div>
+    <div class="kpi-label">아이디어 PASS</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-val">2</div>
+    <div class="kpi-label">GDD 개발 승인</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-val" style="color:var(--green)">2</div>
+    <div class="kpi-label">배포 완료</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 1: PIPELINE TIMELINE
+══════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title"><span class="section-num">1</span>파이프라인 타임라인</h2>
+  <div class="timeline">
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 0</div>
+      <div class="tl-title">요청 접수 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">게임 2개 제작 요청 수신. 파이프라인 시작.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 1</div>
+      <div class="tl-title">아이디어 생성 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">3명의 크리에이터(spark, oddball, trendsetter)가 6개 아이디어 생성 → 1개 중복 제거 → 5개 후보.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 2</div>
+      <div class="tl-title">아이디어 검증 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">4명 심사위원이 5개 아이디어 채점. 3개 PASS (70점 이상), 2개 FAIL. 상위 2개 개발 선정.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 3</div>
+      <div class="tl-title">GDD 작성 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">Pulse Weaver & Fridge Tetris 전체 게임 디자인 문서 작성.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 4</div>
+      <div class="tl-title">기획 심사 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">3명 심사위원(builder, joy, profit)이 GDD 채점. 2개 모두 DEVELOP 판정.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 5</div>
+      <div class="tl-title">개발 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">두 게임 동시 개발. Phaser 3 기반 HTML5 게임 구현.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 6</div>
+      <div class="tl-title">테스트 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">3명 테스터(player-one, bugcatcher, adcheck)가 각 게임 검증. Fridge Tetris는 버그 수정 후 Round 2 재테스트.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 7</div>
+      <div class="tl-title">버그 수정 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">Fridge Tetris: 6개 버그 중 5개 수정. 텍스처 레이스 컨디션 해결.</div>
+    </div>
+    <div class="tl-item done">
+      <div class="tl-phase">Phase 8</div>
+      <div class="tl-title">배포 <span class="tl-badge done">완료</span></div>
+      <div class="tl-desc">GitHub Pages에 2개 게임 배포 완료. Slack 알림 발송.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 2: 아이디어 생성
+══════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title"><span class="section-num">2</span>아이디어 생성</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+    총 6개 생성 → 1개 중복 제거 → <strong style="color:#e6edf3">5개 후보</strong>
+  </p>
+  <div class="card-grid">
+
+    <div class="card">
+      <div class="card-title">Pulse Weaver</div>
+      <div class="card-subtitle">크리에이터: spark &nbsp;·&nbsp; idea-20260304-002</div>
+      <div class="card-body">쇼크웨이브 경로를 그려 생태계를 변환시키는 퍼즐. 순서에 따라 원소가 결합해 콤보를 만든다.</div>
+      <div style="margin-top:10px;">
+        <span class="tag">drag-input</span>
+        <span class="tag">chain-reaction</span>
+        <span class="tag">puzzle</span>
+        <span class="tag">elemental-combo</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Fridge Tetris</div>
+      <div class="card-subtitle">크리에이터: oddball &nbsp;·&nbsp; idea-20260304-003</div>
+      <div class="card-body">냉장고 안 남은 음식이 되어 새 식료품에 밀려 안쪽으로 밀리지 않게 생존하는 게임.</div>
+      <div style="margin-top:10px;">
+        <span class="tag">puzzle</span>
+        <span class="tag">humor</span>
+        <span class="tag">grid</span>
+        <span class="tag">survival</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Gravity Flip Chain</div>
+      <div class="card-subtitle">크리에이터: spark &nbsp;·&nbsp; idea-20260304-001</div>
+      <div class="card-body">완벽한 타이밍에 중력을 뒤집어 연쇄 반응을 만들어 블록을 클리어하는 게임.</div>
+      <div style="margin-top:10px;">
+        <span class="tag">physics</span>
+        <span class="tag">chain-reaction</span>
+        <span class="tag">one-tap</span>
+        <span class="tag">combo</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sock Singularity</div>
+      <div class="card-subtitle">크리에이터: oddball &nbsp;·&nbsp; idea-20260304-004</div>
+      <div class="card-body">건조기 안에서 짝 양말을 찾아 탭으로 방향을 제어하는 물리 기반 패턴 인식 게임.</div>
+      <div style="margin-top:10px;">
+        <span class="tag">humor</span>
+        <span class="tag">physics</span>
+        <span class="tag">pattern-recognition</span>
+        <span class="tag">absurd</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Crowd Rush Merge</div>
+      <div class="card-subtitle">크리에이터: trendsetter &nbsp;·&nbsp; idea-20260304-005</div>
+      <div class="card-body">달리면서 동일 번호 군중을 합쳐 게이트를 돌파하는 하이퍼캐주얼 러너.</div>
+      <div style="margin-top:10px;">
+        <span class="tag">hyper-casual</span>
+        <span class="tag">trending</span>
+        <span class="tag">merge</span>
+        <span class="tag">runner</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 3: 아이디어 검증
+══════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title"><span class="section-num">3</span>아이디어 검증</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+    통과 기준: <strong style="color:#e6edf3">70.0점 이상</strong> &nbsp;·&nbsp; 상위 2개 개발 진행
+  </p>
+  <div style="overflow-x:auto;">
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th>순위</th>
+        <th>게임</th>
+        <th>최종 점수</th>
+        <th>판정</th>
+        <th>비고</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="rank">#1</span></td>
+        <td class="game-name">Pulse Weaver</td>
+        <td><span class="score-num green">73.6</span></td>
+        <td><span class="badge pass">PASS</span></td>
+        <td style="color:var(--muted);font-size:12px;">개발 진행</td>
+      </tr>
+      <tr>
+        <td><span class="rank">#2</span></td>
+        <td class="game-name">Fridge Tetris</td>
+        <td><span class="score-num green">71.1</span></td>
+        <td><span class="badge pass">PASS</span></td>
+        <td style="color:var(--muted);font-size:12px;">개발 진행</td>
+      </tr>
+      <tr>
+        <td><span class="rank">#3</span></td>
+        <td class="game-name">Gravity Flip Chain</td>
+        <td><span class="score-num green">70.9</span></td>
+        <td><span class="badge backup">PASS (예비)</span></td>
+        <td style="color:var(--muted);font-size:12px;">백업 후보</td>
+      </tr>
+      <tr>
+        <td><span class="rank">#4</span></td>
+        <td class="game-name">Crowd Rush Merge</td>
+        <td><span class="score-num red">69.95</span></td>
+        <td><span class="badge fail">FAIL</span></td>
+        <td style="color:var(--muted);font-size:12px;">0.05점 미달</td>
+      </tr>
+      <tr>
+        <td><span class="rank">#5</span></td>
+        <td class="game-name">Sock Singularity</td>
+        <td><span class="score-num red">69.25</span></td>
+        <td><span class="badge fail">FAIL</span></td>
+        <td style="color:var(--muted);font-size:12px;">&mdash;</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 4: 기획 심사 (GDD 평가)
+══════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title"><span class="section-num">4</span>기획 심사</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+    심사위원 3명 (builder × 0.40 / joy × 0.35 / profit × 0.25) &nbsp;·&nbsp; 통과 기준: <strong style="color:#e6edf3">70점 이상</strong>
+  </p>
+
+  <!-- Fridge Tetris GDD -->
+  <details open>
+    <summary>
+      <div class="summary-left">
+        <span>Fridge Tetris</span>
+        <span class="badge develop">DEVELOP</span>
+      </div>
+      <div class="summary-right">
+        <span class="score-num green">82.2</span>
+      </div>
+    </summary>
+    <div class="details-body">
+      <div class="score-breakdown">
+        <div class="score-item">
+          <div class="score-item-label">Builder (구현성)</div>
+          <div class="score-item-val">77.5</div>
+          <div class="score-item-weight">가중치 40%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:77.5%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-label">Joy (재미)</div>
+          <div class="score-item-val" style="color:var(--green)">84.5</div>
+          <div class="score-item-weight">가중치 35%</div>
+          <div class="progress-bar"><div class="progress-fill green" style="width:84.5%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-label">Profit (수익)</div>
+          <div class="score-item-val" style="color:var(--green)">86.5</div>
+          <div class="score-item-weight">가중치 25%</div>
+          <div class="progress-bar"><div class="progress-fill green" style="width:86.5%"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">주요 강점</div>
+        <ul class="list-plain strengths-list">
+          <li>독창적이고 매력적인 콘셉트 — 강한 감성 훅 (먹힘 = 승리)</li>
+          <li>파동 타이머 공식 및 난이도 테이블이 구현 가능한 수준으로 정밀 명세</li>
+          <li>6개 광고 배치, 자연스러운 세션 통합</li>
+          <li>해결 가능성 보장 — 불가능한 상태 방지 설계</li>
+        </ul>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">주요 리스크</div>
+        <ul class="list-plain risks-list">
+          <li>가변 크기 아이템(1x1~2x2) BFS 해결 가능성 확인이 복잡</li>
+          <li>Phaser Canvas + DOM SVG 혼합 렌더링: 60fps 보장 어려울 수 있음</li>
+          <li>game.js 범위가 광범위 (그리드, 드래그, 오디오, 웨이브 관리)</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <!-- Pulse Weaver GDD -->
+  <details>
+    <summary>
+      <div class="summary-left">
+        <span>Pulse Weaver</span>
+        <span class="badge develop">DEVELOP</span>
+      </div>
+      <div class="summary-right">
+        <span class="score-num green">76.9</span>
+      </div>
+    </summary>
+    <div class="details-body">
+      <div class="score-breakdown">
+        <div class="score-item">
+          <div class="score-item-label">Builder (구현성)</div>
+          <div class="score-item-val">74.5</div>
+          <div class="score-item-weight">가중치 40%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:74.5%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-label">Joy (재미)</div>
+          <div class="score-item-val">77.5</div>
+          <div class="score-item-weight">가중치 35%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:77.5%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-label">Profit (수익)</div>
+          <div class="score-item-val" style="color:var(--green)">79.5</div>
+          <div class="score-item-weight">가중치 25%</div>
+          <div class="progress-bar"><div class="progress-fill green" style="width:79.5%"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">주요 강점</div>
+        <ul class="list-plain strengths-list">
+          <li>최고 수준의 출시 준비 완성도 — 개발자가 즉시 코딩 시작 가능한 GDD</li>
+          <li>변환 문법 테이블 완전 명세 (3원소 콤보 및 펄스 분열 포함)</li>
+          <li>Web Audio API 기반 오디오 완전 명세 — 외부 파일 없음</li>
+          <li>단계별 튜토리얼 설계 우수 (Stage 1-5 각각 하나의 개념 도입)</li>
+        </ul>
+      </div>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">주요 리스크</div>
+        <ul class="list-plain risks-list">
+          <li>game.js / stages.js가 300줄 초과 예상</li>
+          <li>BFS 해결 가능성 확인이 메인 스레드 블로킹 가능 (51+ 스테이지 절차 생성)</li>
+          <li>펄스 분열(Crystal→Prism: 4개 서브 펄스) 구현 복잡도 높음</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 5: 테스트 결과
+══════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title"><span class="section-num">5</span>테스트 결과</h2>
+
+  <!-- ── Pulse Weaver Tests ── -->
+  <details open>
+    <summary>
+      <div class="summary-left">
+        <span>Pulse Weaver</span>
+        <span class="round-badge">Round 1</span>
+        <span class="badge ship">SHIP</span>
+      </div>
+      <div class="summary-right">
+        <span class="score-num green">74.7</span>
+      </div>
+    </summary>
+    <div class="details-body">
+
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600;">테스터별 점수</div>
+      <div class="tester-grid">
+        <div class="tester-card">
+          <div class="tester-name">player-one</div>
+          <div class="tester-score">74.5</div>
+          <div class="tester-verdict"><span class="badge ship" style="font-size:10px">SHIP</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">스테이지 11 도달, 최고 8,178점</div>
+        </div>
+        <div class="tester-card">
+          <div class="tester-name">bugcatcher</div>
+          <div class="tester-score">86.5</div>
+          <div class="tester-verdict"><span class="badge ship" style="font-size:10px">SHIP</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">버그 0 blocker, 0 major</div>
+        </div>
+        <div class="tester-card">
+          <div class="tester-name">adcheck</div>
+          <div class="tester-score">56.0</div>
+          <div class="tester-verdict"><span class="badge revise" style="font-size:10px">NEEDS_WORK</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">광고 훅 일부 미연결</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="two-col">
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">발견된 버그</div>
+          <div class="bug-list">
+            <div class="bug-item minor">
+              <div class="bug-title"><span class="sev-badge sev-minor">minor</span>BUG-001 / 일시정지 버튼 탭 영역 작음</div>
+              <div class="bug-desc">일시정지(❚❚) 버튼의 인터랙티브 영역이 ~20×18px로 좁아 여러 번 클릭 필요.</div>
+            </div>
+            <div class="bug-item cosmetic">
+              <div class="bug-title"><span class="sev-badge sev-cosmetic">cosmetic</span>BUG-002 / favicon 404</div>
+              <div class="bug-desc">페이지 로드마다 /favicon.ico 404 오류 발생. 콘솔 노이즈.</div>
+            </div>
+            <div class="bug-item cosmetic">
+              <div class="bug-title"><span class="sev-badge sev-cosmetic">cosmetic</span>BUG-003 / 유휴 피드백 없음</div>
+              <div class="bug-desc">12초 이상 미입력 시 아무런 힌트/애니메이션 없음.</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">광고 이슈</div>
+          <div class="bug-list">
+            <div class="bug-item minor">
+              <div class="bug-title"><span class="sev-badge sev-minor">medium</span>PW-AD-001 / 점수 보상 광고 미연결</div>
+              <div class="bug-desc">showRewardedForScore()가 AdManager에 구현되어 있으나 어디서도 호출 안 됨.</div>
+            </div>
+            <div class="bug-item minor">
+              <div class="bug-title"><span class="sev-badge sev-minor">medium</span>PW-AD-002 / 세션 빈도 카운터 미동작</div>
+              <div class="bug-desc">interstitialShownThisSession 값이 선언만 되고 갱신 안 됨.</div>
+            </div>
+            <div class="bug-item cosmetic">
+              <div class="bug-title"><span class="sev-badge sev-cosmetic">low</span>PW-AD-003 / 실패 후 보상 광고 없음</div>
+              <div class="bug-desc">실패 시 재도전 보상 광고 미구현. 모바일 표준 패턴 누락.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note-box">
+        <strong>버그 요약:</strong> Blocker 0 / Major 0 / Minor 1 / Cosmetic 2. 출시 가능 상태. 광고 최적화는 다음 버전에서 개선 권장.
+      </div>
+    </div>
+  </details>
+
+  <!-- ── Fridge Tetris Tests ── -->
+  <details open>
+    <summary>
+      <div class="summary-left">
+        <span>Fridge Tetris</span>
+        <span class="round-badge">Round 1 → 버그 수정 → Round 2</span>
+        <span class="badge ship">SHIP</span>
+      </div>
+      <div class="summary-right">
+        <span style="font-size:12px;color:var(--muted)">R1: </span>
+        <span class="score-num yellow" style="margin-right:8px">55.3</span>
+        <span style="font-size:12px;color:var(--muted)">R2: </span>
+        <span class="score-num green">72.0</span>
+      </div>
+    </summary>
+    <div class="details-body">
+
+      <!-- Round 1 -->
+      <div style="font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:10px;">Round 1 테스트</div>
+      <div class="tester-grid">
+        <div class="tester-card">
+          <div class="tester-name">player-one</div>
+          <div class="tester-score">61.0</div>
+          <div class="tester-verdict"><span class="badge revise" style="font-size:10px">REVISE</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">웨이브 18 도달, 최고 4,660점</div>
+        </div>
+        <div class="tester-card">
+          <div class="tester-name">bugcatcher</div>
+          <div class="tester-score">37.0</div>
+          <div class="tester-verdict"><span class="badge fail" style="font-size:10px">FAIL</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">Major 3개 포함 6개 버그</div>
+        </div>
+        <div class="tester-card">
+          <div class="tester-name">adcheck</div>
+          <div class="tester-score">76.5</div>
+          <div class="tester-verdict"><span class="badge pass" style="font-size:10px">PASS</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">광고 구조 양호</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">Round 1 발견 버그 (6개)</div>
+      <div class="bug-list">
+        <div class="bug-item major">
+          <div class="bug-title"><span class="sev-badge sev-major">major</span>BUG-001 / 텍스처 키 충돌 — 재시작 시 아이템이 검은 사각형으로 렌더링</div>
+          <div class="bug-desc">2번째 플레이부터 모든 아이템이 검은 사각형으로 표시. 원인: Phaser 텍스처 매니저에 이미 등록된 키를 재등록 시도. (root: async addBase64 레이스 컨디션)</div>
+        </div>
+        <div class="bug-item major">
+          <div class="bug-title"><span class="sev-badge sev-major">major</span>BUG-002 / 데스크탑 방향 감지 오류 — 게임 완전 차단</div>
+          <div class="bug-desc">screen.orientation.type API 사용으로 데스크탑에서 항상 landscape 판정. 전체 데스크탑 사용자 접근 불가.</div>
+        </div>
+        <div class="bug-item major">
+          <div class="bug-title"><span class="sev-badge sev-major">major</span>BUG-003 / 검은 박스 렌더링 (BUG-001 파생)</div>
+          <div class="bug-desc">다중 재시작 후 그리드 아이템이 검은 직사각형으로 표시.</div>
+        </div>
+        <div class="bug-item minor">
+          <div class="bug-title"><span class="sev-badge sev-minor">minor</span>BUG-004 / 메인 메뉴 깨진 이미지</div>
+          <div class="bug-desc">SHOP 버튼 아래 검은 박스 노출. 누락 에셋 또는 잘못된 경로.</div>
+        </div>
+        <div class="bug-item cosmetic">
+          <div class="bug-title"><span class="sev-badge sev-cosmetic">cosmetic</span>BUG-005 / favicon 404</div>
+          <div class="bug-desc">콘솔 노이즈.</div>
+        </div>
+        <div class="bug-item minor">
+          <div class="bug-title"><span class="sev-badge sev-minor">minor</span>BUG-006 / 오버레이 우회 시 Wave 3부터 시작</div>
+          <div class="bug-desc">오버레이 강제 숨김 시 게임이 Wave 3 상태에서 시작됨.</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Bug Fix -->
+      <div style="font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:10px;">버그 수정 결과 (6개 중 5개 완료)</div>
+      <div class="bug-list">
+        <div class="bug-item fixed">
+          <div class="bug-title"><span class="sev-badge sev-fixed">수정완료</span>BUG-001/003 / 텍스처 레이스 컨디션</div>
+          <div class="bug-desc">BootScene에서 모든 텍스처를 한 번만 사전 등록. GameScene 재시작 시 중복 등록 없음. Round 2에서 시각적으로 확인.</div>
+        </div>
+        <div class="bug-item fixed">
+          <div class="bug-title"><span class="sev-badge sev-fixed">수정완료</span>BUG-004 / 메인 메뉴 깨진 이미지</div>
+          <div class="bug-desc">인라인 SVG 파비콘 적용. 타이틀 화면 정상 표시 확인.</div>
+        </div>
+        <div class="bug-item fixed">
+          <div class="bug-title"><span class="sev-badge sev-fixed">수정완료</span>BUG-005 / favicon 404</div>
+          <div class="bug-desc">index.html에 인라인 SVG 파비콘 추가. 404 오류 0건 확인.</div>
+        </div>
+        <div class="bug-item fixed">
+          <div class="bug-title"><span class="sev-badge sev-fixed">수정완료</span>광고 smell blocker / gameOverCount 리셋</div>
+          <div class="bug-desc">HUD 파워업 버튼이 AdManager.showRewardedSmellBlocker()를 올바르게 호출. resetRun()에서 gameOverCount 리셋 확인.</div>
+        </div>
+        <div class="bug-item major">
+          <div class="bug-title"><span class="sev-badge sev-major">미수정</span>BUG-002 / 데스크탑 방향 감지</div>
+          <div class="bug-desc">window.innerWidth &lt; window.innerHeight 체크 후에도 데스크탑 landscape에서 오버레이 표시. 터치 감지 우회(!('ontouchstart' in window)) 미구현.</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Round 2 -->
+      <div style="font-size:13px;font-weight:600;color:#e6edf3;margin-bottom:10px;">Round 2 재테스트</div>
+      <div class="tester-grid">
+        <div class="tester-card">
+          <div class="tester-name">통합 QA 점수</div>
+          <div class="tester-score" style="color:var(--green)">72.0</div>
+          <div class="tester-verdict"><span class="badge pass" style="font-size:10px">PARTIAL PASS</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">5/6 버그 수정 확인</div>
+        </div>
+      </div>
+      <div class="note-box" style="border-left-color:var(--yellow)">
+        <strong>Round 2 판정:</strong> 5개 버그 수정 완료. 잔존 이슈: 데스크탑 landscape 오버레이 미수정 (High). 모바일 배포 환경에서는 정상 작동. 배포 진행.
+      </div>
+
+    </div>
+  </details>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SECTION 6: 배포
+══════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <h2 class="section-title"><span class="section-num">6</span>배포</h2>
+  <div class="deploy-grid">
+
+    <div class="deploy-card">
+      <div class="deploy-card-header">
+        <div class="game-title">Pulse Weaver</div>
+        <div class="game-tagline">쇼크웨이브 경로를 그려 생태계를 변환시키는 퍼즐 게임</div>
+      </div>
+      <div class="deploy-card-body">
+        <a class="deploy-link" href="https://jireh-father.github.io/ai-game-studio/pulse-weaver/" target="_blank" rel="noopener">
+          <span class="deploy-link-icon">&#127760;</span>
+          jireh-father.github.io/ai-game-studio/pulse-weaver/
+        </a>
+        <div class="deploy-stats">
+          <div class="deploy-stat">
+            <div class="deploy-stat-val">74.7</div>
+            <div class="deploy-stat-label">테스트 점수</div>
+          </div>
+          <div class="deploy-stat">
+            <div class="deploy-stat-val">0</div>
+            <div class="deploy-stat-label">Blocker 버그</div>
+          </div>
+          <div class="deploy-stat">
+            <div class="deploy-stat-val">11</div>
+            <div class="deploy-stat-label">테스트 스테이지</div>
+          </div>
+          <div class="deploy-stat">
+            <div class="deploy-stat-val"><span class="badge ship" style="font-size:12px">SHIP</span></div>
+            <div class="deploy-stat-label">판정</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="deploy-card">
+      <div class="deploy-card-header">
+        <div class="game-title">Fridge Tetris</div>
+        <div class="game-tagline">냉장고 속 남은 음식이 되어 새 식료품에 밀리지 않고 생존하는 게임</div>
+      </div>
+      <div class="deploy-card-body">
+        <a class="deploy-link" href="https://jireh-father.github.io/ai-game-studio/fridge-tetris/" target="_blank" rel="noopener">
+          <span class="deploy-link-icon">&#127760;</span>
+          jireh-father.github.io/ai-game-studio/fridge-tetris/
+        </a>
+        <div class="deploy-stats">
+          <div class="deploy-stat">
+            <div class="deploy-stat-val">72.0</div>
+            <div class="deploy-stat-label">Round 2 점수</div>
+          </div>
+          <div class="deploy-stat">
+            <div class="deploy-stat-val">5/6</div>
+            <div class="deploy-stat-label">버그 수정</div>
+          </div>
+          <div class="deploy-stat">
+            <div class="deploy-stat-val">18</div>
+            <div class="deploy-stat-label">도달 웨이브</div>
+          </div>
+          <div class="deploy-stat">
+            <div class="deploy-stat-val"><span class="badge ship" style="font-size:12px">SHIP</span></div>
+            <div class="deploy-stat-label">판정</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  AI Game Studio &mdash; 자동 게임 제작 파이프라인 &nbsp;·&nbsp; Run: run-2026-03-04-001 &nbsp;·&nbsp; 2026-03-04
+</footer>
+
+</div>
+</body>
+</html>
