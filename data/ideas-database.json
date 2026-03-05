@@ -26,6 +26,9 @@
     {"id":"idea-20260305-021","title":"Noodle Lasso","slug":"noodle-lasso","creator":"trendsetter","score":71.3,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["trending","hyper-casual","one-drag","physics","food-humor"]},
     {"id":"idea-20260305-026","title":"Swipe Dojo","slug":"swipe-dojo","creator":"trendsetter","score":71.2,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["rhythm","reflex","combat","swipe","trending"]},
     {"id":"idea-20260305-016","title":"Spam Call Smash","slug":"spam-call-smash","creator":"oddball","score":70.8,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["reflex","pattern-recognition","humor","tap","sorting"]},
-    {"id":"idea-20260305-030","title":"Flip Burger","slug":"flip-burger","creator":"trendsetter","score":69.6,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["timing","reflex","food","hyper-casual","trending"]}
+    {"id":"idea-20260305-030","title":"Flip Burger","slug":"flip-burger","creator":"trendsetter","score":69.6,"status":"shipped","run_id":"run-2026-03-05-001","mechanic_tags":["timing","reflex","food","hyper-casual","trending"]},
+    {"id":"idea-20260305-032","title":"Ricochet Bloom","slug":"ricochet-bloom","creator":"spark","score":73,"status":"scrapped","run_id":"run-2026-03-05-002","mechanic_tags":["physics","flick","chain-reaction","splitting","emergent","painting"]},
+    {"id":"idea-20260305-034","title":"Microwave Roulette","slug":"microwave-roulette","creator":"oddball","score":72,"status":"shipped","run_id":"run-2026-03-05-002","mechanic_tags":["timing","precision-tap","humor","absurd","reflex","anticipation"]},
+    {"id":"idea-20260305-035","title":"Toilet Unclogger","slug":"toilet-unclogger","creator":"oddball","score":71,"status":"shipped","run_id":"run-2026-03-05-002","mechanic_tags":["rapid-tap","rhythm","humor","gross","multitask","reflex"]}
   ]
 }

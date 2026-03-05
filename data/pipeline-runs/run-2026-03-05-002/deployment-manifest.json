@@ -1,0 +1,12 @@
+{
+  "run_id": "run-2026-03-05-002",
+  "deployed_at": "2026-03-05T03:40:00Z",
+  "commit_hash": "39d5c62",
+  "games_deployed": ["microwave-roulette", "toilet-unclogger"],
+  "games_scrapped": ["ricochet-bloom"],
+  "urls": {
+    "microwave-roulette": "https://jireh-father.github.io/ai-game-studio/microwave-roulette/",
+    "toilet-unclogger": "https://jireh-father.github.io/ai-game-studio/toilet-unclogger/"
+  },
+  "verification_passed": true
+}
