@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Game Studio - Game Catalog</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;
+  --border:#2a2a3a;--text:#e8e6f0;--text2:#8a889a;
+  --accent:#ff3366;--accent2:#7b2ff7;--accent3:#00e5a0;
+  --glow:rgba(255,51,102,0.15);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Space Mono',monospace;background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(123,47,247,0.12),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(255,51,102,0.08),transparent);
+  pointer-events:none;z-index:0;
+}
+.noise{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  opacity:0.03;pointer-events:none;z-index:1;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.container{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* Header */
+header{padding:80px 0 60px;text-align:center}
+.logo{
+  font-family:'Syne',sans-serif;font-size:clamp(2.4rem,6vw,4.2rem);font-weight:800;
+  letter-spacing:-0.03em;line-height:1.1;
+  background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--accent2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.subtitle{
+  font-size:0.8rem;color:var(--text2);margin-top:16px;letter-spacing:0.15em;text-transform:uppercase;
+}
+.stats-bar{
+  display:flex;gap:32px;justify-content:center;margin-top:32px;flex-wrap:wrap;
+}
+.stat{
+  display:flex;flex-direction:column;align-items:center;
+}
+.stat-num{
+  font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);
+}
+.stat-label{font-size:0.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.12em;margin-top:4px}
+
+/* Filter */
+.filter-bar{
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+  padding:24px 0 48px;
+}
+.filter-btn{
+  padding:8px 18px;border:1px solid var(--border);border-radius:99px;
+  background:transparent;color:var(--text2);font-family:'Space Mono',monospace;
+  font-size:0.75rem;cursor:pointer;transition:all 0.2s;letter-spacing:0.03em;
+}
+.filter-btn:hover,.filter-btn.active{
+  border-color:var(--accent);color:var(--accent);background:var(--glow);
+}
+
+/* Grid */
+.grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;padding-bottom:80px;
+}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px;position:relative;overflow:hidden;
+  transition:all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+  cursor:pointer;text-decoration:none;display:block;color:inherit;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));
+  opacity:0;transition:opacity 0.3s;
+}
+.card:hover{
+  border-color:var(--accent);transform:translateY(-4px);
+  box-shadow:0 12px 40px rgba(255,51,102,0.1),0 4px 16px rgba(0,0,0,0.3);
+}
+.card:hover::before{opacity:1}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;
+  line-height:1.3;flex:1;
+}
+.card-run{
+  font-size:0.6rem;color:var(--text2);padding:4px 10px;
+  border:1px solid var(--border);border-radius:99px;
+  white-space:nowrap;margin-left:12px;
+}
+.card-pitch{
+  font-size:0.78rem;color:var(--text2);line-height:1.6;margin-bottom:16px;
+}
+.card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tag{
+  font-size:0.6rem;padding:3px 8px;border-radius:4px;
+  background:var(--surface2);color:var(--text2);letter-spacing:0.03em;
+}
+.card-footer{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-top:16px;border-top:1px solid var(--border);
+}
+.score{
+  font-family:'Syne',sans-serif;font-weight:700;
+}
+.score.high{color:var(--accent3)}
+.score.mid{color:#f0c040}
+.score.low{color:var(--accent)}
+.creator{font-size:0.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em}
+.play-hint{
+  font-size:0.7rem;color:var(--accent);opacity:0;transition:opacity 0.3s;
+  display:flex;align-items:center;gap:4px;
+}
+.card:hover .play-hint{opacity:1}
+
+/* Reports section */
+.section-title{
+  font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;
+  margin-bottom:24px;padding-top:40px;
+  border-top:1px solid var(--border);
+}
+.report-list{
+  display:flex;flex-direction:column;gap:10px;padding-bottom:80px;
+}
+.report-link{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 20px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;text-decoration:none;color:var(--text);
+  transition:all 0.2s;font-size:0.85rem;
+}
+.report-link:hover{border-color:var(--accent2);background:var(--surface2)}
+.report-link span:last-child{color:var(--text2);font-size:0.7rem}
+
+/* Footer */
+footer{
+  text-align:center;padding:40px 0;border-top:1px solid var(--border);
+  font-size:0.65rem;color:var(--text2);
+}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.card{animation:fadeUp 0.5s ease both}
+.grid .card:nth-child(1){animation-delay:0.02s}
+.grid .card:nth-child(2){animation-delay:0.04s}
+.grid .card:nth-child(3){animation-delay:0.06s}
+.grid .card:nth-child(4){animation-delay:0.08s}
+.grid .card:nth-child(5){animation-delay:0.10s}
+.grid .card:nth-child(6){animation-delay:0.12s}
+.grid .card:nth-child(7){animation-delay:0.14s}
+.grid .card:nth-child(8){animation-delay:0.16s}
+.grid .card:nth-child(9){animation-delay:0.18s}
+.grid .card:nth-child(10){animation-delay:0.20s}
+.grid .card:nth-child(n+11){animation-delay:0.22s}
+
+@media(max-width:640px){
+  header{padding:48px 0 36px}
+  .grid{grid-template-columns:1fr;gap:14px}
+  .stats-bar{gap:20px}
+  .card{padding:20px}
+}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+  <header>
+    <div class="logo">AI Game Studio</div>
+    <div class="subtitle">Autonomous Agent Pipeline — Shipped Games Catalog</div>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-num" id="game-count">0</span><span class="stat-label">Games Shipped</span></div>
+      <div class="stat"><span class="stat-num" id="run-count">0</span><span class="stat-label">Pipeline Runs</span></div>
+      <div class="stat"><span class="stat-num" id="creator-count">0</span><span class="stat-label">Ideators</span></div>
+    </div>
+  </header>
+
+  <div class="filter-bar" id="filters"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="section-title">Pipeline Reports</div>
+  <div class="report-list" id="reports"></div>
+
+  <footer>
+    Built by AI agents. Zero human code. &mdash; AI Game Studio &copy; 2026
+    <br><br>
+    <a href="https://github.com/jireh-father/ai-game-studio" style="color:var(--accent);text-decoration:none">GitHub Repository</a>
+  </footer>
+</div>
+
+<script>
+const BASE = '';
+const GAMES = [
+  {slug:"alarm-slap",title:"Alarm Slap",pitch:"Frantically slap snoozing alarms before they wake the whole house",tags:["reflex","tap","swipe","whack-a-mole","panic"],score:77.3,creator:"oddball",run:"run-2026-03-04-002"},
+  {slug:"shatter-chain",title:"Shatter Chain",pitch:"Flick a ball to shatter glass — chain reactions score big",tags:["physics","chain-reaction","flick","destruction"],score:80.4,creator:"spark",run:"run-2026-03-04-002"},
+  {slug:"pulse-weaver",title:"Pulse Weaver",pitch:"Draw paths between pulsing nodes to create elemental combos",tags:["chain-reaction","puzzle","drag-input","elemental-combo"],score:null,creator:"spark",run:"run-2026-03-04-001"},
+  {slug:"fridge-tetris",title:"Fridge Tetris",pitch:"Stuff oversized food into a tiny fridge before it overflows",tags:["puzzle","humor","time-pressure","grid","survival"],score:null,creator:"oddball",run:"run-2026-03-04-001"},
+  {slug:"flip-burger",title:"Flip Burger",pitch:"Time your flips to stack the perfect burger tower",tags:["timing","reflex","food","hyper-casual"],score:null,creator:"trendsetter",run:"run-2026-03-05-001"},
+  {slug:"swipe-dojo",title:"Swipe Dojo",pitch:"Match directional swipes to incoming attacks in rapid combat",tags:["rhythm","reflex","combat","swipe"],score:null,creator:"trendsetter",run:"run-2026-03-05-001"},
+  {slug:"spin-clash",title:"Spin Clash",pitch:"Flick your spinner to clash against enemies with physics-based combat",tags:["physics","flick","combat","survival","momentum"],score:null,creator:"spark",run:"run-2026-03-05-001"},
+  {slug:"wrecking-swing",title:"Wrecking Swing",pitch:"Swing a wrecking ball to demolish structures with perfect timing",tags:["physics","one-tap","timing","destruction"],score:null,creator:"spark",run:"run-2026-03-05-001"},
+  {slug:"escalator-chaos",title:"Escalator Chaos",pitch:"Swipe commuters onto the right escalators before gridlock",tags:["swipe","sorting","crowd","time-pressure","humor"],score:null,creator:"oddball",run:"run-2026-03-05-001"},
+  {slug:"tidal-rush",title:"Tidal Rush",pitch:"One-tap runner dodging rising tidal waves",tags:["endless-runner","one-tap","survival","water"],score:null,creator:"trendsetter",run:"run-2026-03-05-001"},
+  {slug:"spam-call-smash",title:"Spam Call Smash",pitch:"Smash incoming spam calls — don't hit the real ones!",tags:["reflex","pattern-recognition","humor","tap"],score:null,creator:"oddball",run:"run-2026-03-05-001"},
+  {slug:"noodle-lasso",title:"Noodle Lasso",pitch:"Lasso flying noodles with a drag-to-catch mechanic",tags:["hyper-casual","one-drag","physics","food-humor"],score:null,creator:"trendsetter",run:"run-2026-03-05-001"},
+  {slug:"rope-riot",title:"Rope Riot",pitch:"Drag ropes to trap and fling enemies in physics mayhem",tags:["physics","drag-input","combat","survival","reflex"],score:null,creator:"spark",run:"run-2026-03-05-001"},
+  {slug:"magma-flow",title:"Magma Flow",pitch:"Draw channels to guide magma before it overflows",tags:["drawing","physics","fluid-simulation","time-pressure"],score:null,creator:"spark",run:"run-2026-03-05-001"},
+  {slug:"microwave-roulette",title:"Microwave Roulette",pitch:"Stop the microwave at exactly the right time — or BOOM",tags:["timing","precision-tap","humor","absurd","reflex"],score:73.7,creator:"oddball",run:"run-2026-03-05-002"},
+  {slug:"toilet-unclogger",title:"Toilet Unclogger",pitch:"Rapid-tap the plunger to unclog increasingly insane toilets",tags:["rapid-tap","rhythm","humor","gross","reflex"],score:71.2,creator:"oddball",run:"run-2026-03-05-002"},
+  {slug:"shadow-dodge",title:"Shadow Dodge",pitch:"Dodge by reading enemy shadow telegraphs",tags:["dodge","prediction","shadows","visual","reflex"],score:73.6,creator:"trendsetter",run:"run-2026-03-05-003"},
+  {slug:"plate-spinner",title:"Plate Spinner",pitch:"Keep multiple plates spinning — drop one and it's over",tags:["multitask","timing","plates","chaos","stress"],score:73.5,creator:"trendsetter",run:"run-2026-03-05-003"},
+  {slug:"pendulum-panic",title:"Pendulum Panic",pitch:"Swing pendulums to smash targets with precision timing",tags:["physics","timing","pendulum","smash","precision"],score:73.5,creator:"spark",run:"run-2026-03-05-003"},
+  {slug:"slingshot-stack",title:"Slingshot Stack",pitch:"Slingshot blocks to build the tallest tower",tags:["physics","stacking","slingshot","aim","tower"],score:72.6,creator:"spark",run:"run-2026-03-05-003"},
+  {slug:"soap-escape",title:"Soap Escape",pitch:"Guide a slippery soap bar through a bathroom obstacle course",tags:["physics","slip","dodge","comedy","bathroom"],score:70.6,creator:"oddball",run:"run-2026-03-05-003"},
+  {slug:"crane-claw-frenzy",title:"Crane Claw Frenzy",pitch:"Operate an arcade claw machine under time pressure",tags:["claw","timing","physics","prizes","arcade"],score:69.9,creator:"trendsetter",run:"run-2026-03-05-003"},
+  {slug:"whack-a-mole-mayhem",title:"Whack-a-Mole Mayhem",pitch:"Classic whack-a-mole with bombs, combos, and chaos",tags:["whack-a-mole","reflex","arcade","bombs","classic"],score:69.8,creator:"trendsetter",run:"run-2026-03-05-003"},
+  {slug:"bounce-gauntlet",title:"Bounce Gauntlet",pitch:"Aim and bounce through a gauntlet of precision challenges",tags:["physics","aiming","bounce","gauntlet","precision"],score:69.6,creator:"spark",run:"run-2026-03-05-003"},
+  {slug:"chopstick-rush",title:"Chopstick Rush",pitch:"Grab sushi off a conveyor belt with clumsy chopsticks",tags:["dexterity","chopsticks","sushi","conveyor","food"],score:69.0,creator:"trendsetter",run:"run-2026-03-05-003"},
+  {slug:"bedtime-ninja",title:"Bedtime Ninja",pitch:"Sneak past sleeping family members without waking them",tags:["stealth","timing","comedy","sneak","family"],score:68.0,creator:"oddball",run:"run-2026-03-05-003"},
+];
+
+const REPORTS = [
+  {id:"run-2026-03-05-003",label:"Run 005 — 10 games (Shadow Dodge, Plate Spinner, ...)"},
+  {id:"run-2026-03-05-002",label:"Run 004 — 3 games (Microwave Roulette, Toilet Unclogger, Ricochet Bloom)"},
+  {id:"run-2026-03-05-001",label:"Run 003 — 10 games (Flip Burger, Swipe Dojo, ...)"},
+  {id:"run-2026-03-04-002",label:"Run 002 — 3 games (Alarm Slap, Shatter Chain, Stack Panic)"},
+  {id:"run-2026-03-04-001",label:"Run 001 — 2 games (Pulse Weaver, Fridge Tetris)"},
+];
+
+// Stats
+const runs = new Set(GAMES.map(g=>g.run));
+const creators = new Set(GAMES.map(g=>g.creator));
+document.getElementById('game-count').textContent = GAMES.length;
+document.getElementById('run-count').textContent = runs.size;
+document.getElementById('creator-count').textContent = creators.size;
+
+// Filters
+const allRuns = [...runs].sort().reverse();
+const filterBar = document.getElementById('filters');
+const allBtn = document.createElement('button');
+allBtn.className='filter-btn active';allBtn.textContent='All';allBtn.dataset.run='all';
+filterBar.appendChild(allBtn);
+allRuns.forEach(r=>{
+  const b=document.createElement('button');
+  b.className='filter-btn';b.textContent=r.replace('run-2026-','R').replace('-00','#');
+  b.dataset.run=r;filterBar.appendChild(b);
+});
+
+filterBar.addEventListener('click',e=>{
+  if(!e.target.classList.contains('filter-btn'))return;
+  filterBar.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  renderGrid(e.target.dataset.run);
+});
+
+function renderGrid(runFilter){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  const filtered=runFilter==='all'?GAMES:GAMES.filter(g=>g.run===runFilter);
+  filtered.forEach(g=>{
+    const scoreClass=g.score>=75?'high':g.score>=65?'mid':'low';
+    const card=document.createElement('a');
+    card.className='card';card.href=`${BASE}${g.slug}/`;card.target='_blank';card.rel='noopener';
+    card.innerHTML=`
+      <div class="card-head">
+        <div class="card-title">${g.title}</div>
+        <div class="card-run">${g.run.replace('run-2026-','').replace('-00','#')}</div>
+      </div>
+      <div class="card-pitch">${g.pitch}</div>
+      <div class="card-tags">${g.tags.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="card-footer">
+        <span class="score ${scoreClass}">${g.score?g.score.toFixed(1):'—'}</span>
+        <span class="creator">${g.creator}</span>
+        <span class="play-hint">PLAY &#8599;</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+renderGrid('all');
+
+// Reports
+const reportList=document.getElementById('reports');
+REPORTS.forEach(r=>{
+  const a=document.createElement('a');
+  a.className='report-link';a.href=`${BASE}reports/${r.id}.html`;a.target='_blank';a.rel='noopener';
+  a.innerHTML=`<span>${r.label}</span><span>View Report &#8599;</span>`;
+  reportList.appendChild(a);
+});
+</script>
+</body>
+</html>
