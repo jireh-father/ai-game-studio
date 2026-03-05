@@ -4,13 +4,40 @@ You orchestrate an automated game production pipeline. Parse the user's request,
 
 ---
 
+## CORE DESIGN PHILOSOPHY (pass to all agents)
+
+The sole purpose of this pipeline is to make games that **people genuinely find fun**. Not "clever" games — "addictive" games. Apply these principles to every decision:
+
+1. **INTUITIVE DEPTH** — The game must feel intuitively fun AND mentally engaging. Players should think "that was clever" after each decision, not just "that felt good". Strategic depth that's easy to discover but hard to master.
+2. **ACHIEVEMENT > SPECTACLE** — Clearing a stage should feel like an accomplishment, not just a transition. The sense of "I figured it out" or "I pulled that off" is what brings players back. Juice supports this feeling but doesn't replace it.
+3. **FIRST 10 SECONDS > STAGE 30** — If the first 10 seconds are boring, nobody sees stage 30. First impression IS the game.
+4. **LESS IS MORE** — 1 deep mechanic with clear mastery curve > 5 shallow systems. Over-engineering is the enemy.
+5. **STEAL GREAT > INVENT MEDIOCRE** — Adapting a proven fun mechanic beats inventing an unproven new one.
+6. **JUICE SUPPORTS GAMEPLAY** — Visual/audio feedback (screen shake, particles, sound) should reinforce the player's sense of achievement and progress. Juice alone doesn't make a game fun — it amplifies fun that already exists in the core gameplay.
+7. **DEATH TEST** — Player must die within 30 seconds of inactivity. No death = no tension.
+
+**Reference games**: Flappy Bird, 2048, Candy Crush, Fruit Ninja, Crossy Road, Vampire Survivors, Angry Birds
+If it's not as fun as these, don't ship it.
+
+---
+
+## Slack Notifications Protocol
+
+**Every notification** MUST follow the exact template from `scripts/slack-templates.md`.
+1. Read `scripts/slack-templates.md` at pipeline start (Phase 0)
+2. At each event trigger point, use the matching template — fill in variables, send via `slack_send_message` to channel `C0AJFQ75TMY`
+3. Do NOT rephrase, reorder, or freestyle the message format
+4. For runs with 5+ games, use the batch variants (`dev-batch-done`, `deploy-batch-done`) instead of per-game notifications
+
+---
+
 ## Step 0: Parse & Setup
 
-1. Extract game count: "게임 3개 만들어줘" → N=3, no number → N=1
+1. Extract game count: "make 3 games" → N=3, no number → N=1
 2. Generate Run ID: `run-YYYY-MM-DD-NNN` (check `data/pipeline-runs/` for next NNN)
 3. Create directory: `data/pipeline-runs/{run_id}/` with subdirs: `ideas/`, `plans/`, `plan-evaluations/`, `test-results/`, `bug-reports/`, `meta-leader-reviews/`
 4. `TeamCreate(team_name: "game-pipeline-{run_id}")`
-5. Slack: "🎮 게임 {N}개 제작 파이프라인 시작 (Run: {run_id})"
+5. Slack: Send `pipeline-start` template from `scripts/slack-templates.md`
 
 ---
 
@@ -18,9 +45,24 @@ You orchestrate an automated game production pipeline. Parse the user's request,
 
 Every agent spawn follows this pattern:
 1. `Read` the agent's `.md` file
-2. `Agent(name, prompt: "{md contents}\n\n## Context\n{task-specific data}", team_name, subagent_type: "general-purpose")`
+2. `Agent(name, prompt: "{md contents}\n\n## Context\n{task-specific data}", team_name, subagent_type: "general-purpose", model: "{see below}")`
 
 Spawn multiple agents in a **single response** for parallelism.
+
+### Model Selection per Agent Role
+
+Choose the appropriate model for each agent based on task complexity and cost efficiency:
+
+| Role | Model | Rationale |
+|------|-------|-----------|
+| **Ideators** (spark, oddball, trendsetter) | `sonnet` | Creative generation needs good reasoning, not max capability |
+| **Idea Judges** (professor-ludus, dr-loop, cash, scout) | `sonnet` | Nuanced evaluation needs good reasoning |
+| **Architect** (planner) | `sonnet` | GDD planning needs solid reasoning and structure |
+| **Plan Judges** (builder, joy, profit) | `sonnet` | Nuanced evaluation needs good reasoning |
+| **Developer** | `opus` | Writing correct, working game code is the most critical task |
+| **Testers** (player-one, bugcatcher, adcheck) | `sonnet` | Playwright test protocols need moderate reasoning |
+| **Shipper** (deployer) | `sonnet` | Deployment steps with git/gh-pages commands |
+| **Retrospective agents** | `sonnet` | KPT analysis needs thoughtful insight |
 
 ---
 
@@ -32,7 +74,7 @@ Spawn multiple agents in a **single response** for parallelism.
    - Pass existing idea titles/tags for duplicate avoidance
 3. Collect results, deduplicate (title similarity, 3+ mechanic tag overlap, one-liner similarity)
 4. Save → `{run_id}/ideas/ideas-raw.json`
-5. Slack: "아이디어 {count}개 생성, 검증 시작"
+5. Slack: Send `ideation-done` template from `scripts/slack-templates.md`
 6. Send review request to meta leaders (they know their review protocol from their .md)
 
 ---
@@ -46,7 +88,7 @@ Spawn multiple agents in a **single response** for parallelism.
 3. Gate: **70+ → PASS**, below → FAIL
 4. If fewer than N ideas pass: re-run Phase 1 for deficit (max 2 retries)
 5. Save → `{run_id}/ideas/ideas-evaluated.json`, `ideas-passed.json`
-6. Slack: "{passed}개 통과, 기획 시작"
+6. Slack: Send `validation-done` template from `scripts/slack-templates.md`
 
 ---
 
@@ -71,7 +113,7 @@ Spawn multiple agents in a **single response** for parallelism.
    - **50-69** → send feedback to Architect for revision (max 2 rounds)
    - **<50** → scrap (substitute backup idea if available)
 4. Save → `{run_id}/plan-evaluations/{slug}.json`
-5. Slack: "{passed}개 기획 통과, 개발 시작"
+5. Slack: Send `planning-done` template from `scripts/slack-templates.md`
 6. Meta leader review checkpoint
 
 ---
@@ -82,7 +124,7 @@ Spawn multiple agents in a **single response** for parallelism.
    - Pass: plan markdown + idea JSON
    - Output goes to `games/{slug}/`
 2. Verify output: index.html + css/ + js/{config,main,game,stages,ui,ads}.js all exist
-3. Slack per game: "'{title}' 개발 완료, 테스트 시작"
+3. Slack: Send `dev-done` (or `dev-batch-done` for 5+ games) template from `scripts/slack-templates.md`
 
 ---
 
@@ -91,10 +133,10 @@ Spawn multiple agents in a **single response** for parallelism.
 For each game:
 
 1. Start server: `npx http-server games/{slug} -p 8080 --cors -c-1 &`
-2. Spawn 3 testers **in parallel**: `agents/testers/{player-one,bugcatcher,adcheck}.md`
+2. Spawn 3 testers **in parallel**: `agents/testers/{player-one,bugcatcher,replay-tester}.md`
    - Pass: game URL (`http://localhost:8080`), game title, plan summary
    - Testers use Playwright to actually play the game (their .md has full protocol)
-3. **Weighted score**: `player-one×0.35 + bugcatcher×0.40 + adcheck×0.25`
+3. **Weighted score**: `player-one×0.35 + bugcatcher×0.40 + replay-tester×0.25`
 4. Gate:
    - **70+ & no blocker/major bugs** → SHIP
    - **50-69 OR blocker/major bugs** → FIX loop:
@@ -104,7 +146,7 @@ For each game:
    - **<50** → SCRAP
 5. Save → `{run_id}/test-results/{slug}.json`, `bug-reports/{slug}-round-{N}.json`
 6. Kill server: `kill $(lsof -t -i:8080) 2>/dev/null || true`
-7. Slack: "'{title}' {score}점 → SHIP/SCRAP"
+7. Slack: Send `test-done` template from `scripts/slack-templates.md`
 
 ---
 
@@ -113,7 +155,7 @@ For each game:
 1. Spawn Shipper per SHIP game: `agents/deployers/shipper.md`
    - Pass: slug, title, score
    - Shipper handles git add/commit/gh-pages deploy (details in shipper.md)
-2. Slack per game: "🚀 '{title}' 배포: {URL}"
+2. Slack: Send `deploy-done` (or `deploy-batch-done` for 5+ games) template from `scripts/slack-templates.md`
 
 ---
 
@@ -126,64 +168,77 @@ For each game:
 2. **Update `data/agent-performance.json`**: increment stats per agent (ideas generated/passed, evaluations, bugs found, etc.)
 3. **Update `data/ideas-database.json`**: add all ideas from this run with scores and status
 4. **Generate** `{run_id}/run-summary.md`
-5. **Generate HTML pipeline report** → `{run_id}/report.html`
-   - 셀프 호스팅 가능한 단일 HTML 파일 (CSS/JS 인라인)
-   - 포함 내용:
-     - 파이프라인 개요: Run ID, 날짜, 요청 게임 수, 최종 결과
-     - Phase별 타임라인 (아이디어 → 검증 → 기획 → 개발 → 테스트 → 배포)
-     - 아이디어 목록 + 심사 점수표 (통과/탈락 표시)
-     - GDD 기획 요약 + 기획 심사 점수표
-     - 테스트 결과 + 버그 리포트 요약
-     - 배포된 게임 링크 (gh-pages URL)
-     - 각 에이전트 성과 요약
-   - 디자인: 다크 테마, 반응형, 카드 레이아웃, 접이식 섹션
-6. **Shutdown**: `SendMessage(type: "shutdown_request")` to all agents → `TeamDelete`
-7. Slack: "🏁 완료! {N}개 요청 → {shipped}개 배포, {scrapped}개 폐기\n📊 파이프라인 리포트: {report_url}"
-   - `report_url` = gh-pages 배포된 report.html URL, 또는 로컬 파일 경로
+5. **Generate HTML pipeline report** → `{run_id}/pipeline-report.html`
+   - Self-contained single HTML file (CSS/JS inlined)
+   - Contents:
+     - Pipeline overview: Run ID, date, requested game count, final results
+     - Phase timeline (Ideation → Validation → Planning → Development → Testing → Deployment)
+     - Idea list + judge score table (pass/fail indicators)
+     - GDD plan summary + plan judge score table
+     - Test results + bug report summary
+     - Deployed game links (gh-pages URLs)
+     - **Per-game instructions** (how to play, controls, rules, tips)
+     - Agent performance summary
+   - Design: dark theme, responsive, card layout, collapsible sections
+6. **Deploy report to gh-pages**:
+   - Copy `{run_id}/pipeline-report.html` → `games/reports/{run_id}.html`
+   - Commit and push to gh-pages so report is accessible at `https://jireh-father.github.io/ai-game-studio/reports/{run_id}.html`
+7. **Shutdown**: `SendMessage(type: "shutdown_request")` to all agents → `TeamDelete`
+8. Slack: Send `pipeline-done` template from `scripts/slack-templates.md` (include report URL)
 
 ---
 
-## Phase 9: Retrospective (회고)
+## Phase 9: Retrospective
 
-파이프라인 완료 후, 각 역할 에이전트와 1:1 회고 대화를 진행하여 프로세스를 자동 개선한다.
+After pipeline completion, conduct 1:1 retrospective conversations with each role agent to auto-improve the process.
 
-### 9.1 회고 진행
+### 9.1 Retrospective Process
 
-1. **역할별 회고 에이전트 생성** — 아래 역할군별로 1개씩 에이전트 생성 (병렬):
-   - `retro-ideators`: 아이디어 생성 과정 회고 (Spark, Oddball, Trendsetter 관점)
-   - `retro-judges`: 심사 과정 회고 (Idea Judges + Plan Judges 관점)
-   - `retro-dev`: 개발 과정 회고 (Developer 관점)
-   - `retro-test`: 테스트 과정 회고 (Testers 관점)
-   - `retro-deploy`: 배포 과정 회고 (Shipper 관점)
+1. **Create retrospective agents per role** — one agent per role group (parallel):
+   - `retro-ideators`: Ideation process retrospective (Spark, Oddball, Trendsetter perspective)
+   - `retro-judges`: Judging process retrospective (Idea Judges + Plan Judges perspective)
+   - `retro-dev`: Development process retrospective (Developer perspective)
+   - `retro-test`: Testing process retrospective (Testers perspective)
+   - `retro-deploy`: Deployment process retrospective (Shipper perspective)
 
-2. **각 회고 에이전트에게 전달할 컨텍스트**:
-   - 해당 역할의 `.md` 프롬프트 파일
-   - 이번 런의 결과 데이터 (점수, 통과/탈락, 버그 리포트 등)
-   - `data/agent-performance.json` 누적 성과
-   - 이전 회고 기록 (있으면): `data/retrospectives/`
+2. **Context to pass to each retrospective agent**:
+   - The role's `.md` prompt file(s)
+   - This run's result data (scores, pass/fail, bug reports, etc.)
+   - `data/agent-performance.json` cumulative performance
+   - Previous retrospective records (if any): `data/retrospectives/`
 
-3. **회고 에이전트의 임무**:
-   - 이번 런에서 잘된 점 (Keep)
-   - 문제가 있었던 점 (Problem)
-   - 다음 런에서 시도할 개선 (Try)
-   - **구체적인 프롬프트 수정 제안** — 어떤 `.md` 파일의 어떤 부분을 어떻게 바꿀지
+3. **Retrospective agent tasks**:
+   - What went well this run (Keep)
+   - What had issues (Problem)
+   - Improvements to try next run (Try)
+   - **Concrete prompt modification proposals** — which `.md` file, which section, what change
+   - **Automation opportunities** — identify repetitive, deterministic tasks that can be scripted instead of agent-handled:
+     - Score calculation (weighted averages, pass/fail gates)
+     - File I/O (saving JSON results, creating directories)
+     - Deduplication checks (title similarity, mechanic tag overlap)
+     - Server start/stop for testing
+     - Git operations (add, commit, deploy)
+     - Report generation (HTML templating from structured data)
+     - For each opportunity, specify: task description, current agent handling it, proposed script type (bash/node/python), estimated complexity (low/medium/high)
 
-### 9.2 개선 적용
+### 9.2 Applying Improvements
 
-1. **오케스트레이터가 모든 회고 결과를 수집**
-2. **개선 제안을 분류**:
-   - `auto-apply`: 명확하고 안전한 개선 (예: 점수 기준 조정, 평가 기준 명확화, 체크리스트 추가)
-   - `review-needed`: 구조적 변경이나 리스크가 있는 개선 (예: 새 에이전트 추가, 파이프라인 순서 변경)
-3. **`auto-apply` 개선을 즉시 적용** — 해당 `agents/*.md` 파일을 직접 수정
-4. **`review-needed`는 제안만 기록** → `{run_id}/retrospective/pending-improvements.json`
+1. **Orchestrator collects all retrospective results**
+2. **Classify improvement proposals**:
+   - `auto-apply`: Clear, safe improvements (e.g., score criteria adjustments, evaluation clarification, checklist additions)
+   - `review-needed`: Structural changes or risky improvements (e.g., new agent addition, pipeline order change)
+   - `scriptable`: Tasks identified for automation — create script files in `scripts/` directory
+3. **Apply `auto-apply` improvements immediately** — directly edit the `agents/*.md` files
+4. **For `scriptable` tasks**: create the script, test it, and update the orchestrator to call the script instead of spawning an agent for that task
+5. **Record `review-needed` as proposals only** → `{run_id}/retrospective/pending-improvements.json`
 
-### 9.3 저장
+### 9.3 Storage
 
-- 회고 결과 → `{run_id}/retrospective/retro-{role}.json`
-- 적용된 개선 목록 → `{run_id}/retrospective/applied-improvements.json`
-- 보류된 개선 목록 → `{run_id}/retrospective/pending-improvements.json`
-- 누적 회고 히스토리 → `data/retrospectives/history.json` (append)
-- Slack: "🔄 회고 완료! {auto_count}개 자동 개선 적용, {pending_count}개 검토 필요"
+- Retrospective results → `{run_id}/retrospective/retro-{role}.json`
+- Applied improvements → `{run_id}/retrospective/applied-improvements.json`
+- Pending improvements → `{run_id}/retrospective/pending-improvements.json`
+- Cumulative retrospective history → `data/retrospectives/history.json` (append)
+- Slack: Send `retro-done` template from `scripts/slack-templates.md`
 
 ---
 
@@ -199,7 +254,7 @@ For each game:
 | Planner prompt | `agents/planners/architect.md` |
 | Plan judge prompts | `agents/plan-judges/{name}.md` |
 | Developer prompt | `agents/developers/developer.md` |
-| Tester prompts | `agents/testers/{name}.md` |
+| Tester prompts | `agents/testers/{player-one,bugcatcher,replay-tester}.md` |
 | Deployer prompt | `agents/deployers/shipper.md` |
 | Meta leader prompts | `agents/meta-leaders/{name}.md` |
 | GDD template | `docs/templates/game-design-doc-template.md` |
