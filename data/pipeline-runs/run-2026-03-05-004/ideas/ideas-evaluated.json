@@ -1,0 +1,42 @@
+{
+  "run_id": "run-2026-03-05-004",
+  "evaluation_method": "triple-track-gate",
+  "threshold": 72,
+  "passed_at_threshold": 1,
+  "fallback": "top-10-selection",
+  "selected": 10,
+  "ideas_evaluated": [
+    {"id":"idea-20260305-083","title":"Balloon Pump Panic","slug":"balloon-pump-panic","creator":"trendsetter","game_type":"reflex","scores":{"ludus":69,"loop":76,"devil":67,"cash":76,"scout":71},"tracks":{"reflex":72.5,"brain":71.3,"creative":70.6},"best_track":"reflex","best_score":72.5,"status":"passed"},
+    {"id":"idea-20260305-082","title":"Taxi Drift Stack","slug":"taxi-drift-stack","creator":"trendsetter","game_type":"reflex","scores":{"ludus":72,"loop":70,"devil":71,"cash":73,"scout":72},"tracks":{"reflex":71.2,"brain":71.6,"creative":71.4},"best_track":"brain","best_score":71.6,"status":"passed"},
+    {"id":"idea-20260305-094","title":"Reverse Mirror","slug":"reverse-mirror","creator":"visionary","game_type":"creative","scores":{"ludus":74,"loop":69,"devil":70,"cash":68,"scout":60},"tracks":{"reflex":66.9,"brain":70.8,"creative":68.0},"best_track":"brain","best_score":70.8,"status":"passed"},
+    {"id":"idea-20260305-072","title":"Valve Panic","slug":"valve-panic","creator":"spark","game_type":"reflex","scores":{"ludus":71,"loop":64,"devil":72,"cash":74,"scout":55},"tracks":{"reflex":65.3,"brain":70.5,"creative":65.0},"best_track":"brain","best_score":70.5,"status":"passed"},
+    {"id":"idea-20260305-086","title":"Parkour Tap","slug":"parkour-tap","creator":"trendsetter","game_type":"reflex","scores":{"ludus":66,"loop":71,"devil":73,"cash":71,"scout":66},"tracks":{"reflex":70.3,"brain":69.8,"creative":68.4},"best_track":"reflex","best_score":70.3,"status":"passed"},
+    {"id":"idea-20260305-073","title":"Shockwave Hop","slug":"shockwave-hop","creator":"spark","game_type":"reflex","scores":{"ludus":55,"loop":72,"devil":68,"cash":72,"scout":68},"tracks":{"reflex":70.0,"brain":65.1,"creative":64.9},"best_track":"reflex","best_score":70.0,"status":"passed"},
+    {"id":"idea-20260305-098","title":"Time Thief","slug":"time-thief","creator":"visionary","game_type":"creative","scores":{"ludus":68,"loop":71,"devil":71,"cash":69,"scout":54},"tracks":{"reflex":66.5,"brain":69.6,"creative":65.0},"best_track":"brain","best_score":69.6,"status":"passed"},
+    {"id":"idea-20260305-097","title":"Shrink Panic","slug":"shrink-panic","creator":"visionary","game_type":"creative","scores":{"ludus":65,"loop":74,"devil":68,"cash":72,"scout":63},"tracks":{"reflex":69.5,"brain":69.0,"creative":66.8},"best_track":"reflex","best_score":69.5,"status":"passed"},
+    {"id":"idea-20260305-084","title":"Conveyor Crunch","slug":"conveyor-crunch","creator":"trendsetter","game_type":"reflex","scores":{"ludus":63,"loop":68,"devil":69,"cash":70,"scout":50},"tracks":{"reflex":64.1,"brain":66.9,"creative":61.3},"best_track":"brain","best_score":66.9,"status":"passed"},
+    {"id":"idea-20260305-087","title":"Glass Walk","slug":"glass-walk","creator":"trendsetter","game_type":"reflex","scores":{"ludus":44,"loop":59,"devil":65,"cash":75,"scout":74},"tracks":{"reflex":66.7,"brain":58.5,"creative":60.2},"best_track":"reflex","best_score":66.7,"status":"passed"}
+  ],
+  "ideas_failed": [
+    {"id":"idea-20260305-074","title":"Fuse Trail","best_score":65.3,"status":"failed"},
+    {"id":"idea-20260305-095","title":"Lie Detector","best_score":64.8,"status":"failed"},
+    {"id":"idea-20260305-089","title":"Hex Collapse","best_score":64.3,"status":"failed"},
+    {"id":"idea-20260305-078","title":"Parking Lot Panic","best_score":63.8,"status":"failed"},
+    {"id":"idea-20260305-077","title":"Bubble Wrap Pop","best_score":63.5,"status":"failed"},
+    {"id":"idea-20260305-093","title":"Gravity Slide","best_score":63.3,"status":"failed"},
+    {"id":"idea-20260305-081","title":"Zipper Dash","best_score":62.7,"status":"failed"},
+    {"id":"idea-20260305-075","title":"Gear Grind","best_score":61.8,"status":"failed"},
+    {"id":"idea-20260305-080","title":"Elevator Rush","best_score":61.6,"status":"failed"},
+    {"id":"idea-20260305-088","title":"Signal Splice","best_score":61.2,"status":"failed"},
+    {"id":"idea-20260305-070","title":"Orbit Catcher","best_score":61.2,"status":"failed"},
+    {"id":"idea-20260305-076","title":"Lint Roller Frenzy","best_score":60.2,"status":"failed"},
+    {"id":"idea-20260305-079","title":"Sneeze Catcher","best_score":60.1,"status":"failed"},
+    {"id":"idea-20260305-091","title":"Loop Lock","best_score":59.8,"status":"failed"},
+    {"id":"idea-20260305-090","title":"Tile Alchemy","best_score":58.8,"status":"failed"},
+    {"id":"idea-20260305-085","title":"Meteor Munch","best_score":58.3,"status":"failed"},
+    {"id":"idea-20260305-096","title":"Gravity Auction","best_score":54.6,"status":"failed"},
+    {"id":"idea-20260305-092","title":"Digit Duel","best_score":51.7,"status":"failed"},
+    {"id":"idea-20260305-099","title":"Emotion Engine","best_score":48.7,"status":"failed"},
+    {"id":"idea-20260305-071","title":"Pinch Bridge","best_score":47.2,"status":"failed"}
+  ]
+}

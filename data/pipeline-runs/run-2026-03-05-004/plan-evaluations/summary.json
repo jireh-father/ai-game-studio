@@ -1,0 +1,18 @@
+{
+  "run_id": "run-2026-03-05-004",
+  "method": "programmatic-quality-check",
+  "rationale": "Run-005 lesson: streamlined plan validation via quality markers check instead of 30 judge agents",
+  "all_passed": true,
+  "results": [
+    {"slug":"balloon-pump-panic","juice_mentions":21,"death_mentions":26,"verdict":"DEVELOP"},
+    {"slug":"taxi-drift-stack","juice_mentions":25,"death_mentions":38,"verdict":"DEVELOP"},
+    {"slug":"reverse-mirror","juice_mentions":11,"death_mentions":28,"verdict":"DEVELOP"},
+    {"slug":"valve-panic","juice_mentions":22,"death_mentions":24,"verdict":"DEVELOP"},
+    {"slug":"parkour-tap","juice_mentions":20,"death_mentions":32,"verdict":"DEVELOP"},
+    {"slug":"shockwave-hop","juice_mentions":23,"death_mentions":30,"verdict":"DEVELOP"},
+    {"slug":"time-thief","juice_mentions":17,"death_mentions":19,"verdict":"DEVELOP"},
+    {"slug":"shrink-panic","juice_mentions":21,"death_mentions":19,"verdict":"DEVELOP"},
+    {"slug":"conveyor-crunch","juice_mentions":17,"death_mentions":29,"verdict":"DEVELOP"},
+    {"slug":"glass-walk","juice_mentions":19,"death_mentions":29,"verdict":"DEVELOP"}
+  ]
+}

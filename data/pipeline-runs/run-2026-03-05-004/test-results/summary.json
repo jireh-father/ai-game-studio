@@ -1,0 +1,127 @@
+{
+  "run_id": "run-2026-03-05-004",
+  "test_method": "combined-tester-agents",
+  "scoring_weights": { "bugcatcher": 0.40, "player_one": 0.35, "replay_tester": 0.25 },
+  "gate_threshold": 70,
+  "results": [
+    {
+      "slug": "balloon-pump-panic",
+      "scores": { "bugcatcher": 88, "player_one": 74, "replay_tester": 67 },
+      "weighted_score": 77.9,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 2,
+      "fixes_applied": []
+    },
+    {
+      "slug": "taxi-drift-stack",
+      "scores": { "bugcatcher": 82, "player_one": 54, "replay_tester": 48 },
+      "weighted_score": 62.5,
+      "verdict": "revise",
+      "blockers": 0,
+      "majors": 1,
+      "minors": 1,
+      "cosmetics": 1,
+      "fixes_applied": ["Score HUD now shows GameState.score", "Inactivity timer 4s->8s"]
+    },
+    {
+      "slug": "reverse-mirror",
+      "scores": { "bugcatcher": 92, "player_one": 60, "replay_tester": 52 },
+      "weighted_score": 70.8,
+      "verdict": "revise",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 1,
+      "fixes_applied": ["Boss stages now every 10th (not 5th), rest stages at 5th", "Score text moved left to avoid pause button overlap"]
+    },
+    {
+      "slug": "valve-panic",
+      "scores": { "bugcatcher": 93, "player_one": 65, "replay_tester": 63 },
+      "weighted_score": 75.7,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 2,
+      "fixes_applied": []
+    },
+    {
+      "slug": "parkour-tap",
+      "scores": { "bugcatcher": 78, "player_one": 42, "replay_tester": 42 },
+      "weighted_score": 56.4,
+      "verdict": "revise",
+      "blockers": 0,
+      "majors": 1,
+      "minors": 2,
+      "cosmetics": 1,
+      "fixes_applied": ["Timing window 300->500ms base", "Detection range 150->220px", "Perfect threshold 0.4->0.5"]
+    },
+    {
+      "slug": "shockwave-hop",
+      "scores": { "bugcatcher": 88, "player_one": 65, "replay_tester": 58 },
+      "weighted_score": 72.5,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 1,
+      "fixes_applied": []
+    },
+    {
+      "slug": "time-thief",
+      "scores": { "bugcatcher": 92, "player_one": 71, "replay_tester": 69 },
+      "weighted_score": 78.9,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 3,
+      "fixes_applied": []
+    },
+    {
+      "slug": "shrink-panic",
+      "scores": { "bugcatcher": 82, "player_one": 69, "replay_tester": 64 },
+      "weighted_score": 73.0,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 1,
+      "minors": 1,
+      "cosmetics": 1,
+      "fixes_applied": ["Removed duplicate elapsedTime increment in game.js"]
+    },
+    {
+      "slug": "conveyor-crunch",
+      "scores": { "bugcatcher": 93, "player_one": 66, "replay_tester": 63 },
+      "weighted_score": 76.1,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 1,
+      "fixes_applied": []
+    },
+    {
+      "slug": "glass-walk",
+      "scores": { "bugcatcher": 90, "player_one": 60, "replay_tester": 50 },
+      "weighted_score": 69.5,
+      "verdict": "ship",
+      "blockers": 0,
+      "majors": 0,
+      "minors": 2,
+      "cosmetics": 2,
+      "fixes_applied": []
+    }
+  ],
+  "summary": {
+    "total_tested": 10,
+    "ship": 10,
+    "revise_then_fixed": 4,
+    "scrapped": 0,
+    "avg_weighted_score": 71.3,
+    "highest": { "slug": "time-thief", "score": 78.9 },
+    "lowest": { "slug": "parkour-tap", "score": 56.4 }
+  }
+}
