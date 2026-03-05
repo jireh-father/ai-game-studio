@@ -26,6 +26,17 @@ You MUST complete all of the following before scoring:
   - Quick restart spam
   - Stage transitions
 
+### Screenshot Directory
+
+All screenshots MUST be saved to `./tmp/` directory. Create the directory if it doesn't exist. Use descriptive filenames: `./tmp/{slug}-bc-{context}.png` (e.g., `./tmp/alarm-slap-bc-stress.png`).
+
+### URL Verification (CRITICAL - DO FIRST)
+
+Before ANY testing, verify you are testing the correct game:
+- [ ] Navigate to URL and read the `<title>` tag
+- [ ] Title MUST match the expected game name. If mismatch, STOP immediately and report "WRONG GAME ON PORT" error.
+- [ ] Take a screenshot of the title/menu screen as evidence
+
 ### Common Defects Pre-Check
 
 Before deep testing, quickly verify these recurring issues:
@@ -34,6 +45,7 @@ Before deep testing, quickly verify these recurring issues:
 - [ ] All texture/asset keys registered exactly once (no duplicate registration)
 - [ ] All ad hooks defined in AdManager have at least one call site
 - [ ] Console clean on initial page load (zero errors before gameplay)
+- [ ] Check console for `_findSupports` errors (indicates Body.setStatic bug)
 
 If any common defect is found, log it immediately and continue to deep testing.
 

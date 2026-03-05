@@ -1,23 +1,48 @@
 {
-  "version": 1,
-  "last_updated": "2026-03-04T00:00:00Z",
+  "version": 2,
+  "last_updated": "2026-03-04T13:20:00Z",
   "agents": {
-    "spark": { "ideas_generated": 0, "ideas_passed": 0, "avg_score": 0, "runs": [] },
-    "oddball": { "ideas_generated": 0, "ideas_passed": 0, "avg_score": 0, "runs": [] },
-    "trendsetter": { "ideas_generated": 0, "ideas_passed": 0, "avg_score": 0, "runs": [] },
-    "professor-ludus": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "dr-loop": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "cash": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "scout": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "architect": { "plans_created": 0, "plans_passed": 0, "avg_score": 0, "runs": [] },
-    "builder": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "joy": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "profit": { "evaluations": 0, "avg_score_given": 0, "runs": [] },
-    "developer": { "games_developed": 0, "games_shipped": 0, "bugs_fixed": 0, "avg_test_score": 0, "runs": [] },
-    "player-one": { "tests_conducted": 0, "bugs_found": 0, "avg_score_given": 0, "runs": [] },
-    "bugcatcher": { "tests_conducted": 0, "bugs_found": 0, "avg_score_given": 0, "runs": [] },
-    "adcheck": { "tests_conducted": 0, "bugs_found": 0, "avg_score_given": 0, "runs": [] },
-    "shipper": { "deployments": 0, "successful": 0, "runs": [] }
+    "spark": { "ideas_generated": 3, "ideas_passed": 1, "avg_score": 75.5, "runs": ["run-2026-03-04-002"] },
+    "oddball": { "ideas_generated": 3, "ideas_passed": 1, "avg_score": 74.8, "runs": ["run-2026-03-04-002"] },
+    "trendsetter": { "ideas_generated": 3, "ideas_passed": 1, "avg_score": 74.3, "runs": ["run-2026-03-04-002"] },
+    "professor-ludus": { "evaluations": 9, "avg_score_given": 77, "runs": ["run-2026-03-04-002"] },
+    "dr-loop": { "evaluations": 9, "avg_score_given": 72, "runs": ["run-2026-03-04-002"] },
+    "cash": { "evaluations": 9, "avg_score_given": 80, "runs": ["run-2026-03-04-002"] },
+    "scout": { "evaluations": 9, "avg_score_given": 72.5, "runs": ["run-2026-03-04-002"] },
+    "architect": { "plans_created": 3, "plans_passed": 3, "avg_score": 80.1, "runs": ["run-2026-03-04-002"] },
+    "builder": { "evaluations": 3, "avg_score_given": 74.7, "runs": ["run-2026-03-04-002"] },
+    "joy": { "evaluations": 3, "avg_score_given": 84.3, "runs": ["run-2026-03-04-002"] },
+    "profit": { "evaluations": 3, "avg_score_given": 83, "runs": ["run-2026-03-04-002"] },
+    "developer": { "games_developed": 3, "games_shipped": 2, "bugs_fixed": 3, "avg_test_score": 73.8, "runs": ["run-2026-03-04-002"] },
+    "player-one": { "tests_conducted": 4, "bugs_found": 0, "avg_score_given": 52.6, "runs": ["run-2026-03-04-002"] },
+    "bugcatcher": { "tests_conducted": 5, "bugs_found": 8, "avg_score_given": 72, "runs": ["run-2026-03-04-002"] },
+    "replay-tester": { "tests_conducted": 3, "bugs_found": 0, "avg_score_given": 56, "runs": ["run-2026-03-04-002"] },
+    "adcheck": { "tests_conducted": 1, "bugs_found": 2, "avg_score_given": 75, "runs": ["run-2026-03-04-002"], "note": "Replaced by replay-tester mid-run" },
+    "shipper": { "deployments": 1, "successful": 1, "games_deployed": 2, "runs": ["run-2026-03-04-002"] }
   },
-  "meta_leader_decisions": []
+  "evolution_agents": {
+    "game-analyzer": { "runs": ["evo-shatter-chain-001"], "composite_score": 8.3, "verdict": "retain" },
+    "mechanic-evolver": { "proposals_generated": 3, "proposals_selected": 2, "avg_review_score": 72.0, "runs": ["evo-shatter-chain-001"], "composite_score": 7.3, "verdict": "retain" },
+    "feel-evolver": { "proposals_generated": 3, "proposals_selected": 3, "avg_review_score": 76.0, "runs": ["evo-shatter-chain-001"], "composite_score": 8.0, "verdict": "retain" },
+    "content-evolver": { "proposals_generated": 3, "proposals_selected": 2, "avg_review_score": 71.0, "runs": ["evo-shatter-chain-001"], "composite_score": 7.0, "verdict": "improve" },
+    "meta-evolver": { "proposals_generated": 3, "proposals_selected": 2, "avg_review_score": 72.8, "runs": ["evo-shatter-chain-001"], "composite_score": 7.3, "verdict": "retain" },
+    "fun-evolver": { "proposals_generated": 3, "proposals_selected": 2, "avg_review_score": 79.2, "runs": ["evo-shatter-chain-001"], "composite_score": 8.7, "verdict": "retain", "note": "Star performer — Golden Roulette highest-scoring proposal" },
+    "design-evolver": { "proposals_generated": 3, "proposals_selected": 1, "avg_review_score": 76.0, "runs": ["evo-shatter-chain-001"], "composite_score": 6.7, "verdict": "improve" },
+    "upgrader": { "upgrades_completed": 5, "bugs_introduced": 2, "avg_test_score": 76.8, "runs": ["evo-shatter-chain-001", "evo-swipe-dojo-001"], "composite_score": 7.0, "verdict": "improve", "note": "Ice freeze setStatic bug in 2/5 teams" },
+    "evo-bugcatcher": { "tests_conducted": 5, "wrong_game_tests": 1, "bugs_found": 3, "runs": ["evo-shatter-chain-001"], "composite_score": 5.0, "verdict": "improve", "note": "Tested wrong game on T4 due to port collision" }
+  },
+  "meta_leader_decisions": [
+    {
+      "run": "evo-shatter-chain-001",
+      "date": "2026-03-05",
+      "decisions": [
+        "APPLIED: Add ice freeze anti-pattern to upgrader known bugs (#7)",
+        "APPLIED: Add post-implementation verification to upgrader prompt",
+        "APPLIED: Add URL title verification to bugcatcher prompt",
+        "APPLIED: Increase upgrader line limit 300->350",
+        "DEFERRED: Code Reviewer agent (evaluate after next run)",
+        "DEFERRED: Fun-evolver weight increase (need more data)"
+      ]
+    }
+  ]
 }
