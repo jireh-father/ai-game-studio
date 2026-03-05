@@ -1,0 +1,57 @@
+{
+  "run_id": "evo-shatter-chain-2026-03-05-001",
+  "base_game": "shatter-chain",
+  "date": "2026-03-05",
+  "teams_deployed": 5,
+  "commit": "ec62ce6",
+  "games": [
+    {
+      "slug": "shatter-chain-t1-v2",
+      "team": 1,
+      "direction": "Golden Chaos",
+      "features": ["Golden Panel Roulette", "Screen Crack Overlay", "Ball Personality"],
+      "score": 78,
+      "verdict": "SHIP",
+      "url": "https://jireh-father.github.io/ai-game-studio/shatter-chain-t1-v2/"
+    },
+    {
+      "slug": "shatter-chain-t2-v2",
+      "team": 2,
+      "direction": "Content Explosion",
+      "features": ["Glass Explosion Ragdoll", "Bomb/Ice Glass", "Game Over Stats Dashboard"],
+      "score": 72,
+      "verdict": "SHIP",
+      "bugs_fixed": ["Ice freeze Body.setStatic crash -> ignoreGravity + collisionFilter"],
+      "url": "https://jireh-father.github.io/ai-game-studio/shatter-chain-t2-v2/"
+    },
+    {
+      "slug": "shatter-chain-t3-v2",
+      "team": 3,
+      "direction": "Meta Progression",
+      "features": ["Screen Crack Overlay", "Chain Milestone Achievements", "Daily Shatter Challenge"],
+      "score": 78,
+      "verdict": "SHIP",
+      "url": "https://jireh-father.github.io/ai-game-studio/shatter-chain-t3-v2/"
+    },
+    {
+      "slug": "shatter-chain-t4-v2",
+      "team": 4,
+      "direction": "Pressure Cooker",
+      "features": ["Ball Personality", "Glass Fusion Timer", "Gravity Flip Zones"],
+      "score": 72,
+      "verdict": "SHIP",
+      "notes": "Original test scored 64 due to wrong-game port collision; features confirmed present in code",
+      "url": "https://jireh-father.github.io/ai-game-studio/shatter-chain-t4-v2/"
+    },
+    {
+      "slug": "shatter-chain-t5-v2",
+      "team": 5,
+      "direction": "Risk & Reward",
+      "features": ["Golden Panel Roulette", "Bomb/Ice Glass", "Chain Milestone Achievements"],
+      "score": 84,
+      "verdict": "SHIP",
+      "bugs_fixed": ["Ice freeze Body.setStatic crash -> ignoreGravity + collisionFilter"],
+      "url": "https://jireh-father.github.io/ai-game-studio/shatter-chain-t5-v2/"
+    }
+  ]
+}

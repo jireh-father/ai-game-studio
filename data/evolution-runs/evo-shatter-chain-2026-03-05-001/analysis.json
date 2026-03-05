@@ -1,0 +1,401 @@
+{
+  "game": "shatter-chain",
+  "title": "Shatter Chain",
+  "analysisDate": "2026-03-05",
+  "analyst": "Game Analyzer",
+
+  "codeInventory": {
+    "totalFiles": 11,
+    "totalLines": 1493,
+    "engine": "Phaser 3.60.0 with Matter.js physics",
+    "files": [
+      { "path": "index.html", "lines": 25, "role": "Entry point, CDN Phaser, script load order" },
+      { "path": "js/config.js", "lines": 170, "role": "Constants, physics config, collision categories, colors, Web Audio API sound functions" },
+      { "path": "js/game.js", "lines": 301, "role": "Core GameScene: arena setup, input handling, ball launch, update loop, HUD" },
+      { "path": "js/main.js", "lines": 47, "role": "Global GameState, Phaser config, scene registration" },
+      { "path": "js/ui.js", "lines": 281, "role": "BootScene (SVG textures), MenuScene, GameOverScene" },
+      { "path": "js/stages.js", "lines": 223, "role": "Difficulty params, seeded RNG, 6 layout patterns, glass types, barrier generation" },
+      { "path": "js/effects.js", "lines": 183, "role": "EffectsManager: floating scores, sparks, shake, zoom punch, hit-stop, slow-mo, trails" },
+      { "path": "js/collision.js", "lines": 155, "role": "CollisionMixin: ball-glass, shard-glass chain hits, shard spawning, body limit management" },
+      { "path": "js/flow.js", "lines": 157, "role": "FlowMixin: ball lost, wave clear bonuses, wave fail, continue prompt, game over" },
+      { "path": "js/ads.js", "lines": 51, "role": "Placeholder AdManager with continue and double score stubs" },
+      { "path": "css/style.css", "lines": 57, "role": "Responsive layout, landscape rotation prompt" }
+    ],
+    "sceneFlow": "BootScene -> MenuScene -> GameScene (loop per wave via restart) -> GameOverScene -> MenuScene/GameScene",
+    "inputHandlers": [
+      { "event": "pointerdown", "binding": "GameScene.onPointerDown", "purpose": "Start aiming in launch zone" },
+      { "event": "pointermove", "binding": "GameScene.onPointerMove", "purpose": "Draw trajectory preview" },
+      { "event": "pointerup", "binding": "GameScene.onPointerUp", "purpose": "Launch ball based on drag direction/distance" },
+      { "event": "collisionstart", "binding": "CollisionMixin.onCollision", "purpose": "Ball-glass, shard-glass, ball-floor collision dispatch" }
+    ],
+    "gameObjects": [
+      { "name": "Ball", "behavior": "Physics circle, launched from bottom, bounces off walls, triggers glass shattering on contact" },
+      { "name": "Glass Panel", "types": ["normal (1hp)", "reinforced (2hp)", "armored (3hp)"], "behavior": "Static bodies in arena, some move with sine wave motion" },
+      { "name": "Shard", "behavior": "Spawned from shattered glass, carries chain depth, can shatter other glass panels creating chain reactions" },
+      { "name": "Barrier", "behavior": "Rotating static obstacles that deflect balls and block paths" },
+      { "name": "Walls", "behavior": "Arena boundaries, floor triggers ball lost" }
+    ],
+    "mixinPattern": "GameScene uses Object.assign to mix in CollisionMixin and FlowMixin, splitting logic across 3 files"
+  },
+
+  "coreMechanicAnalysis": {
+    "coreVerb": "flick/drag",
+    "coreLoop": "Aim by dragging in launch zone -> Release to launch ball -> Ball hits glass panels -> Shards fly out and chain-hit other panels -> Score multiplies with chain depth -> Clear all panels or lose balls -> Repeat next wave",
+    "masteryCurve": {
+      "beginner": "Points ball roughly at glass cluster, relies on luck for chains, uses all 3 balls",
+      "intermediate": "Aims for dense panel clusters to maximize chain reactions, learns angle/speed control, clears with 2 balls",
+      "expert": "Calculates ricochet angles off walls, targets specific panels to trigger maximum cascades, achieves perfect cascade (1-ball clear) with speed bonus",
+      "depth": "Medium - angle precision matters, but physics chaos limits pure skill expression; strategic targeting of reinforced/armored panels adds planning depth"
+    },
+    "satisfactionSource": "The chain reaction cascade is the primary satisfaction source. Watching one shatter trigger 3+ more creates a domino effect that feels powerful. The escalating score multipliers (x2, x4, x8) with ascending audio chimes and intensifying visual effects amplify the 'one flick, total destruction' fantasy. Slow-mo on last ball adds drama."
+  },
+
+  "strengthAssessment": {
+    "mechanicDepth": {
+      "score": 6,
+      "notes": "Angle/power aiming with ricochet potential is solid. Chain mechanics add emergent depth. However, shard physics are semi-random - player influence on chain outcomes is limited after initial launch. No secondary mechanics (special powers, ball types, etc.)."
+    },
+    "juiceQuality": {
+      "score": 8,
+      "notes": "Excellent juice implementation: hit-stop on first impact, camera shake scaling with chain depth, zoom punch, floating score text, spark particles color-coded by chain depth, slow-mo on last ball and deep chains, ball trail, launch stretch animation, perfect cascade full-screen burst. Web Audio provides responsive sound. One of the best-juiced games in the catalog."
+    },
+    "contentVariety": {
+      "score": 7,
+      "notes": "6 layout patterns (rows, grid, diamond, pyramid, scattered, dense), 3 glass types with distinct HP, moving panels, rotating barriers, bonus waves every 5th, boss waves every 10th. 36+ difficulty tiers with progressive unlocking of mechanics. Good variety for a hypercasual."
+    },
+    "difficultyCurve": {
+      "score": 7,
+      "notes": "Well-designed 6-tier progression: easy intro (3 balls, normal glass) -> reinforced glass at w8 -> ball reduction to 2 at w13 -> moving panels -> armored glass + barriers at w21 -> endgame at w36+. Timer pressure adds urgency. Wave 12 warning about ball reduction is a nice touch. Bonus waves provide breather. Boss waves spike challenge."
+    },
+    "loopTightness": {
+      "score": 6,
+      "notes": "Wave clear -> 0.8s text display -> scene restart is reasonably fast. Wave fail -> 0.6s death effect -> continue prompt (5s timeout) or game over screen. The continue prompt adds friction. Scene restart per wave is heavier than needed. Game over -> play again requires navigating a full screen."
+    },
+    "visualAppeal": {
+      "score": 7,
+      "notes": "Clean dark navy aesthetic with glass blue accents. Hex grid background adds subtle depth. Glass panels with highlights and rivet details on armored type. Shard polygons with stroke. Timer bar with danger pulse. Decorative ball animation on menu. Consistent color palette. No sprite assets - all procedural, which keeps it lightweight but limits visual richness."
+    },
+    "codeQuality": {
+      "score": 8,
+      "notes": "Well-organized mixin pattern separating collision, flow, and effects into distinct files. Clear separation of concerns: config for constants, stages for generation, effects for juice. Seeded RNG for wave consistency. Physics body limit management prevents performance issues. Proper visibility change handling. Delayed body removal avoids Matter.js crash bug. Only issue: game.js at 301 lines slightly exceeds 300-line guideline."
+    }
+  },
+
+  "weaknessAssessment": [
+    {
+      "id": "W1",
+      "description": "No skill progression or unlockable content - every session starts identically with no meta-progression",
+      "severity": "major",
+      "impactArea": "meta",
+      "improvementPotential": "high",
+      "details": "No achievements, no unlockable ball skins, no permanent upgrades, no leaderboard beyond local high score. Players have zero reason to return beyond beating their own score."
+    },
+    {
+      "id": "W2",
+      "description": "Limited player agency in chain outcomes - shard trajectories are mostly random",
+      "severity": "major",
+      "impactArea": "mechanics",
+      "improvementPotential": "medium",
+      "details": "After launching the ball, the player has no further control. Chain reactions are emergent but largely luck-based. Shards scatter semi-randomly. This means skill ceiling is capped at initial aim quality."
+    },
+    {
+      "id": "W3",
+      "description": "No background music or ambient audio",
+      "severity": "minor",
+      "impactArea": "feel",
+      "improvementPotential": "medium",
+      "details": "Settings include a 'Music' toggle but no music is implemented. SFX are solid but the game feels silent between actions. Ambient glass hum or rhythmic beat would improve atmosphere."
+    },
+    {
+      "id": "W4",
+      "description": "Single ball type with no special abilities or power-ups",
+      "severity": "major",
+      "impactArea": "mechanics",
+      "improvementPotential": "high",
+      "details": "Every ball behaves identically. No fire balls, heavy balls, multi-balls, explosive balls, or other variants. This limits strategic variety and 'aha moment' potential."
+    },
+    {
+      "id": "W5",
+      "description": "No combo/streak tracking across waves for long-session engagement",
+      "severity": "minor",
+      "impactArea": "fun",
+      "improvementPotential": "medium",
+      "details": "Each wave is independent. No wave streak counter, no consecutive perfect bonus, no increasing multiplier for maintaining performance across waves."
+    },
+    {
+      "id": "W6",
+      "description": "Game over screen lacks compelling replay hook",
+      "severity": "minor",
+      "impactArea": "design",
+      "improvementPotential": "medium",
+      "details": "Game over shows score, wave, and best chain. No comparison to previous runs, no 'almost reached wave X' teaser, no challenge suggestion like 'try for a perfect cascade'. Replay friction is high."
+    },
+    {
+      "id": "W7",
+      "description": "No landscape rotation prompt element in HTML despite CSS rule",
+      "severity": "minor",
+      "impactArea": "design",
+      "improvementPotential": "low",
+      "details": "CSS defines #rotate-prompt styling for landscape mode but the HTML has no such element. Landscape orientation will show game at wrong aspect ratio."
+    },
+    {
+      "id": "W8",
+      "description": "Hit-stop uses physics pause which may cause timing issues with delayedCall",
+      "severity": "minor",
+      "impactArea": "design",
+      "improvementPotential": "low",
+      "details": "EffectsManager.hitStop pauses matter.world then uses Phaser time.delayedCall to resume. This works because Phaser timers run independently of Matter physics, but it's a known fragile pattern. The slow-mo uses engine.timing.timeScale which is safer."
+    },
+    {
+      "id": "W9",
+      "description": "No tutorial or first-time user experience - players must discover drag-to-aim mechanic",
+      "severity": "minor",
+      "impactArea": "design",
+      "improvementPotential": "medium",
+      "details": "First wave starts with no instruction. Tagline says 'One flick. Total destruction.' but no visual hint shows the drag mechanic. First-time players may tap instead of drag and get confused."
+    },
+    {
+      "id": "W10",
+      "description": "Trajectory preview doesn't account for gravity accurately",
+      "severity": "minor",
+      "impactArea": "mechanics",
+      "improvementPotential": "low",
+      "details": "drawTrajectory uses a simplified parabola (0.2*t*t) that approximates but doesn't match Matter.js gravity (0.4). Preview dots diverge from actual ball path, especially at longer distances."
+    }
+  ],
+
+  "improvementOpportunities": {
+    "mechanics": [
+      {
+        "id": "M1",
+        "description": "Power-up balls: fire ball (explodes on impact, AoE damage), heavy ball (breaks reinforced in 1 hit), multi-ball (splits into 3 on first impact), magnet ball (attracts shards toward glass)",
+        "funImpact": 9,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Earned by clearing waves with specific conditions (e.g., perfect cascade = fire ball next wave). Adds strategic depth and 'power fantasy' moments."
+      },
+      {
+        "id": "M2",
+        "description": "Active shard control: tap during chain to redirect shards toward remaining glass panels",
+        "funImpact": 8,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "medium",
+        "notes": "Solves W2 (limited agency). Risk: may make chains too easy. Limit to 1-2 redirects per wave."
+      },
+      {
+        "id": "M3",
+        "description": "Glass types with special behaviors: mirror glass (reflects ball), bomb glass (explodes and damages adjacent), ice glass (shards slow nearby panels), gold glass (bonus points)",
+        "funImpact": 7,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Adds puzzle-like strategic targeting. Which panel to hit first becomes meaningful."
+      },
+      {
+        "id": "M4",
+        "description": "Combo meter that fills across chain reactions within a wave - when full, triggers a free 'earthquake' that cracks all panels by 1 HP",
+        "funImpact": 7,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Rewards long chains with a tangible benefit beyond score multiplier."
+      }
+    ],
+    "feel": [
+      {
+        "id": "F1",
+        "description": "Add background music with reactive intensity - quiet during aiming, building during ball flight, climaxing during chain cascades",
+        "funImpact": 6,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Music toggle already exists in settings. Web Audio API is already initialized."
+      },
+      {
+        "id": "F2",
+        "description": "Screen-wide glass crack overlay effect when achieving chain depth 3+, entire screen appears to crack then shatters away",
+        "funImpact": 7,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Pure juice enhancement. Adds spectacle to deep chains."
+      },
+      {
+        "id": "F3",
+        "description": "Ball 'personality' - eyes on the ball that widen on launch and squint on impact, subtle face expressions",
+        "funImpact": 5,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Adds character and emotional connection to the projectile."
+      },
+      {
+        "id": "F4",
+        "description": "Haptic pattern variety: different vibration patterns for normal shatter vs chain shatter vs perfect cascade",
+        "funImpact": 4,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Already using navigator.vibrate. Just needs pattern variation."
+      }
+    ],
+    "content": [
+      {
+        "id": "C1",
+        "description": "Boss waves with unique mega-panels that require multiple hits and have special shatter patterns (spiral explosion, line shatter, cross shatter)",
+        "funImpact": 8,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Boss waves already exist but are just 'more panels'. Unique boss mechanics would be memorable milestones."
+      },
+      {
+        "id": "C2",
+        "description": "Environmental hazards: gravity zones, wind currents, teleport portals that redirect ball/shards",
+        "funImpact": 7,
+        "implementationComplexity": "high",
+        "riskOfBreakingFun": "medium",
+        "notes": "Adds variety but complexity is high. Start with one (gravity zones) and expand."
+      },
+      {
+        "id": "C3",
+        "description": "Challenge waves: 'shatter all in one shot', 'chain depth 4+', 'clear in under 3 seconds' with bonus rewards",
+        "funImpact": 7,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Uses existing mechanics but frames them as targeted goals. Easy to implement."
+      },
+      {
+        "id": "C4",
+        "description": "Themed wave packs every 10 waves: 'Crystal Cavern' (blue tones, crystal glass), 'Volcanic Forge' (red tones, lava barriers), 'Space Station' (zero gravity zones)",
+        "funImpact": 6,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Visual variety and thematic progression give sense of journey."
+      }
+    ],
+    "meta": [
+      {
+        "id": "P1",
+        "description": "Unlock system: ball skins (chrome, neon, flame, crystal) earned by reaching wave milestones or achieving chain depth records",
+        "funImpact": 6,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Simple cosmetic rewards that give long-term goals. Store in localStorage."
+      },
+      {
+        "id": "P2",
+        "description": "Achievement system: 'Chain Master' (depth 4), 'Speed Demon' (clear in under 3s), 'Untouchable' (clear 5 waves without losing a ball), etc.",
+        "funImpact": 7,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Most data already tracked (chain depth, balls left, clear time). Just needs display and notification system."
+      },
+      {
+        "id": "P3",
+        "description": "Daily challenge: seeded daily wave with global leaderboard seed, compete for best score on same layout",
+        "funImpact": 8,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Seeded RNG already exists. Just need a date-based seed and separate high score tracking."
+      },
+      {
+        "id": "P4",
+        "description": "Wave streak counter displayed on menu: 'Current Run Record: Wave 14' with progress bar to next milestone",
+        "funImpact": 5,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Simple but effective motivation to beat personal records."
+      }
+    ],
+    "fun": [
+      {
+        "id": "U1",
+        "description": "Rage mode: after dying 3 times on same wave, offer 'RAGE MODE' - infinite balls for 10 seconds, pure destruction catharsis",
+        "funImpact": 9,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "medium",
+        "notes": "Prevents frustration spiral. Could be ad-gated. Score doesn't count in rage mode."
+      },
+      {
+        "id": "U2",
+        "description": "Replay camera: after a spectacular chain cascade (depth 3+), show a slow-mo replay from a different angle with dramatic zoom",
+        "funImpact": 8,
+        "implementationComplexity": "high",
+        "riskOfBreakingFun": "low",
+        "notes": "Complex to implement (need state recording) but massive satisfaction amplifier."
+      },
+      {
+        "id": "U3",
+        "description": "Destruction counter: persistent total panels shattered across all sessions, displayed on menu, with milestones (1000, 10000, etc.)",
+        "funImpact": 5,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Simple accumulation metric that makes every play session feel contributory."
+      },
+      {
+        "id": "U4",
+        "description": "Lucky shot detection: if ball ricochets off 3+ walls before hitting glass, play special 'trick shot' fanfare and bonus points",
+        "funImpact": 7,
+        "implementationComplexity": "medium",
+        "riskOfBreakingFun": "low",
+        "notes": "Rewards creative/wild shots that players already attempt. Needs wall bounce counter on ball."
+      }
+    ],
+    "design": [
+      {
+        "id": "D1",
+        "description": "First-time tutorial: wave 1 shows animated hand gesture indicating drag-to-aim, disappears after first launch",
+        "funImpact": 4,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Solves W9. Critical for user acquisition/retention."
+      },
+      {
+        "id": "D2",
+        "description": "Add missing #rotate-prompt HTML element for landscape handling",
+        "funImpact": 2,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Solves W7. Simple HTML addition."
+      },
+      {
+        "id": "D3",
+        "description": "Game over screen redesign: show 'almost reached wave X' teaser, suggest challenge ('try for a x4 chain!'), show improvement trend",
+        "funImpact": 6,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Solves W6. Reduces replay friction by giving specific goals."
+      },
+      {
+        "id": "D4",
+        "description": "Pause button during gameplay with resume confirmation",
+        "funImpact": 3,
+        "implementationComplexity": "low",
+        "riskOfBreakingFun": "low",
+        "notes": "Currently only auto-pauses on visibility change. No manual pause option."
+      }
+    ]
+  },
+
+  "gameFlowMap": {
+    "0-5s": "Menu screen with dark navy background, hex grid pattern, animated floating glass panels, pulsing PLAY button. Title 'SHATTER CHAIN' prominent. If returning player, best score and wave shown. Player taps PLAY.",
+    "5-15s": "Wave 1 announced with large centered text (fades in/out over 0.6s). Arena shows 6-7 normal glass panels in a row/grid pattern. Ball indicators at bottom show 3 balls. Timer bar at top starts counting down from 15s. Player drags from launch zone, sees trajectory preview dots, releases to launch ball upward.",
+    "15-30s": "Ball impacts glass panels. Hit-stop freeze on first contact (40ms). Glass shatters into polygon shards. Shards fly into adjacent panels creating chain reactions. Chain x2, x4 text pops up. Floating score numbers rise from impact points. Camera shakes proportional to chain depth. Player launches remaining balls to clear stragglers.",
+    "30-60s": "Wave clear flash and 'WAVE CLEAR!' text. Score bonuses: ball bonus, speed bonus if under 5s, perfect cascade if 1-ball clear. Scene restarts for wave 2. Panel count increases, gaps decrease. By wave 4-7, 10-13 panels in tighter formations. Player develops aim strategy.",
+    "60s+": "Wave 8+ introduces reinforced glass (2 hits, crack visual on first hit). Wave 13+ drops to 2 balls and adds moving panels (sine wave). Wave 21+ adds armored glass (3 hits with rivets) and rotating barriers. Bonus waves every 5th provide breather with extra balls. Boss waves every 10th spike panel count. Timer pressure increases. Eventually balls run out or timer expires -> wave fail -> continue (ad) or game over."
+  },
+
+  "overallAssessment": {
+    "compositeScore": 7.0,
+    "coreStrength": "Satisfying chain-reaction physics with excellent juice/feedback. The 'one flick, total destruction' fantasy delivers when chains cascade. Sound design with escalating chime frequencies adds audio satisfaction.",
+    "biggestOpportunity": "Meta-progression and mechanical variety. The game has strong core feel but lacks reasons to return (no unlocks, no progression, no variety in tools). Adding power-up balls and an achievement/unlock system would dramatically increase retention.",
+    "evolutionPriority": [
+      "1. Power-up balls (M1) - highest fun impact, addresses biggest mechanical gap",
+      "2. Achievement system (P2) - easy win for retention, data already tracked",
+      "3. First-time tutorial (D1) - critical for acquisition",
+      "4. Background music (F1) - setting already exists, missing implementation",
+      "5. Challenge waves (C3) - reuses existing mechanics, adds goal variety",
+      "6. Active shard control (M2) - addresses agency gap, deepens skill ceiling"
+    ],
+    "riskFactors": [
+      "Adding too many ball types could dilute the 'one simple action' appeal",
+      "Shard redirect mechanic (M2) could make game trivially easy if not carefully limited",
+      "game.js already at 301 lines - new mechanics risk exceeding file size, may need splitting",
+      "Chain depth scoring caps at x8 (depth 3+) - deeper chains need distinct rewards to feel worthwhile"
+    ]
+  }
+}
