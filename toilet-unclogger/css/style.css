@@ -1,0 +1,50 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #E3F2FD;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#game-container {
+  width: 100%; height: 100%;
+  max-width: 428px;
+  position: relative;
+}
+canvas { display: block; }
+#landscape-warning {
+  display: none;
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #263238;
+  color: #F5F0E8;
+  z-index: 9999;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  text-align: center;
+  padding: 20px;
+}
+#landscape-warning .rotate-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: rotate-pulse 2s ease-in-out infinite;
+}
+@keyframes rotate-pulse {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+@media (orientation: landscape) {
+  #landscape-warning { display: flex; }
+}
