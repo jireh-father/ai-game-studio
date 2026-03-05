@@ -126,6 +126,73 @@ header{padding:80px 0 60px;text-align:center}
   display:flex;align-items:center;gap:4px;
 }
 .card:hover .play-hint{opacity:1}
+.help-btn{
+  position:absolute;top:12px;right:12px;width:28px;height:28px;
+  border-radius:50%;border:1px solid var(--border);background:var(--surface2);
+  color:var(--text2);font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;z-index:5;opacity:0;
+}
+.card:hover .help-btn{opacity:1}
+.help-btn:hover{
+  border-color:var(--accent2);color:var(--accent2);background:rgba(123,47,247,0.15);
+  transform:scale(1.15);
+}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);
+  z-index:100;display:none;align-items:center;justify-content:center;
+  padding:20px;animation:fadeIn 0.2s ease;
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  max-width:480px;width:100%;max-height:80vh;overflow-y:auto;
+  position:relative;animation:scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.modal::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));
+  border-radius:20px 20px 0 0;
+}
+.modal-header{
+  padding:28px 28px 0;display:flex;justify-content:space-between;align-items:flex-start;
+}
+.modal-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;flex:1}
+.modal-close{
+  width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
+  background:transparent;color:var(--text2);font-size:1.1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+  margin-left:12px;flex-shrink:0;
+}
+.modal-close:hover{border-color:var(--accent);color:var(--accent)}
+.modal-pitch{
+  padding:8px 28px 0;font-size:0.8rem;color:var(--accent);font-style:italic;
+}
+.modal-body{padding:20px 28px 28px}
+.modal-section{margin-bottom:16px}
+.modal-section:last-child{margin-bottom:0}
+.modal-section h3{
+  font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;
+  color:var(--accent2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;
+}
+.modal-section p,.modal-section li{
+  font-size:0.78rem;color:var(--text2);line-height:1.7;
+}
+.modal-section ul{padding-left:18px}
+.modal-section li{margin-bottom:4px}
+.modal-play-btn{
+  display:block;width:100%;padding:14px;margin-top:20px;
+  border:none;border-radius:12px;cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  transition:all 0.2s;letter-spacing:0.03em;
+}
+.modal-play-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,51,102,0.3)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
 
 /* Reports section */
 .section-title{
@@ -203,35 +270,72 @@ footer{
 <script>
 const BASE = '';
 const GAMES = [
-  {slug:"alarm-slap",title:"Alarm Slap",pitch:"Frantically slap snoozing alarms before they wake the whole house",tags:["reflex","tap","swipe","whack-a-mole","panic"],score:77.3,creator:"oddball",run:"run-2026-03-04-002"},
-  {slug:"shatter-chain",title:"Shatter Chain",pitch:"Flick a ball to shatter glass — chain reactions score big",tags:["physics","chain-reaction","flick","destruction"],score:80.4,creator:"spark",run:"run-2026-03-04-002"},
-  {slug:"pulse-weaver",title:"Pulse Weaver",pitch:"Draw paths between pulsing nodes to create elemental combos",tags:["chain-reaction","puzzle","drag-input","elemental-combo"],score:73.6,creator:"spark",run:"run-2026-03-04-001"},
-  {slug:"fridge-tetris",title:"Fridge Tetris",pitch:"Stuff oversized food into a tiny fridge before it overflows",tags:["puzzle","humor","time-pressure","grid","survival"],score:71.1,creator:"oddball",run:"run-2026-03-04-001"},
-  {slug:"flip-burger",title:"Flip Burger",pitch:"Time your flips to stack the perfect burger tower",tags:["timing","reflex","food","hyper-casual"],score:69.6,creator:"trendsetter",run:"run-2026-03-05-001"},
-  {slug:"swipe-dojo",title:"Swipe Dojo",pitch:"Match directional swipes to incoming attacks in rapid combat",tags:["rhythm","reflex","combat","swipe"],score:71.2,creator:"trendsetter",run:"run-2026-03-05-001"},
-  {slug:"spin-clash",title:"Spin Clash",pitch:"Flick your spinner to clash against enemies with physics-based combat",tags:["physics","flick","combat","survival","momentum"],score:72.4,creator:"spark",run:"run-2026-03-05-001"},
-  {slug:"wrecking-swing",title:"Wrecking Swing",pitch:"Swing a wrecking ball to demolish structures with perfect timing",tags:["physics","one-tap","timing","destruction"],score:74.8,creator:"spark",run:"run-2026-03-05-001"},
-  {slug:"escalator-chaos",title:"Escalator Chaos",pitch:"Swipe commuters onto the right escalators before gridlock",tags:["swipe","sorting","crowd","time-pressure","humor"],score:71.3,creator:"oddball",run:"run-2026-03-05-001"},
-  {slug:"tidal-rush",title:"Tidal Rush",pitch:"One-tap runner dodging rising tidal waves",tags:["endless-runner","one-tap","survival","water"],score:74.9,creator:"trendsetter",run:"run-2026-03-05-001"},
-  {slug:"spam-call-smash",title:"Spam Call Smash",pitch:"Smash incoming spam calls — don't hit the real ones!",tags:["reflex","pattern-recognition","humor","tap"],score:70.8,creator:"oddball",run:"run-2026-03-05-001"},
-  {slug:"noodle-lasso",title:"Noodle Lasso",pitch:"Lasso flying noodles with a drag-to-catch mechanic",tags:["hyper-casual","one-drag","physics","food-humor"],score:71.3,creator:"trendsetter",run:"run-2026-03-05-001"},
-  {slug:"rope-riot",title:"Rope Riot",pitch:"Drag ropes to trap and fling enemies in physics mayhem",tags:["physics","drag-input","combat","survival","reflex"],score:75.1,creator:"spark",run:"run-2026-03-05-001"},
-  {slug:"magma-flow",title:"Magma Flow",pitch:"Draw channels to guide magma before it overflows",tags:["drawing","physics","fluid-simulation","time-pressure"],score:77.9,creator:"spark",run:"run-2026-03-05-001"},
-  {slug:"microwave-roulette",title:"Microwave Roulette",pitch:"Stop the microwave at exactly the right time — or BOOM",tags:["timing","precision-tap","humor","absurd","reflex"],score:73.7,creator:"oddball",run:"run-2026-03-05-002"},
-  {slug:"toilet-unclogger",title:"Toilet Unclogger",pitch:"Rapid-tap the plunger to unclog increasingly insane toilets",tags:["rapid-tap","rhythm","humor","gross","reflex"],score:71.2,creator:"oddball",run:"run-2026-03-05-002"},
-  {slug:"shadow-dodge",title:"Shadow Dodge",pitch:"Dodge by reading enemy shadow telegraphs",tags:["dodge","prediction","shadows","visual","reflex"],score:73.6,creator:"trendsetter",run:"run-2026-03-05-003"},
-  {slug:"plate-spinner",title:"Plate Spinner",pitch:"Keep multiple plates spinning — drop one and it's over",tags:["multitask","timing","plates","chaos","stress"],score:73.5,creator:"trendsetter",run:"run-2026-03-05-003"},
-  {slug:"pendulum-panic",title:"Pendulum Panic",pitch:"Swing pendulums to smash targets with precision timing",tags:["physics","timing","pendulum","smash","precision"],score:73.5,creator:"spark",run:"run-2026-03-05-003"},
-  {slug:"slingshot-stack",title:"Slingshot Stack",pitch:"Slingshot blocks to build the tallest tower",tags:["physics","stacking","slingshot","aim","tower"],score:72.6,creator:"spark",run:"run-2026-03-05-003"},
-  {slug:"soap-escape",title:"Soap Escape",pitch:"Guide a slippery soap bar through a bathroom obstacle course",tags:["physics","slip","dodge","comedy","bathroom"],score:70.6,creator:"oddball",run:"run-2026-03-05-003"},
-  {slug:"crane-claw-frenzy",title:"Crane Claw Frenzy",pitch:"Operate an arcade claw machine under time pressure",tags:["claw","timing","physics","prizes","arcade"],score:69.9,creator:"trendsetter",run:"run-2026-03-05-003"},
-  {slug:"whack-a-mole-mayhem",title:"Whack-a-Mole Mayhem",pitch:"Classic whack-a-mole with bombs, combos, and chaos",tags:["whack-a-mole","reflex","arcade","bombs","classic"],score:69.8,creator:"trendsetter",run:"run-2026-03-05-003"},
-  {slug:"bounce-gauntlet",title:"Bounce Gauntlet",pitch:"Aim and bounce through a gauntlet of precision challenges",tags:["physics","aiming","bounce","gauntlet","precision"],score:69.6,creator:"spark",run:"run-2026-03-05-003"},
-  {slug:"chopstick-rush",title:"Chopstick Rush",pitch:"Grab sushi off a conveyor belt with clumsy chopsticks",tags:["dexterity","chopsticks","sushi","conveyor","food"],score:69.0,creator:"trendsetter",run:"run-2026-03-05-003"},
-  {slug:"bedtime-ninja",title:"Bedtime Ninja",pitch:"Sneak past sleeping family members without waking them",tags:["stealth","timing","comedy","sneak","family"],score:68.0,creator:"oddball",run:"run-2026-03-05-003"},
+  {slug:"alarm-slap",title:"Alarm Slap",pitch:"Frantically slap snoozing alarms before they wake the whole house",tags:["reflex","tap","swipe","whack-a-mole","panic"],score:77.3,creator:"oddball",run:"run-2026-03-04-002",
+   desc:{controls:"Tap alarms to slap them off. Swipe away persistent alarms. New alarms spawn faster each stage.",rules:"Slap all alarms before the noise meter fills up. Missing an alarm raises the noise bar. If the bar fills — Game Over. Combo slaps score bonus points.",tips:["Focus on alarms flashing red first — they're about to go off","Swipe alarms that resist tapping","Keep the noise meter below 50% for a score multiplier"]}},
+  {slug:"shatter-chain",title:"Shatter Chain",pitch:"Flick a ball to shatter glass — chain reactions score big",tags:["physics","chain-reaction","flick","destruction"],score:80.4,creator:"spark",run:"run-2026-03-04-002",
+   desc:{controls:"Flick (swipe) the ball toward glass targets. Angle and power matter — aim for clusters to trigger chain reactions.",rules:"Shatter glass panels to score. Chain reactions multiply your score. Limited balls per stage. Clear the target score to advance.",tips:["Aim for corners where panels cluster together","Lighter flicks give more control","Save your last ball for the biggest remaining cluster"]}},
+  {slug:"pulse-weaver",title:"Pulse Weaver",pitch:"Draw paths between pulsing nodes to create elemental combos",tags:["chain-reaction","puzzle","drag-input","elemental-combo"],score:73.6,creator:"spark",run:"run-2026-03-04-001",
+   desc:{controls:"Drag to draw paths between glowing nodes. Connect same-color nodes for combos. Release to activate the chain.",rules:"Connect pulsing nodes before they fade. Matching elements create combo multipliers. Paths cannot cross. Timer counts down each stage.",tips:["Plan your path before drawing — crossed paths break","Connect 4+ nodes for massive combo bonuses","Watch the pulse timing — connect nodes at peak glow"]}},
+  {slug:"fridge-tetris",title:"Fridge Tetris",pitch:"Stuff oversized food into a tiny fridge before it overflows",tags:["puzzle","humor","time-pressure","grid","survival"],score:71.1,creator:"oddball",run:"run-2026-03-04-001",
+   desc:{controls:"Drag food items into the fridge grid. Tap to rotate items before placing. Swipe down to drop quickly.",rules:"Fit all food items into the fridge. Complete rows clear space. If food stacks above the fridge — Game Over. Bigger items score more points.",tips:["Rotate items to find the best fit","Clear full rows to make room for big items","Place small items in gaps left by large ones"]}},
+  {slug:"flip-burger",title:"Flip Burger",pitch:"Time your flips to stack the perfect burger tower",tags:["timing","reflex","food","hyper-casual"],score:69.6,creator:"trendsetter",run:"run-2026-03-05-001",
+   desc:{controls:"Tap to flip the burger patty. Time your tap to land it perfectly on the stack.",rules:"Stack burger ingredients by timing your flips. Perfect landings score bonus points. Misaligned flips wobble the tower. Tower collapse = Game Over.",tips:["Watch the shadow to time your landing","Light taps for short flips, hold for high flips","The tower wobbles more as it gets taller — be precise"]}},
+  {slug:"swipe-dojo",title:"Swipe Dojo",pitch:"Match directional swipes to incoming attacks in rapid combat",tags:["rhythm","reflex","combat","swipe"],score:71.2,creator:"trendsetter",run:"run-2026-03-05-001",
+   desc:{controls:"Swipe in the direction shown by incoming attacks (up/down/left/right). Speed matters — faster swipes score more.",rules:"Match swipe direction to deflect attacks. Wrong direction = take damage. 3 hits and you're out. Combos build up for special attacks.",tips:["Focus on the arrow color — red means swipe fast","Build combos for screen-clearing special moves","Later stages mix directions rapidly — stay centered"]}},
+  {slug:"spin-clash",title:"Spin Clash",pitch:"Flick your spinner to clash against enemies with physics-based combat",tags:["physics","flick","combat","survival","momentum"],score:72.4,creator:"spark",run:"run-2026-03-05-001",
+   desc:{controls:"Flick your spinner toward enemies. Angle and power control trajectory. Tap to activate special spin boost.",rules:"Collide with enemy spinners to destroy them. Bigger enemies need stronger hits. Momentum matters — faster spin = more damage. Survive all waves to clear the stage.",tips:["Flick at an angle to curve around obstacles","Save spin boost for heavy enemies","Edge hits deflect — aim center-to-center"]}},
+  {slug:"wrecking-swing",title:"Wrecking Swing",pitch:"Swing a wrecking ball to demolish structures with perfect timing",tags:["physics","one-tap","timing","destruction"],score:74.8,creator:"spark",run:"run-2026-03-05-001",
+   desc:{controls:"Tap to release the wrecking ball at the peak of its swing. One tap per attempt — timing is everything.",rules:"Demolish the target structure to clear the stage. Hit score thresholds to earn stars. Limited swings per stage. More destruction = higher score.",tips:["Release at the highest point of the swing arc","Aim for structural weak points (connectors, bases)","Some structures collapse in chain reactions — find the keystone"]}},
+  {slug:"escalator-chaos",title:"Escalator Chaos",pitch:"Swipe commuters onto the right escalators before gridlock",tags:["swipe","sorting","crowd","time-pressure","humor"],score:71.3,creator:"oddball",run:"run-2026-03-05-001",
+   desc:{controls:"Swipe commuters left or right to direct them to the correct escalator. Swipe up for express lane.",rules:"Sort commuters by color to matching escalators. Wrong escalator = angry commuter (penalty). Gridlock (too many waiting) = Game Over.",tips:["Swipe fast — commuters pile up quickly","Express lane clears two at once but has cooldown","Watch for VIP commuters (gold) — they're worth 3x points"]}},
+  {slug:"tidal-rush",title:"Tidal Rush",pitch:"One-tap runner dodging rising tidal waves",tags:["endless-runner","one-tap","survival","water"],score:74.9,creator:"trendsetter",run:"run-2026-03-05-001",
+   desc:{controls:"Tap to jump. Hold for higher jump. Time jumps to dodge waves and obstacles.",rules:"Run endlessly while dodging tidal waves that rise from behind. Collect shells for points. Hit by a wave = Game Over. Distance = score.",tips:["Short taps for small obstacles, hold for big waves","Collect shell streaks for combo multipliers","Waves get faster — keep your rhythm steady"]}},
+  {slug:"spam-call-smash",title:"Spam Call Smash",pitch:"Smash incoming spam calls — don't hit the real ones!",tags:["reflex","pattern-recognition","humor","tap"],score:70.8,creator:"oddball",run:"run-2026-03-05-001",
+   desc:{controls:"Tap spam calls to smash them. Do NOT tap legitimate calls (green phone icon).",rules:"Smash spam calls for points. Hitting a real call loses a life. 3 lives total. Speed increases each stage. Combo smashes earn bonuses.",tips:["Spam calls have red/orange borders — real calls are green","Don't rush — one wrong tap costs a life","Combos reset if you miss a spam call"]}},
+  {slug:"noodle-lasso",title:"Noodle Lasso",pitch:"Lasso flying noodles with a drag-to-catch mechanic",tags:["hyper-casual","one-drag","physics","food-humor"],score:71.3,creator:"trendsetter",run:"run-2026-03-05-001",
+   desc:{controls:"Drag to draw a lasso circle around flying noodles. Release to catch them.",rules:"Catch noodles by lassoing them mid-air. Bigger circles catch more but score less per noodle. Miss all noodles in a wave = lose a life.",tips:["Small precise lassos score 2x more","Catch multiple noodles in one lasso for combo","Watch the wind direction — noodles drift"]}},
+  {slug:"rope-riot",title:"Rope Riot",pitch:"Drag ropes to trap and fling enemies in physics mayhem",tags:["physics","drag-input","combat","survival","reflex"],score:75.1,creator:"spark",run:"run-2026-03-05-001",
+   desc:{controls:"Drag to stretch ropes between anchor points. Release to fling trapped enemies. Tap anchors to reset rope.",rules:"Trap enemies inside rope boundaries, then release to fling them off-screen. Enemies that reach you = damage. Clear all enemies to advance.",tips:["Stretch ropes wide to trap multiple enemies","Fling enemies into each other for bonus points","Reset rope quickly if enemies slip past"]}},
+  {slug:"magma-flow",title:"Magma Flow",pitch:"Draw channels to guide magma before it overflows",tags:["drawing","physics","fluid-simulation","time-pressure"],score:77.9,creator:"spark",run:"run-2026-03-05-001",
+   desc:{controls:"Draw channels by dragging on the terrain. Magma follows your channels downhill. Tap to dig deeper.",rules:"Guide magma to the collection pool before it overflows. Channel length limited per stage. Overflow = Game Over. Fill pools faster for bonus score.",tips:["Draw downhill — magma won't flow upward","Short channels are more efficient than long ones","Tap existing channels to widen them for faster flow"]}},
+  {slug:"microwave-roulette",title:"Microwave Roulette",pitch:"Stop the microwave at exactly the right time — or BOOM",tags:["timing","precision-tap","humor","absurd","reflex"],score:73.7,creator:"oddball",run:"run-2026-03-05-002",
+   desc:{controls:"Tap the STOP button when the timer hits the target zone. One chance per round — precision matters!",rules:"Each round has a spinning timer and a target zone. Stop in the green zone = perfect cook. Miss = explosion. Tighter zones in later stages. 3 explosions = Game Over.",tips:["Watch the timer speed — it accelerates each round","The green zone shrinks as stages progress","Tap slightly early — there's input delay on mobile"]}},
+  {slug:"toilet-unclogger",title:"Toilet Unclogger",pitch:"Rapid-tap the plunger to unclog increasingly insane toilets",tags:["rapid-tap","rhythm","humor","gross","reflex"],score:71.2,creator:"oddball",run:"run-2026-03-05-002",
+   desc:{controls:"Rapid-tap to pump the plunger. Match the rhythm indicator for bonus power. Swipe up for super plunge.",rules:"Fill the unclog meter by rapid-tapping. Each toilet needs more taps. Timer counts down — if you don't unclog in time, overflow = Game Over.",tips:["Match the rhythm beats for 2x plunge power","Save super plunge for the final push","Toilets get weirder but the core rhythm stays the same"]}},
+  {slug:"shadow-dodge",title:"Shadow Dodge",pitch:"Dodge by reading enemy shadow telegraphs",tags:["dodge","prediction","shadows","visual","reflex"],score:73.6,creator:"trendsetter",run:"run-2026-03-05-003",
+   desc:{controls:"Swipe to move your character. Shadows appear on the ground before attacks land — dodge them!",rules:"Shadows telegraph incoming attacks. Stay out of shadow zones when attacks land. Survive waves to progress. Getting hit = lose a life (3 lives).",tips:["Bigger shadows mean slower but wider attacks","Move to the edges when multiple shadows overlap","Some shadows fake out — watch for the flash before dodging"]}},
+  {slug:"plate-spinner",title:"Plate Spinner",pitch:"Keep multiple plates spinning — drop one and it's over",tags:["multitask","timing","plates","chaos","stress"],score:73.5,creator:"trendsetter",run:"run-2026-03-05-003",
+   desc:{controls:"Tap a wobbling plate to re-spin it. New plates are added over time. Tap precisely on the plate center.",rules:"Keep all plates spinning. Plates slow down and wobble. A dropped plate = Game Over. More plates = higher score multiplier.",tips:["Prioritize the most wobbly plate (flashing red)","Tap the center for a longer spin","Don't panic when 5+ plates are going — find a rhythm"]}},
+  {slug:"pendulum-panic",title:"Pendulum Panic",pitch:"Swing pendulums to smash targets with precision timing",tags:["physics","timing","pendulum","smash","precision"],score:73.5,creator:"spark",run:"run-2026-03-05-003",
+   desc:{controls:"Tap to release the pendulum at the right moment. It swings and smashes targets in its path.",rules:"Release pendulums to hit targets. Different targets need different swing arcs. Limited pendulums per stage. Hit the score target to advance.",tips:["Release at the peak of the backswing for max range","Red targets need full-power swings","Group targets together — one pendulum can hit multiple"]}},
+  {slug:"slingshot-stack",title:"Slingshot Stack",pitch:"Slingshot blocks to build the tallest tower",tags:["physics","stacking","slingshot","aim","tower"],score:72.6,creator:"spark",run:"run-2026-03-05-003",
+   desc:{controls:"Pull back the slingshot to aim. Release to launch blocks. Adjust angle and power for precision stacking.",rules:"Stack blocks by slingshotting them onto the tower. Blocks that fall off don't count. Reach the target height to clear the stage. Tower stability matters.",tips:["Light pulls for fine adjustments near the top","Wider blocks first, narrow blocks on top","Wait for the tower to settle before launching the next block"]}},
+  {slug:"soap-escape",title:"Soap Escape",pitch:"Guide a slippery soap bar through a bathroom obstacle course",tags:["physics","slip","dodge","comedy","bathroom"],score:70.6,creator:"oddball",run:"run-2026-03-05-003",
+   desc:{controls:"Tilt/drag to guide the soap. The soap slides with momentum — it's slippery! Tap to do a quick hop.",rules:"Navigate through bathroom obstacles without falling off edges. Collect bubbles for points. Hit a drain = lose a life. Reach the towel to clear the stage.",tips:["Gentle inputs — the soap slides farther than you think","Hop over drains and puddles","Bubbles near edges are risky but worth bonus points"]}},
+  {slug:"crane-claw-frenzy",title:"Crane Claw Frenzy",pitch:"Operate an arcade claw machine under time pressure",tags:["claw","timing","physics","prizes","arcade"],score:69.9,creator:"trendsetter",run:"run-2026-03-05-003",
+   desc:{controls:"Tap to stop the claw's horizontal movement. Tap again to drop. Timing determines grab position.",rules:"Grab prizes before time runs out. Different prizes = different points. The claw grip weakens on heavier prizes. Grab the target prize to clear the stage.",tips:["Heavy prizes need dead-center grabs","Light prizes can be scooped from the side","Watch the claw sway — tap when it's directly above the target"]}},
+  {slug:"whack-a-mole-mayhem",title:"Whack-a-Mole Mayhem",pitch:"Classic whack-a-mole with bombs, combos, and chaos",tags:["whack-a-mole","reflex","arcade","bombs","classic"],score:69.8,creator:"trendsetter",run:"run-2026-03-05-003",
+   desc:{controls:"Tap moles to whack them. Do NOT tap bombs! Golden moles need a double-tap.",rules:"Whack moles for points. Bombs explode and end the game. Golden moles are worth 5x but need double-tap. Speed increases each wave.",tips:["Wait a split second to identify bombs vs moles","Golden moles flash — don't miss the double-tap","Combos build when you whack consecutive moles without missing"]}},
+  {slug:"bounce-gauntlet",title:"Bounce Gauntlet",pitch:"Aim and bounce through a gauntlet of precision challenges",tags:["physics","aiming","bounce","gauntlet","precision"],score:69.6,creator:"spark",run:"run-2026-03-05-003",
+   desc:{controls:"Tap to set launch angle. Tap again to set power. The ball bounces off walls and obstacles.",rules:"Launch the ball and collect stars as it bounces through the gauntlet. Reach the exit zone to clear the stage. Limited launches per stage.",tips:["Use wall bounces to reach tricky star positions","Lighter launches give more control","Count the bounces — each wall hit changes the angle predictably"]}},
+  {slug:"chopstick-rush",title:"Chopstick Rush",pitch:"Grab sushi off a conveyor belt with clumsy chopsticks",tags:["dexterity","chopsticks","sushi","conveyor","food"],score:69.0,creator:"trendsetter",run:"run-2026-03-05-003",
+   desc:{controls:"Tap and hold to close chopsticks. Release to open. Move chopsticks by dragging. Grab sushi and place on plate.",rules:"Grab the requested sushi from the conveyor belt. Wrong sushi = penalty. Dropped sushi = lost points. Fill orders to advance stages.",tips:["Close chopsticks right as sushi passes between them","Small sushi is harder to grab but worth more","The conveyor speeds up — anticipate sushi positions"]}},
+  {slug:"bedtime-ninja",title:"Bedtime Ninja",pitch:"Sneak past sleeping family members without waking them",tags:["stealth","timing","comedy","sneak","family"],score:68.0,creator:"oddball",run:"run-2026-03-05-003",
+   desc:{controls:"Tap to move forward one step. Hold to tiptoe (slower but quieter). Swipe to dash past hazards.",rules:"Reach your bed without waking family members. Each step makes noise — louder on creaky floors. Wake someone = restart the stage. Collect snacks for bonus points.",tips:["Tiptoe past light sleepers (shown with Z's)","Creaky floorboards glow faintly — avoid or tiptoe","Dash only when you're far from sleepers"]}},
+  {slug:"swipe-dojo-t1-v2",title:"Swipe Dojo: Mechanic Depth",pitch:"Distinct enemy behaviors, rage mode, and swipe trail particles",tags:["evolution","combat","enemy-variety","rage-mode"],score:80,creator:"evo-team-1",run:"evo-swipe-dojo-001",
+   desc:{controls:"Swipe to match attack directions. Each enemy type has unique behavior — Fast enemies telegraph earlier, Tanks need 2 swipes, Tricky enemies change direction mid-attack.",rules:"Same core as Swipe Dojo but with distinct enemy behaviors. Rage mode every 10 stages. Swipe trails show colored particle effects. Music intensity scales with combo/stage.",tips:["Fast enemies have shorter windows but telegraph sooner","Tanks require double swipes per arrow","Watch Tricky enemies — they change direction mid-swing","Rage mode grants brief invincibility"]}},
+  {slug:"swipe-dojo-t2-v2",title:"Swipe Dojo: Belt Progression",pitch:"Earn belt ranks from White to Black through themed environments",tags:["evolution","progression","belt-ranks","environments"],score:80,creator:"evo-team-2",run:"evo-swipe-dojo-001",
+   desc:{controls:"Same swipe controls as original. Fill rage meter with perfect blocks for special moves.",rules:"Progress through belt ranks (White to Black) with visual changes. Environment themes change every 10 stages (dojo, forest, mountain, volcano, clouds). Rage meter fills on perfect blocks.",tips:["Perfect blocks fill the rage meter fastest","Each belt rank unlocks new visual effects","Environment changes signal difficulty shifts","Use rage special move for tough enemy sequences"]}},
+  {slug:"swipe-dojo-t3-v2",title:"Swipe Dojo: Combo Spectacle",pitch:"Last-stand comebacks, dramatic finishing blows, and announcer hype",tags:["evolution","spectacle","announcer","last-stand"],score:80,creator:"evo-team-3",run:"evo-swipe-dojo-001",
+   desc:{controls:"Same swipe controls. At 1 HP, enter Last Stand mode with 2x score and dramatic effects.",rules:"Last Stand at 1HP gives 2x score multiplier and comeback healing. Finishing blows trigger hitstop and zoom. Announcer text escalates: NICE! AMAZING! INCREDIBLE! LEGENDARY! GODLIKE! Overkill bonus for perfect kills.",tips:["Survive at 1HP — Last Stand gives 2x score","Defeat an enemy in Last Stand to heal +1 HP","Chase perfect timing for CRITICAL FINISH bonus","Overkill (perfect + kill) gives +500 score"]}},
+  {slug:"swipe-dojo-t4-v2",title:"Swipe Dojo: Risk/Reward",pitch:"Counter-attacks, power-up drops, and double-or-nothing stage choices",tags:["evolution","counter-attack","power-ups","risk-reward"],score:80,creator:"evo-team-4",run:"evo-swipe-dojo-001",
+   desc:{controls:"After perfect block, swipe within 600ms for counter-attack bonus. Tap floating power-ups to collect.",rules:"Counter-attack after perfect blocks for bonus damage. Enemies drop power-ups: Shield (absorb 1 hit), Slow-Time (double windows 8s), Double-Points (2x score 10s). 10 consecutive perfects = heal +1 HP. Between stages choose SAFE or DOUBLE OR NOTHING.",tips:["Counter-attack window is 600ms after perfect block","Shield power-up absorbs one hit — save it for tough stages","10 perfect streak heals a life","DOUBLE OR NOTHING is risky but 2x score is worth it"]}},
+  {slug:"swipe-dojo-t5-v2",title:"Swipe Dojo: Audio/Visual",pitch:"Swipe trail particles, multi-arrow bursts, and reactive music layers",tags:["evolution","particles","multi-arrow","reactive-music"],score:80,creator:"evo-team-5",run:"evo-swipe-dojo-001",
+   desc:{controls:"Same swipe controls. Multi-arrow bursts require fast sequential swipes. Swipe trails show colored particles.",rules:"Stage 8+ introduces multi-arrow bursts (2-3 rapid arrows, 250ms gap). Swipe trail particles colored by direction. Bass drop on stage clear. Arrow approach animation with depth illusion. Music layers add at combo milestones.",tips:["Multi-arrow bursts start at stage 8 — swipe fast!","Colored trails help you see your swipe direction","Music layers add at combo 10/20/30 — listen for changes","Bass drops signal stage clears — feel the beat"]}},
 ];
 
 const REPORTS = [
+  {id:"evo-swipe-dojo-2026-03-05-001",label:"Evolution — Swipe Dojo (5 variants: Mechanic, Belt, Spectacle, Risk, Audio)"},
   {id:"run-2026-03-05-003",label:"Run 005 — 10 games (Shadow Dodge, Plate Spinner, ...)"},
   {id:"run-2026-03-05-002",label:"Run 004 — 3 games (Microwave Roulette, Toilet Unclogger, Ricochet Bloom)"},
   {id:"run-2026-03-05-001",label:"Run 003 — 10 games (Flip Burger, Swipe Dojo, ...)"},
@@ -269,11 +373,12 @@ function renderGrid(runFilter){
   const grid=document.getElementById('grid');
   grid.innerHTML='';
   const filtered=runFilter==='all'?GAMES:GAMES.filter(g=>g.run===runFilter);
-  filtered.forEach(g=>{
+  filtered.forEach((g,i)=>{
     const scoreClass=g.score>=75?'high':g.score>=65?'mid':'low';
     const card=document.createElement('a');
     card.className='card';card.href=`${BASE}${g.slug}/`;card.target='_blank';card.rel='noopener';
     card.innerHTML=`
+      <button class="help-btn" data-idx="${i}" data-run="${runFilter}" title="How to Play">?</button>
       <div class="card-head">
         <div class="card-title">${g.title}</div>
         <div class="card-run">${g.run.replace('run-2026-','').replace('-00','#')}</div>
@@ -289,6 +394,44 @@ function renderGrid(runFilter){
   });
 }
 renderGrid('all');
+
+// Modal
+const overlay=document.createElement('div');
+overlay.className='modal-overlay';
+overlay.innerHTML=`<div class="modal"><div class="modal-header"><div class="modal-title"></div><button class="modal-close">&times;</button></div><div class="modal-pitch"></div><div class="modal-body"></div></div>`;
+document.body.appendChild(overlay);
+
+function openModal(g){
+  const d=g.desc||{};
+  overlay.querySelector('.modal-title').textContent=g.title;
+  overlay.querySelector('.modal-pitch').textContent=g.pitch;
+  const body=overlay.querySelector('.modal-body');
+  body.innerHTML=`
+    <div class="modal-section"><h3>Controls</h3><p>${d.controls||'Tap to interact.'}</p></div>
+    <div class="modal-section"><h3>Rules</h3><p>${d.rules||'Score points and survive as long as possible.'}</p></div>
+    <div class="modal-section"><h3>Tips</h3><ul>${(d.tips||['Play and have fun!']).map(t=>`<li>${t}</li>`).join('')}</ul></div>
+    <button class="modal-play-btn" data-slug="${g.slug}">Play ${g.title} &#8599;</button>`;
+  overlay.classList.add('show');
+}
+
+overlay.querySelector('.modal-close').addEventListener('click',()=>overlay.classList.remove('show'));
+overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('show')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')overlay.classList.remove('show')});
+
+overlay.addEventListener('click',e=>{
+  const btn=e.target.closest('.modal-play-btn');
+  if(btn){window.open(`${BASE}${btn.dataset.slug}/`,'_blank');overlay.classList.remove('show')}
+});
+
+document.getElementById('grid').addEventListener('click',e=>{
+  const helpBtn=e.target.closest('.help-btn');
+  if(helpBtn){
+    e.preventDefault();e.stopPropagation();
+    const slug=helpBtn.closest('.card').href.split('/').filter(Boolean).pop();
+    const game=GAMES.find(g=>g.slug===slug);
+    if(game)openModal(game);
+  }
+});
 
 // Reports
 const reportList=document.getElementById('reports');
