@@ -1,0 +1,47 @@
+[
+  {
+    "team": 1,
+    "score": 80,
+    "verdict": "ship",
+    "errors": [],
+    "warnings": [
+      "[.WebGL-0x52640074bf00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    ]
+  },
+  {
+    "team": 2,
+    "score": 80,
+    "verdict": "ship",
+    "errors": [],
+    "warnings": [
+      "[.WebGL-0x5a540073e200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    ]
+  },
+  {
+    "team": 3,
+    "score": 80,
+    "verdict": "ship",
+    "errors": [],
+    "warnings": [
+      "[.WebGL-0x3fac00742200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    ]
+  },
+  {
+    "team": 4,
+    "score": 80,
+    "verdict": "ship",
+    "errors": [],
+    "warnings": [
+      "[.WebGL-0x10cc0073cd00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    ]
+  },
+  {
+    "team": 5,
+    "score": 30,
+    "verdict": "revise",
+    "errors": [
+      "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8094/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8094/\", waiting until \"networkidle\"\u001b[22m\n"
+    ],
+    "warnings": []
+  }
+]

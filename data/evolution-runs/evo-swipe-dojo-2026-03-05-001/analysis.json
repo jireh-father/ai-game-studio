@@ -1,0 +1,92 @@
+{
+  "game_slug": "swipe-dojo",
+  "analyzer": "game-analyzer",
+  "analysis_timestamp": "2026-03-05T12:00:00Z",
+  "code_inventory": {
+    "engine": "phaser3",
+    "files": [
+      {"path": "index.html", "lines": 24, "purpose": "Entry point, CDN Phaser load, script load order"},
+      {"path": "js/config.js", "lines": 100, "purpose": "Game constants: dimensions, palette, scoring, enemy names/variants, localStorage keys"},
+      {"path": "js/stages.js", "lines": 92, "purpose": "Procedural stage generation: attack windows, sequence length, HP, fakeouts, boss/rest stages"},
+      {"path": "js/ads.js", "lines": 230, "purpose": "Web Audio API synth (kick/hihat/bass music, SFX for blocks/miss/death/combos) + ad stubs"},
+      {"path": "js/ui.js", "lines": 274, "purpose": "MenuScene, GameOverScene, HUD class (lives/score/stage/combo display)"},
+      {"path": "js/effects.js", "lines": 181, "purpose": "GameEffects mixin: block juice, particles, arrows, urgency, pause overlay, stage clear celebration"},
+      {"path": "js/game.js", "lines": 294, "purpose": "Core GameScene: swipe input, block resolution, damage, death, stage progression, enemy HP"},
+      {"path": "js/main.js", "lines": 97, "purpose": "BootScene (SVG texture loading), Phaser config, visibility handler, touch prevention"},
+      {"path": "css/style.css", "lines": 37, "purpose": "Mobile-first responsive layout, dark background, landscape constraint"}
+    ],
+    "scene_flow": ["BootScene", "MenuScene", "GameScene", "GameOverScene"],
+    "total_lines": 1329
+  },
+  "core_mechanic": {
+    "core_verb": "swipe",
+    "core_loop": "Arrow appears showing direction -> player swipes matching direction -> timing determines quality (perfect/good/late) -> enemy HP decreases -> repeat until enemy defeated -> next stage with harder enemy",
+    "mastery_curve": "Beginners learn 4-direction swiping and survive with late blocks. Experts chase perfect timing for combo multipliers (up to 4x), memorize fakeout patterns at stage 10+, and maintain combos through boss fights.",
+    "satisfaction_source": "Combo system with escalating pitch, growing combo text, camera zoom at 10+/20+ combos, and hitstop on perfect blocks create rhythmic flow state. Defeating enemies with HP bars provides closure."
+  },
+  "strengths": {
+    "mechanic_depth": {"score": 5, "reasoning": "Four-direction swiping with timing windows. Perfect/good/late tiers and combo multiplier. Fakeouts after stage 10. Simple core verb with limited skill ceiling."},
+    "juice_quality": {"score": 7, "reasoning": "Hitstop, camera shake, flash, colored particles, floating scores, combo milestone bursts, stage clear celebration, arrow animations, HP color shift, score bounce, enemy bounce. Procedural audio with pitch-scaled combo SFX."},
+    "content_variety": {"score": 5, "reasoning": "5 enemy variants with distinct colors but identical behavior. 30 enemy names. Boss/rest stages provide rhythm. No environmental changes, no special attacks, no power-ups."},
+    "difficulty_curve": {"score": 6, "reasoning": "Attack window shrinks 800ms to 220ms. Sequence length 1 to 6. Fakeouts from stage 11. Boss stages tighter. Rest stages at every 10. Linear but well-engineered."},
+    "loop_tightness": {"score": 7, "reasoning": "Death to retry in ~2-3 seconds. Stage transitions 800ms. Arrow-to-arrow 300ms. Punchy rhythm."},
+    "visual_appeal": {"score": 5, "reasoning": "Dark theme with neon arrows readable and functional. SVG characters simplistic. No background art. Color-coded arrows are the visual highlight."},
+    "code_quality": {"score": 7, "reasoning": "Clean 8-file architecture. Effects as mixin. Audio encapsulated. Stage generation pure functions. Proper BootScene texture loading. setTimeout for hitstop."}
+  },
+  "weaknesses": [
+    {"description": "All enemy variants behave identically - only cosmetic color and HP/window differ", "severity": "critical", "impact_area": "content", "improvement_potential": "high"},
+    {"description": "No spatial gameplay - player and enemy static images, no movement or dodging", "severity": "major", "impact_area": "mechanics", "improvement_potential": "high"},
+    {"description": "No progression or meta-game beyond high score", "severity": "major", "impact_area": "meta", "improvement_potential": "high"},
+    {"description": "Fakeouts start too late (stage 11), first 10 stages pure reaction", "severity": "major", "impact_area": "mechanics", "improvement_potential": "medium"},
+    {"description": "No visual background variation", "severity": "minor", "impact_area": "design", "improvement_potential": "medium"},
+    {"description": "Combo multiplier caps at 4x with no further reward", "severity": "minor", "impact_area": "fun", "improvement_potential": "medium"},
+    {"description": "Vibration toggle exists but never wired to navigator.vibrate()", "severity": "minor", "impact_area": "feel", "improvement_potential": "low"}
+  ],
+  "improvement_opportunities": {
+    "mechanics": [
+      {"idea": "Distinct enemy behaviors: Fast=shorter windows telegraph earlier, Tank=2 swipes per arrow, Tricky=direction change mid-attack, Boss=multi-directional combos", "fun_impact": 9, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Counter-attack system: after perfect block, brief window to swipe for bonus damage", "fun_impact": 8, "complexity": "medium", "break_risk": "medium"},
+      {"idea": "Special moves at combo thresholds: 10=area damage, 20=time slow, 30=instant kill", "fun_impact": 8, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Simultaneous multi-directional attacks requiring rapid sequential swipes", "fun_impact": 7, "complexity": "low", "break_risk": "low"}
+    ],
+    "feel": [
+      {"idea": "Wire vibration: 15ms on perfect, 50ms on damage, 200ms on death", "fun_impact": 6, "complexity": "low", "break_risk": "low"},
+      {"idea": "Swipe trail visualization with colored line and particle trail", "fun_impact": 7, "complexity": "low", "break_risk": "low"},
+      {"idea": "Enemy reaction animations: flinch, stumble, taunt", "fun_impact": 7, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Player stance animations: idle sway, block pose, damage stagger", "fun_impact": 6, "complexity": "medium", "break_risk": "low"}
+    ],
+    "content": [
+      {"idea": "Belt/rank progression: White->Yellow->Green->Blue->Brown->Black belt with visual changes", "fun_impact": 8, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Environment changes every 10 stages: dojo->forest->mountain->volcano->clouds", "fun_impact": 7, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Mini-boss special attacks with swipe sequences and projectile dodging", "fun_impact": 8, "complexity": "high", "break_risk": "medium"},
+      {"idea": "Power-up drops: shield, slow-time, double-points, life restore", "fun_impact": 7, "complexity": "medium", "break_risk": "low"}
+    ],
+    "meta": [
+      {"idea": "Achievement system with persistent unlocks displayed on menu", "fun_impact": 7, "complexity": "low", "break_risk": "low"},
+      {"idea": "Daily challenge with fixed seed", "fun_impact": 7, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Skill tree/permanent upgrades with dojo points", "fun_impact": 8, "complexity": "high", "break_risk": "medium"}
+    ],
+    "fun": [
+      {"idea": "Rhythm mode: arrows sync to procedural music beat", "fun_impact": 9, "complexity": "high", "break_risk": "medium"},
+      {"idea": "Dramatic finishing blow: slow-motion zoom on last HP hit", "fun_impact": 8, "complexity": "medium", "break_risk": "low"},
+      {"idea": "Rage mode: brief invincibility after damage where all blocks are perfect", "fun_impact": 7, "complexity": "low", "break_risk": "medium"}
+    ],
+    "design": [
+      {"idea": "Tutorial overlay for first play with animated hand gestures", "fun_impact": 5, "complexity": "low", "break_risk": "low"},
+      {"idea": "Score breakdown on game over: accuracy, perfect/good/late/miss counts", "fun_impact": 6, "complexity": "low", "break_risk": "low"},
+      {"idea": "Stage preview banner with enemy intro card", "fun_impact": 5, "complexity": "low", "break_risk": "low"}
+    ]
+  },
+  "game_flow": {
+    "0_5s": "Dark screen with SWIPE DOJO title, floating particles, player preview, pulsing TAP TO PLAY button.",
+    "5_15s": "First enemy appears with name and HP bar. First arrow spawns. 800ms window is generous. Immediate audio+visual feedback on block.",
+    "15_30s": "First enemy defeated (3 HP). Death burst + celebration. Stage 2 begins. Combo counter builds.",
+    "30_60s": "Stages 3-5. Windows tighten. Sequences grow to 2 arrows. Boss at stage 5. Lives become relevant.",
+    "60s_plus": "Stages 6+: longer sequences. Stage 11+: fakeouts. Pure reaction test. Most die stages 8-15. Same visuals throughout."
+  },
+  "evolution_potential": {
+    "overall": 8,
+    "best_category": "mechanics",
+    "recommended_focus": "Strong juice and tight core loop but needs mechanical variety. Priority: 1) distinct enemy behaviors, 2) belt/rank progression, 3) counter-attack or special moves for combo payoff."
+  }
+}
