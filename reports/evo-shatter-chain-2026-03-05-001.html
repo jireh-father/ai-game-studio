@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolution Report — Shatter Chain</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--s1:#12121a;--s2:#1a1a26;--bd:#2a2a3a;--tx:#e8e6f0;--tx2:#8a889a;--ac:#ff3366;--ac2:#7b2ff7;--ac3:#00e5a0;--gold:#ffd700;--warn:#ff6b35;--ice:#88ddff}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:24px}
+header{text-align:center;padding:60px 0 40px}
+h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#fff,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:var(--tx2);font-size:0.85rem;margin-top:8px}
+.meta{display:flex;gap:24px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.meta-item{text-align:center}
+.meta-num{font-size:1.8rem;font-weight:800;color:var(--ac3)}
+.meta-label{font-size:0.65rem;color:var(--tx2);text-transform:uppercase;letter-spacing:0.1em}
+h2{font-size:1.3rem;font-weight:700;margin:40px 0 16px;padding-top:20px;border-top:1px solid var(--bd)}
+h3{font-size:1rem;color:var(--ac2);margin:16px 0 8px}
+.ranking-table{width:100%;border-collapse:collapse;margin:16px 0}
+.ranking-table th{text-align:left;padding:10px 12px;background:var(--s2);color:var(--tx2);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid var(--bd)}
+.ranking-table td{padding:10px 12px;border-bottom:1px solid var(--bd);font-size:0.85rem}
+.ranking-table tr:hover{background:var(--s2)}
+.rank-1{color:var(--gold);font-weight:700}
+.score-high{color:var(--ac3);font-weight:700;font-size:1.1rem}
+.score-mid{color:#f0c040;font-weight:700}
+.team-card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:24px;margin:16px 0}
+.team-card.winner{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,0.1)}
+.team-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.team-name{font-size:1.1rem;font-weight:700}
+.team-score{font-size:1.4rem;font-weight:800}
+.feature-list{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.feature-tag{padding:4px 10px;border-radius:6px;font-size:0.75rem;background:var(--s2);color:var(--tx2);border:1px solid var(--bd)}
+.feature-tag.new{border-color:var(--ac3);color:var(--ac3)}
+.bug-card{background:var(--s2);border-left:3px solid var(--warn);padding:12px 16px;margin:8px 0;border-radius:0 8px 8px 0}
+.bug-card.fixed{border-left-color:var(--ac3)}
+.bug-title{font-weight:600;font-size:0.85rem}
+.bug-detail{font-size:0.78rem;color:var(--tx2);margin-top:4px}
+.lesson{padding:8px 0;font-size:0.85rem}
+.lesson strong{color:var(--ac2)}
+.play-links{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:16px 0}
+.play-link{display:block;padding:14px 18px;background:var(--s1);border:1px solid var(--bd);border-radius:10px;text-decoration:none;color:var(--tx);transition:all 0.2s;font-size:0.85rem}
+.play-link:hover{border-color:var(--ac);transform:translateY(-2px);box-shadow:0 4px 12px rgba(255,51,102,0.15)}
+.play-link .team-label{font-size:0.7rem;color:var(--tx2);text-transform:uppercase;letter-spacing:0.08em}
+.play-link .team-title{font-weight:600;margin-top:4px}
+.catalog-link{display:inline-block;margin:24px 0;padding:12px 24px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;text-decoration:none;border-radius:10px;font-weight:600;transition:all 0.2s}
+.catalog-link:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,51,102,0.3)}
+footer{text-align:center;padding:40px 0;color:var(--tx2);font-size:0.7rem;border-top:1px solid var(--bd);margin-top:40px}
+@media(max-width:640px){.container{padding:16px}h1{font-size:1.6rem}.meta{gap:16px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Shatter Chain Evolution</h1>
+  <div class="subtitle">evo-shatter-chain-2026-03-05-001 | 2026-03-05</div>
+  <div class="meta">
+    <div class="meta-item"><div class="meta-num">5</div><div class="meta-label">Teams</div></div>
+    <div class="meta-item"><div class="meta-num">5/5</div><div class="meta-label">Shipped</div></div>
+    <div class="meta-item"><div class="meta-num">84</div><div class="meta-label">Best Score</div></div>
+    <div class="meta-item"><div class="meta-num">80.4</div><div class="meta-label">Original</div></div>
+  </div>
+</header>
+
+<h2>Final Rankings</h2>
+<table class="ranking-table">
+  <thead><tr><th>Rank</th><th>Team</th><th>Direction</th><th>Score</th><th>Key Features</th></tr></thead>
+  <tbody>
+    <tr class="rank-1"><td>1</td><td>T5</td><td>Risk & Reward</td><td class="score-high">84</td><td>Golden Roulette + Bomb/Ice + Achievements</td></tr>
+    <tr><td>2</td><td>T1</td><td>Golden Chaos</td><td class="score-mid">78</td><td>Golden Roulette + Screen Crack + Ball Personality</td></tr>
+    <tr><td>3</td><td>T3</td><td>Meta Progression</td><td class="score-mid">78</td><td>Screen Crack + Achievements + Daily Challenge</td></tr>
+    <tr><td>4</td><td>T2</td><td>Content Explosion</td><td>72</td><td>Ragdoll Chains + Bomb/Ice + Stats Dashboard</td></tr>
+    <tr><td>5</td><td>T4</td><td>Pressure Cooker</td><td>72</td><td>Fusion Timer + Gravity Zones + Ball Personality</td></tr>
+  </tbody>
+</table>
+
+<h2>Team Details</h2>
+
+<div class="team-card winner">
+  <div class="team-header">
+    <div class="team-name">T5 — Risk & Reward</div>
+    <div class="team-score score-high">84</div>
+  </div>
+  <p style="font-size:0.85rem;color:var(--tx2);margin-bottom:8px">The winning combination: high-risk gambling mechanic + tactical glass variety + long-term retention hooks.</p>
+  <ul class="feature-list">
+    <li class="feature-tag new">Golden Panel Roulette (3x multiplier)</li>
+    <li class="feature-tag new">Absorber Conversion (miss penalty)</li>
+    <li class="feature-tag new">Bomb Glass (AoE explosion)</li>
+    <li class="feature-tag new">Ice Glass (1.5s freeze)</li>
+    <li class="feature-tag new">25 Lifetime Achievements</li>
+    <li class="feature-tag new">Permanent Score Multipliers</li>
+    <li class="feature-tag new">Play Streak Counter</li>
+  </ul>
+</div>
+
+<div class="team-card">
+  <div class="team-header"><div class="team-name">T1 — Golden Chaos</div><div class="team-score score-mid">78</div></div>
+  <ul class="feature-list">
+    <li class="feature-tag new">Golden Panel Roulette</li>
+    <li class="feature-tag new">Screen Crack Overlay (3 tiers)</li>
+    <li class="feature-tag new">Ball Personality (squash/stretch, idle bounce)</li>
+  </ul>
+</div>
+
+<div class="team-card">
+  <div class="team-header"><div class="team-name">T3 — Meta Progression</div><div class="team-score score-mid">78</div></div>
+  <ul class="feature-list">
+    <li class="feature-tag new">Screen Crack Overlay</li>
+    <li class="feature-tag new">25 Chain Milestone Achievements</li>
+    <li class="feature-tag new">Daily Shatter Challenge (seeded waves)</li>
+    <li class="feature-tag new">Bronze/Silver/Gold Tiers</li>
+  </ul>
+</div>
+
+<div class="team-card">
+  <div class="team-header"><div class="team-name">T2 — Content Explosion</div><div class="team-score">72</div></div>
+  <ul class="feature-list">
+    <li class="feature-tag new">Glass Explosion Ragdoll (kickback shards)</li>
+    <li class="feature-tag new">Bomb Glass (AoE)</li>
+    <li class="feature-tag new">Ice Glass (freeze)</li>
+    <li class="feature-tag new">DEMOLITION Full Clear Bonus</li>
+    <li class="feature-tag new">Game Over Stats Dashboard</li>
+  </ul>
+</div>
+
+<div class="team-card">
+  <div class="team-header"><div class="team-name">T4 — Pressure Cooker</div><div class="team-score">72</div></div>
+  <ul class="feature-list">
+    <li class="feature-tag new">Glass Fusion Timer (every 4s)</li>
+    <li class="feature-tag new">Gravity Flip Zones (wave 8+)</li>
+    <li class="feature-tag new">Ball Personality (squash, idle hop)</li>
+    <li class="feature-tag new">Fusion Warning Rings</li>
+  </ul>
+</div>
+
+<h2>Bugs Found & Fixed</h2>
+
+<div class="bug-card fixed">
+  <div class="bug-title">Ice Freeze Body.setStatic Crash (T2, T5) — FIXED</div>
+  <div class="bug-detail">Both teams used <code>Body.setStatic(ball, true/false)</code> for temp freeze — known Matter.js crash pattern. Replaced with <code>ignoreGravity + collisionFilter.mask=0</code>.</div>
+</div>
+
+<div class="bug-card fixed">
+  <div class="bug-title">Wrong-Game Port Collision (T4) — RESOLVED</div>
+  <div class="bug-detail">Stale http-server from previous session served wrong game on port 8092. Bugcatcher scored 64 testing Ricochet Bloom instead of T4. Features confirmed present after port cleanup.</div>
+</div>
+
+<h2>Lessons Learned</h2>
+<div class="lesson"><strong>Port cleanup mandatory at Phase 0</strong> — stale servers cause catastrophic wrong-game testing</div>
+<div class="lesson"><strong>Ice freeze anti-pattern</strong> — AI upgraders default to <code>setStatic</code> for temp freeze. Add to known-bug checklist.</div>
+<div class="lesson"><strong>Automated feature verification</strong> — grep for expected config keys before testing to catch silent failures</div>
+<div class="lesson"><strong>game.js line bloat</strong> — complex upgrades (fusion+gravity) push to 510 lines. Consider sub-mixin splitting.</div>
+
+<h2>Play All Versions</h2>
+<div class="play-links">
+  <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/shatter-chain-t5-v2/" target="_blank">
+    <div class="team-label">T5 — Best (84)</div>
+    <div class="team-title">Risk & Reward</div>
+  </a>
+  <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/shatter-chain-t1-v2/" target="_blank">
+    <div class="team-label">T1 (78)</div>
+    <div class="team-title">Golden Chaos</div>
+  </a>
+  <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/shatter-chain-t3-v2/" target="_blank">
+    <div class="team-label">T3 (78)</div>
+    <div class="team-title">Meta Progression</div>
+  </a>
+  <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/shatter-chain-t2-v2/" target="_blank">
+    <div class="team-label">T2 (72)</div>
+    <div class="team-title">Content Explosion</div>
+  </a>
+  <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/shatter-chain-t4-v2/" target="_blank">
+    <div class="team-label">T4 (72)</div>
+    <div class="team-title">Pressure Cooker</div>
+  </a>
+</div>
+
+<a class="play-link" href="https://jireh-father.github.io/ai-game-studio/shatter-chain/" target="_blank" style="display:inline-block;margin:8px 0">
+  <div class="team-label">Original</div>
+  <div class="team-title">Shatter Chain v1 (80.4)</div>
+</a>
+
+<br>
+<a class="catalog-link" href="https://jireh-father.github.io/ai-game-studio/">View Full Game Catalog</a>
+
+<footer>
+  Generated by AI Game Studio Evolution Pipeline<br>
+  evo-shatter-chain-2026-03-05-001 | 5 teams, 5 shipped | 2026-03-05
+</footer>
+</div>
+</body>
+</html>
