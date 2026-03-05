@@ -51,12 +51,36 @@ This gives a 0-100 score for the Fun/Engagement category.
 }
 ```
 
+## VETO CHECK (mandatory before scoring)
+
+**1. Does the GDD have a Juice Specification section?**
+If NO → verdict `"revise"`, core_loop_satisfaction capped at 4. Include "Add Juice Specification section" in required_changes.
+
+**2. Is a visually impressive event specified in the first 10 seconds?**
+If NO → first_impression capped at 4.
+
+**3. Is death → restart designed to be under 2 seconds?**
+If NO → replayability capped at 5.
+
+**4. Does the player die within 30 seconds of inactivity?**
+If NO → core_loop_satisfaction capped at 4.
+
+## Score Anchors
+
+- **10/10 Core Loop**: Fruit Ninja — the slicing action itself is satisfying, chain slices trigger dopamine explosions
+- **8/10**: Crossy Road — each tap is tense, instant restart after death
+- **6/10**: Decent puzzle — satisfying to solve but weak "one more round" urge
+- **4/10**: Game that requires reading instructions to be fun — the core loop itself is boring
+- **2/10**: Game where you just watch the screen — player is passive
+
 ## Evaluation Guidelines
 
-- Imagine yourself as a bored commuter. Would you tap on this?
-- First impression: is the title screen inviting? Is the tutorial minimal?
-- Core loop: does each cycle (play → fail → learn → retry) feel good?
-- Replayability: is there enough variety that session 20 feels different from session 1?
+- **CRITICAL**: Evaluate "will this actually be fun when built?" not "is the GDD well-structured?"
+- **First 10 seconds test**: Read the GDD's first play scenario and imagine it. Are those 10 seconds alone compelling?
+- Core loop: Does the core mechanic create **meaningful decisions**? Does the player feel smart when they play well?
+- **Achievement**: Does clearing a stage or beating a score feel like a genuine accomplishment? Not just "stuff happened" but "I pulled that off"
+- Replayability: After death, is there an "I almost had it!" feeling? Do you want to restart immediately?
 - Difficulty: does the plan specify mathematical difficulty scaling?
+- **Juice verification**: Does Juice Specification have concrete values? Not "appropriate particles" but "20 particles, 400ms, radial burst"
 - Penalize plans where the fun depends on features that are hard to implement in web
-- Reward plans with "juice" (screen shake, particles, satisfying feedback)
+- **No juice = no fun**: If Juice Specification is thin, deduct from both core_loop_satisfaction and polish. This is mandatory, not optional.

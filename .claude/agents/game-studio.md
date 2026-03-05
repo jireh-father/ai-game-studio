@@ -56,7 +56,7 @@ Choose the appropriate model for each agent based on task complexity and cost ef
 | Role | Model | Rationale |
 |------|-------|-----------|
 | **Ideators** (spark, oddball, trendsetter) | `sonnet` | Creative generation needs good reasoning, not max capability |
-| **Idea Judges** (professor-ludus, dr-loop, cash, scout) | `sonnet` | Nuanced evaluation needs good reasoning |
+| **Idea Judges** (professor-ludus, dr-loop, cash, scout, devil) | `sonnet` | Nuanced evaluation needs good reasoning |
 | **Architect** (planner) | `sonnet` | GDD planning needs solid reasoning and structure |
 | **Plan Judges** (builder, joy, profit) | `sonnet` | Nuanced evaluation needs good reasoning |
 | **Developer** | `opus` | Writing correct, working game code is the most critical task |
@@ -79,13 +79,16 @@ Choose the appropriate model for each agent based on task complexity and cost ef
 
 ---
 
-## Phase 2: Idea Validation
+## Phase 2: Idea Validation (STRICT MODE — 3x harder than previous runs)
 
-1. Spawn 4 judges **per idea, in parallel**: `agents/idea-judges/{professor-ludus,dr-loop,cash,scout}.md`
+1. Spawn 5 judges **per idea, in parallel**: `agents/idea-judges/{professor-ludus,dr-loop,cash,scout,devil}.md`
    - Pass the idea JSON to each judge
    - Each judge returns their score (0-100) per their own criteria
-2. **Weighted score**: `ludus×0.35 + loop×0.25 + cash×0.20 + scout×0.20`
-3. Gate: **70+ → PASS**, below → FAIL
+   - **Devil** is a new mechanical exploit judge — specifically tests if the game can be broken/exploited
+2. **Weighted score**: `ludus×0.25 + loop×0.20 + devil×0.25 + cash×0.15 + scout×0.15`
+   - Devil has HIGH weight (0.25) because mechanical robustness is the #1 failure reason
+3. Gate: **75+ → PASS**, below → FAIL (raised from 70 to filter out borderline ideas)
+4. **DEVIL VETO**: If Devil scores below 40, the idea is AUTO-FAIL regardless of composite score
 4. If fewer than N ideas pass: re-run Phase 1 for deficit (max 2 retries)
 5. Save → `{run_id}/ideas/ideas-evaluated.json`, `ideas-passed.json`
 6. Slack: Send `validation-done` template from `scripts/slack-templates.md`
@@ -250,7 +253,7 @@ After pipeline completion, conduct 1:1 retrospective conversations with each rol
 | Agent perf | `data/agent-performance.json` |
 | Run data | `data/pipeline-runs/{run_id}/` |
 | Ideator prompts | `agents/ideators/{name}.md` |
-| Idea judge prompts | `agents/idea-judges/{name}.md` |
+| Idea judge prompts | `agents/idea-judges/{professor-ludus,dr-loop,cash,scout,devil}.md` |
 | Planner prompt | `agents/planners/architect.md` |
 | Plan judge prompts | `agents/plan-judges/{name}.md` |
 | Developer prompt | `agents/developers/developer.md` |

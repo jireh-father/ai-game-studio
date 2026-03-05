@@ -49,10 +49,15 @@ This gives a 0-100 score for the Business Viability category.
 }
 ```
 
+## VETO CHECK (mandatory before scoring)
+
+**Is death → restart under 2 seconds?** If NO → session_economy capped at 5. Slow restarts reduce plays per session and ad exposure opportunities.
+
 ## Evaluation Guidelines
 
 - Ad integration: are there at least 2 natural ad break points per session?
 - Session economy: 1-3 min sessions × 3-5 sessions per sitting = good ad frequency
+- **Fast death→restart is key to revenue**: Every death is an ad opportunity. Faster restarts = more ad impressions per session.
 - Launch readiness: does the plan cover everything for a complete game (no missing screens)?
 - Check: is the monetization design specified in enough detail for the developer?
 - Check: are reward values balanced (too generous = no ads, too stingy = churn)?

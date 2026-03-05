@@ -51,6 +51,17 @@ This gives a 0-100 score for the Technical Feasibility category.
 }
 ```
 
+## VETO CHECK (mandatory before scoring)
+
+**Does the GDD have a "Juice Specification" section?** If NO, set verdict to `"revise"` and include "Add Juice Specification section" in required_changes.
+
+Juice Specification must include concrete numeric values for at minimum:
+- Player input → visual feedback (particles, screen shake, scale punch)
+- Death effects (shake, screen effect, delay)
+- Score increase effects (floating text, HUD punch)
+
+Vague phrases like "add later", "as appropriate", or "smooth" are treated as missing specifications.
+
 ## Evaluation Guidelines
 
 - Check: can each JS file stay under 300 lines?
@@ -58,6 +69,7 @@ This gives a 0-100 score for the Technical Feasibility category.
 - Check: will SVG rendering perform on low-end mobile?
 - Check: are touch controls specified precisely enough to implement?
 - Check: are stage generation rules algorithmic (not hand-designed)?
+- Check: **Can all Juice Specification effects be implemented in Phaser 3/Canvas?**
 - Penalize vague specs ("make it smooth" → should specify exact easing functions)
 - Penalize over-ambitious scope for the tech constraints
 - required_changes must be specific and actionable

@@ -50,11 +50,22 @@ This gives a 0-100 score for the Market Viability category.
 }
 ```
 
+## VETO CHECK (mandatory before scoring)
+
+**Virality comes from fun.** "Clever concepts" get shared, but "addictive games" go viral by word of mouth. Verify:
+
+- Is the core action **visually interesting even just to watch?** (if NO → viral_potential capped at 5)
+- Do shareable "check this out" moments naturally occur during gameplay?
+- **PROVEN MECHANIC CHECK**: Is there at least ONE successful game with a similar core mechanic? If the mechanic is completely unproven and untested, market_gap capped at 5. Novelty without proven fun is risk, not opportunity.
+- **UNLOSEABLE = NO VIRALITY**: Viral games create "I almost had it!" moments. If the game can't kill the player, there are no dramatic moments to share. If unloseable → viral_potential capped at 3.
+
 ## Evaluation Guidelines
 
 - Market gap: "lots of runners, but none with X mechanic" is a good gap
 - Viral potential: think screenshot-worthy moments, shareable scores, "watch this" factor
+- **Viral = experience, not explanation**: "Try this game" goes viral, not "this game is about X". Is the fun something you have to experience firsthand?
 - Competitive edge: what makes someone choose this over 1000 similar-looking games?
 - Trend alignment: riding a trend is good, but pure trend-chasing dates quickly
 - Consider the web game distribution channel (link sharing, embed potential)
 - Penalize ideas that would get lost in a sea of similar games
+- IMPORTANT: Scope competitive analysis to the web game distribution channel (browser-playable, link-shared, social-media-discovered). Native App Store games are indirect competitors, not direct competitors. Evaluate whether the idea stands out among OTHER web/browser games, not against native mobile games with different economics and distribution.

@@ -13,18 +13,29 @@ Test games for bugs, performance, and stability using Playwright. Weight: **0.40
 You MUST complete all of the following before scoring:
 
 ### Minimum Test Requirements
-- **Normal play**: 5 minutes of standard gameplay
-- **Stress testing**: 5 minutes of abnormal input:
+
+**TIME LIMIT**: Complete all testing within **5 minutes total**. Be efficient.
+
+- **Normal play**: 2 minutes of standard gameplay
+- **Stress testing**: 1.5 minutes of abnormal input:
   - Rapid tapping (10+ taps per second)
-  - Multi-touch simulation
   - Tapping outside game area
-  - Swiping in wrong directions
-  - No input for 30+ seconds (idle test)
-- **State transitions**: 5 minutes testing:
-  - Start → play → die → retry (×5)
-  - Start → play → pause (if exists) → resume
+  - No input for 15+ seconds (idle test)
+- **State transitions**: 1.5 minutes testing:
+  - Start → play → die → retry (×3)
   - Quick restart spam
-  - Stage transitions (especially around milestone stages)
+  - Stage transitions
+
+### Common Defects Pre-Check
+
+Before deep testing, quickly verify these recurring issues:
+- [ ] Favicon present (no 404 on /favicon.ico)
+- [ ] Orientation handling works on both portrait viewport and desktop landscape
+- [ ] All texture/asset keys registered exactly once (no duplicate registration)
+- [ ] All ad hooks defined in AdManager have at least one call site
+- [ ] Console clean on initial page load (zero errors before gameplay)
+
+If any common defect is found, log it immediately and continue to deep testing.
 
 ### Test Actions (Playwright)
 
@@ -105,6 +116,20 @@ category_score = (bug_score×0.35 + performance×0.25 + console×0.20 + edge_cas
   "nice_to_fix": []
 }
 ```
+
+### Retest Protocol (Fix Verification Round)
+
+When retesting after bug fixes:
+1. **Environment check**: Verify correct URL, port, and clean initial console
+2. **Critical/Blocker first**: Retest blocker and major bugs before anything else
+3. **Evidence required**: Each bug retest must include FIXED or NOT FIXED with specific evidence (screenshot, console output, or code reference)
+4. **Gate rule**: If ANY major or blocker bug is NOT FIXED, verdict MUST be FAIL — do not issue PARTIAL PASS
+5. **Minor/Cosmetic spot-check**: Verify at least 2 minor/cosmetic fixes; remaining can be sampled
+6. **Regression check**: After verifying fixes, do 3 minutes of normal play to check for regressions introduced by fixes
+
+### Ad Bug Scope
+
+If you discover an ad-related bug (category: ad-integration), report it with full details but add `"severity_note": "deferred to adcheck"`. AdCheck is the authority on ad bug severity. You should still document the bug fully — just defer the final severity classification.
 
 ## Bug Severity Guide
 

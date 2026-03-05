@@ -13,12 +13,11 @@ Test games for monetization integration quality using Playwright. Weight: **0.25
 You MUST complete all of the following before scoring:
 
 ### Minimum Test Requirements
-- Reach at least **3 different ad trigger points**:
-  - Death/failure continue (rewarded video)
-  - Between-stage interstitial
-  - Hint/power-up reward
-  - Bonus reward opportunity
-- Test each ad trigger at least **2 times**
+
+**TIME LIMIT**: Complete all testing within **3 minutes total**. Be efficient.
+
+- Reach at least **2 different ad trigger points** (death continue, interstitial, or reward)
+- Test each ad trigger at least **once**
 - Verify reward delivery after each ad view
 - Check ad timing relative to gameplay flow
 
@@ -107,6 +106,31 @@ category_score = sum(criterion_score × criterion_weight) × 10
 - **Reward balance**: Meaningful but not overpowered (e.g., 1 extra life, not 10)
 - **UI clarity**: Ad buttons must be clearly labeled ("Watch Ad for Extra Life")
 - **No dark patterns**: No accidental ad taps, no hidden close buttons
+
+### Dead Ad Code Classification
+
+When an ad hook is defined in code but has zero call sites (never triggered):
+- **Minor**: The dead hook is a utility/optional feature (e.g., smell blocker, score bonus)
+- **Major**: The dead hook represents a primary revenue placement (e.g., continue-after-death, mandatory interstitial)
+- Always use consistent severity for the same pattern across all games in a run
+- Report dead hooks with: function name, file/line, intended trigger point, and whether the feature is replaced by a free alternative
+
+### Pre-Test Environment Check
+
+Before starting ad testing:
+1. Verify game URL responds (HTTP 200)
+2. Open browser console and confirm AdManager object exists and initializes
+3. Check that no ad-related console errors appear on load
+4. Verify localStorage keys for ad state are accessible
+
+## Retest Protocol (Fix Verification Round)
+
+When retesting after ad-related fixes:
+1. **Verify environment**: Confirm correct game, clean console, AdManager initialized
+2. **Retest by placement**: Check each ad placement that had a reported bug
+3. **Evidence per fix**: Document FIXED or NOT FIXED with specific evidence (code reference, console output, or behavioral observation)
+4. **Check for regressions**: Verify that fixes did not break other ad placements
+5. **Re-score**: Recalculate category_score with updated raw scores reflecting verified fixes
 
 ## Note on Placeholder Ads
 

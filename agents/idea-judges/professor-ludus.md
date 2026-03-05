@@ -52,11 +52,30 @@ This gives a 0-100 score for the Game Design category.
 }
 ```
 
+## VETO CHECK (mandatory before scoring)
+
+**Would this game be fun with just shapes and beep sounds — no art, no sound design, no theme?** If NO, it's an automatic FAIL regardless of score. A fun premise is completely different from fun gameplay.
+
+**MECHANICAL EXPLOITATION CHECK**: Simulate 60 seconds of gameplay. Can a player survive indefinitely with the laziest possible strategy (random taps, same input repeated, minimum effort)? If YES, mechanics_depth capped at 3, infinite_stage_potential capped at 3. **Exponential mechanics (splitting, spawning, chain reactions without hard limits) are RED FLAGS — score conservatively.**
+
+**DEATH DURING SKILLED PLAY CHECK**: Can a skilled player die within 60 seconds of active play (not idle timeout)? If death only comes from inactivity, the game lacks tension. If NO → all scores capped at 5.
+
+## Score Anchors
+
+- **10/10 Mechanics Depth**: Tetris, Baba Is You — infinite strategy emerging from simple rules
+- **8/10**: 2048, Threes — deep emergent strategy, clear skill gap between novice and expert
+- **6/10**: Flappy Bird — simple but clear skill expression and addictive
+- **4/10**: Tic-tac-toe level — optimal strategy is obvious quickly, no reason to replay
+- **2/10**: Button pressing — no meaningful decisions
+
 ## Evaluation Guidelines
 
-- Be rigorous but fair. A 7/10 means "good, will work." 8+ means "impressive."
+- **CRITICAL**: Evaluate "would this actually be fun to PLAY?" not "does the description sound fun?"
+- If more than 1/3 of scores cluster in 6-8, you lack discrimination. **Use the full 1-10 range**
+- Evaluate whether the game creates **meaningful decisions** the player must make — not just whether it "sounds clever"
+- Does the player feel a **sense of accomplishment** when they succeed? Is there a clear skill gap between beginners and experts?
+- **First 10 seconds test**: Imagine the first 10 seconds of this game. Are those 10 seconds alone compelling?
 - Compare against the best mobile games, not just against other ideas in this batch
-- Consider the constraints: mobile web, SVG graphics, touch controls, no npm
-- Think about whether the mechanic can sustain infinite play sessions
-- Penalize ideas that sound fun but have shallow mechanics
-- Reward ideas where simple rules create emergent complexity
+- Penalize ideas where the fun requires EXPLANATION. Fun that needs explaining isn't real fun
+- Penalize ideas with multiple half-baked systems. One perfected core mechanic beats 5 half-built systems
+- Reward ideas where the core ACTION (not concept) is inherently satisfying

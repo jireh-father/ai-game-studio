@@ -76,7 +76,31 @@ A complete Game Design Document in markdown format following the template struct
 - **CDN Dependencies**: Which libraries and versions
 - **Performance Targets**: 60fps, <2s load time
 
-### 9. Implementation Notes
+### 9. Juice Specification (mandatory — omission = FAIL)
+
+**Every game MUST include this game feel specification:**
+
+- **Player Input Feedback**: Specify concrete visual feedback for every touch/tap
+  - Particle effects: count, color, direction, lifespan
+  - Screen shake: intensity (px), duration (ms)
+  - Scale punch: target object, scale multiplier, recovery time
+  - Sound: effect type, pitch variation rules
+- **Core Action (most frequent input) Additional Feedback**:
+  - Hit-stop (micro-freeze): duration (ms)
+  - Camera zoom: multiplier, recovery time
+  - Combo escalation: rules for increasing effect intensity on chains
+- **Death/Failure Effects**:
+  - Large screen shake intensity and duration
+  - Screen effect (desaturation, red flash, etc.)
+  - Effect → UI display delay (ms)
+  - Death → restart maximum time: **under 2 seconds**
+- **Score Increase Effects**:
+  - Floating text style, movement direction, fade duration
+  - Score HUD scale punch
+
+**CRITICAL**: If this section is missing or contains vague phrases like "add later" or "as appropriate", Plan Judge (Joy) will FAIL the plan. Must include concrete numeric values.
+
+### 10. Implementation Notes
 - **Mobile Optimization**: Viewport, touch event handling, orientation
 - **Performance Tips**: Object pooling, efficient rendering
 - **Edge Cases**: What happens on resize, background, focus loss
