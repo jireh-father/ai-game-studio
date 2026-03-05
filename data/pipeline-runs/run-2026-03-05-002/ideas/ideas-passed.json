@@ -1,0 +1,38 @@
+{
+  "run_id": "run-2026-03-05-002",
+  "passed_ideas": [
+    {
+      "id": "idea-20260305-032",
+      "title": "Ricochet Bloom",
+      "slug": "ricochet-bloom",
+      "one_liner": "Flick a ball and watch it bloom into a chain of perfect ricochets that paint the screen",
+      "elevator_pitch": "Flick a ball into a field of bumpers. Each bounce splits the ball into two, creating an exponential ricochet cascade. Score based on bumpers hit before all balls stop. Bumpers decay — hit same one twice and it shatters. New bumpers grow where balls bloom.",
+      "core_mechanic": "Single flick triggering exponential ricochet chains",
+      "mechanic_tags": ["physics", "flick", "chain-reaction", "splitting", "emergent", "painting"],
+      "creator": "spark",
+      "weighted_score": 73
+    },
+    {
+      "id": "idea-20260305-034",
+      "title": "Microwave Roulette",
+      "slug": "microwave-roulette",
+      "one_liner": "Stop the microwave at the perfect second before your food explodes — but every item has a different sweet spot",
+      "elevator_pitch": "Microwaving increasingly absurd items. Tap to stop timer in the green zone — too early and it's frozen, too late and it EXPLODES. Green zone shrinks every stage while distractions obscure your view.",
+      "core_mechanic": "Precision tap timing on a spinning countdown",
+      "mechanic_tags": ["timing", "precision-tap", "humor", "absurd", "reflex", "anticipation"],
+      "creator": "oddball",
+      "weighted_score": 72
+    },
+    {
+      "id": "idea-20260305-035",
+      "title": "Toilet Unclogger",
+      "slug": "toilet-unclogger",
+      "one_liner": "Frantically plunge toilets before they overflow — each clog is weirder than the last",
+      "elevator_pitch": "Toilets keep clogging with ridiculous objects. Tap rapidly to plunge, but each object has a different rhythm. Miss the rhythm and water rises. Overflow = game over. Multiple toilets at higher stages.",
+      "core_mechanic": "Rhythmic rapid-tap with variable tempo matching",
+      "mechanic_tags": ["rapid-tap", "rhythm", "humor", "gross", "multitask", "reflex"],
+      "creator": "oddball",
+      "weighted_score": 71
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "run_id": "run-2026-03-05-002",
+  "tested_at": "2026-03-05T03:35:00Z",
+  "threshold": 70,
+  "results": [
+    {
+      "slug": "microwave-roulette",
+      "title": "Microwave Roulette",
+      "player_one": 70.8,
+      "bugcatcher": 82.0,
+      "replay_tester": 64.3,
+      "composite": 73.7,
+      "formula": "PO×0.35 + BC×0.40 + RT×0.25",
+      "bugs_found": 5,
+      "blocker_bugs": 0,
+      "major_bugs": 1,
+      "fix_rounds": 0,
+      "result": "PASS",
+      "fixes_applied": ["Lives text repositioned (w-50)", "itemsCooked falsy fix"]
+    },
+    {
+      "slug": "toilet-unclogger",
+      "title": "Toilet Unclogger",
+      "player_one": 64.5,
+      "bugcatcher": 79.0,
+      "replay_tester": 68.0,
+      "composite": 71.2,
+      "formula": "PO×0.35 + BC×0.40 + RT×0.25",
+      "bugs_found": 5,
+      "blocker_bugs": 0,
+      "major_bugs": 0,
+      "fix_rounds": 0,
+      "result": "PASS",
+      "fixes_applied": ["Combo text repositioned (y:38)", "Clog name fallback fix", "Resize handler for orientation"]
+    },
+    {
+      "slug": "ricochet-bloom",
+      "title": "Ricochet Bloom",
+      "round_1": {
+        "player_one": 66.0,
+        "bugcatcher": 93.0,
+        "replay_tester": 22.5,
+        "composite": 65.9,
+        "result": "FAIL"
+      },
+      "round_2": {
+        "player_one": 59.0,
+        "bugcatcher": 85.0,
+        "replay_tester": 42.5,
+        "composite": 65.3,
+        "result": "FAIL"
+      },
+      "fix_rounds": 2,
+      "result": "SCRAPPED",
+      "scrap_reason": "Core design flaw: ball-splitting mechanic (up to 64 balls) makes it impossible to fail. Difficulty tuning insufficient — needs fundamental redesign."
+    }
+  ],
+  "summary": {
+    "games_tested": 3,
+    "passed": 2,
+    "scrapped": 1,
+    "shipping": ["microwave-roulette", "toilet-unclogger"]
+  }
+}

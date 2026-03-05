@@ -1,0 +1,16 @@
+{
+  "run_id": "run-2026-03-05-002",
+  "evaluated_at": "2026-03-05T12:10:00Z",
+  "threshold": 70,
+  "results": [
+    { "id": "idea-20260305-032", "title": "Ricochet Bloom", "creator": "spark", "ludus": 75, "loop": 66, "cash": 67, "scout": 83, "weighted": 73, "result": "PASS" },
+    { "id": "idea-20260305-034", "title": "Microwave Roulette", "creator": "oddball", "ludus": 67, "loop": 69, "cash": 74, "scout": 80, "weighted": 72, "result": "PASS" },
+    { "id": "idea-20260305-035", "title": "Toilet Unclogger", "creator": "oddball", "ludus": 68, "loop": 74, "cash": 76, "scout": 68, "weighted": 71, "result": "PASS" },
+    { "id": "idea-20260305-038", "title": "Rail Grind", "creator": "trendsetter", "ludus": 68, "loop": 78, "cash": 70, "scout": 57, "weighted": 69, "result": "FAIL" },
+    { "id": "idea-20260305-031", "title": "Orbit Snap", "creator": "spark", "ludus": 65, "loop": 68, "cash": 66, "scout": 67, "weighted": 66, "result": "FAIL" },
+    { "id": "idea-20260305-036", "title": "Elevator Panic", "creator": "oddball", "ludus": 73, "loop": 62, "cash": 56, "scout": 65, "weighted": 65, "result": "FAIL" },
+    { "id": "idea-20260305-033", "title": "Gravity Flip Dash", "creator": "spark", "ludus": 60, "loop": 78, "cash": 74, "scout": 48, "weighted": 65, "result": "FAIL" },
+    { "id": "idea-20260305-037", "title": "Color Flood Panic", "creator": "trendsetter", "ludus": 64, "loop": 68, "cash": 57, "scout": 50, "weighted": 61, "result": "FAIL" },
+    { "id": "idea-20260305-039", "title": "Orbit Juggle", "creator": "trendsetter", "ludus": 69, "loop": 54, "cash": 48, "scout": 60, "weighted": 59, "result": "FAIL" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "run_id": "run-2026-03-05-002",
+  "evaluated_at": "2026-03-05T12:18:00Z",
+  "threshold": 70,
+  "results": [
+    { "slug": "microwave-roulette", "title": "Microwave Roulette", "builder": 88, "joy": 80, "profit": 79, "weighted": 83, "result": "PASS" },
+    { "slug": "toilet-unclogger", "title": "Toilet Unclogger", "builder": 80, "joy": 80, "profit": 87, "weighted": 82, "result": "PASS" },
+    { "slug": "ricochet-bloom", "title": "Ricochet Bloom", "builder": 73, "joy": 80, "profit": 80, "weighted": 77, "result": "PASS" }
+  ]
+}
