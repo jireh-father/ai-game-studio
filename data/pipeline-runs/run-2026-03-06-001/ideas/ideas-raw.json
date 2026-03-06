@@ -1,0 +1,39 @@
+{
+  "run_id": "run-2026-03-06-001",
+  "total_generated": 30,
+  "after_dedup": 27,
+  "duplicates_removed": [
+    {"removed": "Mirror Logic (trendsetter)", "kept": "Mirror Logic (spark)", "reason": "Same laser/mirror concept"},
+    {"removed": "Fold Logic (puzzler)", "kept": "Fold Logic (visionary)", "reason": "Same title, visionary version more novel"},
+    {"removed": "Signal Splice (trendsetter)", "kept": "Circuit Reroute (spark)", "reason": "Both wire/circuit routing puzzles"}
+  ],
+  "ideas": [
+    {"id": "idea-20260306-001", "title": "Circuit Reroute", "slug": "circuit-reroute", "creator": "spark", "game_type": "brain", "one_liner": "Drag wire segments to complete circuits before the power surge reaches the dead end and fries everything."},
+    {"id": "idea-20260306-002", "title": "Gravity Plumber", "slug": "gravity-plumber", "creator": "spark", "game_type": "brain", "one_liner": "Tap to flip gravity direction and guide a falling ball through a maze of pipes — but every flip changes which pipes are open."},
+    {"id": "idea-20260306-003", "title": "Weight Puzzle", "slug": "weight-puzzle", "creator": "spark", "game_type": "brain", "one_liner": "Place weighted blocks on a teetering balance beam to match the target tilt angle — but every block you place changes the physics for the next."},
+    {"id": "idea-20260306-004", "title": "Mirror Logic", "slug": "mirror-logic", "creator": "spark", "game_type": "brain", "one_liner": "Place and angle mirrors to bounce a laser through targets in the correct ORDER — wrong sequence detonates the bomb."},
+    {"id": "idea-20260306-005", "title": "Domino Plot", "slug": "domino-plot", "creator": "spark", "game_type": "brain", "one_liner": "Place dominoes on a board to create a chain reaction that topples ALL targets — but you only get a limited number of pieces."},
+    {"id": "idea-20260306-006", "title": "Gear Train", "slug": "gear-train", "creator": "spark", "game_type": "brain", "one_liner": "Connect gears of different sizes to transfer rotation from the motor to the target wheel — wrong gear ratios jam the machine and explode."},
+    {"id": "idea-20260306-007", "title": "Trash Sort Panic", "slug": "trash-sort-panic", "creator": "oddball", "game_type": "brain", "one_liner": "Sort garbage into the right bins before your apartment gets condemned."},
+    {"id": "idea-20260306-008", "title": "Password Panic", "slug": "password-panic", "creator": "oddball", "game_type": "brain", "one_liner": "Create passwords that satisfy increasingly insane security requirements before you get locked out."},
+    {"id": "idea-20260306-009", "title": "Cable Untangle", "slug": "cable-untangle", "creator": "oddball", "game_type": "brain", "one_liner": "Untangle the nightmare cable drawer before your devices die."},
+    {"id": "idea-20260306-010", "title": "Excuse Engine", "slug": "excuse-engine", "creator": "oddball", "game_type": "brain", "one_liner": "Build absurd excuses by connecting logic fragments before your boss catches you."},
+    {"id": "idea-20260306-011", "title": "Pipe Dream Plumber", "slug": "pipe-dream-plumber", "creator": "oddball", "game_type": "brain", "one_liner": "Route water through a house of increasingly insane plumbing before everything floods."},
+    {"id": "idea-20260306-012", "title": "Parking Lot Escape", "slug": "parking-lot-escape", "creator": "oddball", "game_type": "brain", "one_liner": "Slide cars around a jammed parking lot to free your car before the meter expires."},
+    {"id": "idea-20260306-013", "title": "Num Collapse", "slug": "num-collapse", "creator": "trendsetter", "game_type": "brain", "one_liner": "Merge adjacent same-numbers on a hex grid before the board fills up — but merging shifts ALL neighbors, creating chain reactions or disasters."},
+    {"id": "idea-20260306-014", "title": "Shade Sort", "slug": "shade-sort", "creator": "trendsetter", "game_type": "brain", "one_liner": "Sort colored liquids between tubes — but you can only see the shades, not the exact colors, and the palette shifts each stage."},
+    {"id": "idea-20260306-015", "title": "Tile Fib", "slug": "tile-fib", "creator": "trendsetter", "game_type": "brain", "one_liner": "One tile in each group is LYING about its value — find the liar by testing sums against target numbers."},
+    {"id": "idea-20260306-016", "title": "Fold Fit", "slug": "fold-fit", "creator": "trendsetter", "game_type": "brain", "one_liner": "Fold a flat shape along dotted lines to make it fit perfectly into a 3D silhouette — origami meets Tetris."},
+    {"id": "idea-20260306-017", "title": "Signal Swap", "slug": "signal-swap", "creator": "puzzler", "game_type": "brain", "one_liner": "Swap colored signals on a grid to complete circuits before the board fills up."},
+    {"id": "idea-20260306-018", "title": "Pipe Paradox", "slug": "pipe-paradox", "creator": "puzzler", "game_type": "brain", "one_liner": "Route flows through pipes where the RULES of flow change every 5 seconds."},
+    {"id": "idea-20260306-019", "title": "Weight Riddle", "slug": "weight-riddle", "creator": "puzzler", "game_type": "brain", "one_liner": "Balance a scale by deducing hidden weights from clues — one wrong guess and it topples."},
+    {"id": "idea-20260306-020", "title": "Hex Collapse", "slug": "hex-collapse", "creator": "puzzler", "game_type": "brain", "one_liner": "Place numbered hexagons to trigger cascading collapses — but only if the math adds up."},
+    {"id": "idea-20260306-021", "title": "Color Law", "slug": "color-law", "creator": "puzzler", "game_type": "brain", "one_liner": "Sort colors into zones — but the sorting RULES change mid-puzzle and you must adapt instantly."},
+    {"id": "idea-20260306-022", "title": "Liar's Grid", "slug": "liars-grid", "creator": "visionary", "game_type": "creative", "one_liner": "A puzzle where the numbers on the board LIE to you, and you must figure out which ones are telling the truth."},
+    {"id": "idea-20260306-023", "title": "Fold Logic", "slug": "fold-logic", "creator": "visionary", "game_type": "creative", "one_liner": "A puzzle where you fold the screen like origami to make disconnected paths connect."},
+    {"id": "idea-20260306-024", "title": "Echo Maze", "slug": "echo-maze", "creator": "visionary", "game_type": "creative", "one_liner": "A maze where you can't see the walls — you tap to send out a sound pulse that briefly reveals them."},
+    {"id": "idea-20260306-025", "title": "Rule Breaker", "slug": "rule-breaker", "creator": "visionary", "game_type": "creative", "one_liner": "A puzzle game that teaches you rules — then the only way to win is to BREAK them."},
+    {"id": "idea-20260306-026", "title": "Gravity Painter", "slug": "gravity-painter", "creator": "visionary", "game_type": "creative", "one_liner": "A puzzle where you rotate gravity to make paint balls roll and color every tile on the board."},
+    {"id": "idea-20260306-027", "title": "Time Loop Tile", "slug": "time-loop-tile", "creator": "visionary", "game_type": "creative", "one_liner": "A puzzle where your PAST SELF replays your previous moves, and you must cooperate with your own ghost to solve it."}
+  ]
+}

@@ -1,0 +1,69 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0A0E1A;
+  touch-action: none;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+#game canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#landscape-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #0A0E1A;
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: #E0E4EC;
+  font-family: monospace;
+  font-size: 20px;
+  text-align: center;
+  padding: 20px;
+}
+
+#landscape-overlay .icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: rotate-phone 2s ease-in-out infinite;
+}
+
+@keyframes rotate-phone {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #landscape-overlay { display: flex; }
+  #game { visibility: hidden; height: 0; overflow: hidden; }
+}
+
+@media (orientation: portrait), (min-height: 501px) {
+  #landscape-overlay { display: none; }
+  #game { display: block; }
+}
