@@ -58,3 +58,11 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+// Recover Phaser canvas after portrait restore from landscape CSS hide
+const portraitQuery = window.matchMedia('(orientation: portrait)');
+portraitQuery.addEventListener('change', (e) => {
+  if (e.matches) {
+    setTimeout(() => { game.scale.refresh(); }, 100);
+  }
+});
