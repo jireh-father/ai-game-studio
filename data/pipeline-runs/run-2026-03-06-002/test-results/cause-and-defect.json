@@ -1,0 +1,168 @@
+{
+  "game": "Cause & Defect",
+  "slug": "cause-and-defect",
+  "testDate": "2026-03-06",
+  "runId": "run-2026-03-06-002",
+  "testerModel": "claude-opus-4-6",
+
+  "bugcatcher": {
+    "weight": 0.40,
+    "consoleErrors": 0,
+    "bugs": [
+      {
+        "id": "BUG-001",
+        "severity": "major",
+        "category": "display",
+        "description": "After orientation change from landscape back to portrait, the Phaser canvas does not resize back to full screen. It remains shrunken and off-center (bottom-center of viewport). Requires page reload to fix.",
+        "reproduction": "1. Start game. 2. Switch viewport to landscape (760x360). 3. Switch back to portrait (360x760). Canvas stays tiny.",
+        "screenshot": "cause-and-defect-rt-09-portrait-back.png"
+      },
+      {
+        "id": "BUG-002",
+        "severity": "minor",
+        "category": "scoring",
+        "description": "Game over screen shows negative score (-100) when player picked absurd fix options without earning any positive points. While technically correct, a negative final score looks odd for the player. Score should floor at 0 for display.",
+        "screenshot": "cause-and-defect-po-03-gameover.png"
+      },
+      {
+        "id": "BUG-003",
+        "severity": "minor",
+        "category": "persistence",
+        "description": "High score shows 'Best: 0' on menu after sessions where score was negative (-100). The highScore persistence works (it saved gamesPlayed=2, highestStage=1) but since the score never went positive, best stays 0. This is technically correct but feels like a missed save.",
+        "screenshot": "cause-and-defect-rt-01-menu-scores.png"
+      },
+      {
+        "id": "BUG-004",
+        "severity": "cosmetic",
+        "category": "UX",
+        "description": "Timer text shows '20.0' immediately on HUD before cascade begins (during intro pan). Timer should ideally start counting only when cascade actually starts, or show par time label instead.",
+        "screenshot": "cause-and-defect-bc-03-start.png"
+      }
+    ],
+    "bugScore": "1 major (x2) + 2 minor (x1) + 1 cosmetic (x0.5) = 4.5 penalty",
+    "rawScore": 70,
+    "notes": [
+      "Game loads cleanly with zero console errors throughout all testing",
+      "Canvas renders properly on initial load",
+      "Title screen has all buttons: PLAY, Help, Best score display",
+      "Machine components (gears, levers, ramps) render correctly with SVG textures",
+      "Failure cascade propagates visibly with red tint + spark particles",
+      "Scrolling via drag works for wider machines",
+      "Tapping root cause (orange glow) correctly shows 3 fix options",
+      "Correct fix triggers satisfying repair cascade animation",
+      "Wrong fix (plausible) speeds up cascade + screen shake",
+      "Absurd fix costs a life + stronger shake + red flash border",
+      "Inactivity mechanic works: 12s idle boosts cascade speed, eventually causes explosion",
+      "Stage progression works: Stage 1 -> Stage 2 confirmed via screenshot",
+      "Pause overlay works with Resume/How to Play/Restart Stage/Quit to Menu",
+      "Landscape warning displays correctly",
+      "Help screen is comprehensive with visual illustrations",
+      "Game over screen shows score, stage, streak, NEW RECORD check, ad continue button, Play Again, Main Menu",
+      "LocalStorage persistence works for gamesPlayed and highestStage"
+    ]
+  },
+
+  "playerOne": {
+    "weight": 0.35,
+    "funHeuristicChecklist": {
+      "1_instant_feedback": { "answer": "YES", "note": "Tapping components gives immediate scale bounce + visual feedback. Fix selection triggers instant repair cascade or shake." },
+      "2_clear_goal": { "answer": "YES", "note": "Goal is immediately clear: find the glowing root cause, tap it, choose the right fix before cascade reaches the end." },
+      "3_death_under_30s_idle": { "answer": "YES", "note": "Inactivity at 12s boosts cascade, machine explodes well within 30s of idle. Confirmed in testing." },
+      "4_one_more_round": { "answer": "NO", "note": "The deduction mechanic (find root cause) feels more cerebral than visceral. After dying, the urge to retry is moderate, not strong. The fix choice being partially random (you must guess among 3 options) reduces agency." },
+      "5_juice_on_actions": { "answer": "YES", "note": "Spark particles on failure, repair cascade with green particles, screen shake on wrong fix, red border flash, score float animation, star stagger animation." },
+      "6_increasing_difficulty": { "answer": "YES", "note": "Difficulty table scales components 5->15, cascade speed 2000->700ms, adds decoys and branching. Boss stages every 10, rest stages every 5." },
+      "7_restart_under_2s": { "answer": "YES", "note": "Play Again from game over screen loads new game instantly. Stage transitions are smooth with intro pan." },
+      "8_satisfying_success": { "answer": "YES", "note": "Correct fix triggers a reverse repair cascade with green/gold particles and score popup. Star rating system adds satisfaction." },
+      "9_simple_controls": { "answer": "YES", "note": "Swipe to scroll, tap to inspect, tap to choose fix. Very simple touch controls." },
+      "10_visual_clarity": { "answer": "YES", "note": "Root cause has orange glow, failed components turn red with crack lines, cascade bar shows progress. HUD shows score, stage, lives, timer, stars clearly." }
+    },
+    "yesCount": 9,
+    "noCount": 1,
+    "rawScore": 66,
+    "notes": [
+      "The reverse-engineering deduction is intellectually interesting but not viscerally exciting",
+      "Time pressure from cascade creates genuine tension - watching components fail one by one is stressful",
+      "Fix choice is partially meaningful: correct vs plausible vs absurd, but without domain knowledge it can feel like guessing",
+      "The 1/3 chance of picking correct makes early stages feel luck-based; later stages with more components give more time to think",
+      "Juice is solid: screen shake, particles, repair cascade, score popups, star animations",
+      "The scrolling mechanic adds a spatial puzzle element but early stages don't need it (only 5 components fit on screen)",
+      "Boss stage double-points and rest stages add variety",
+      "Streak system rewards consistency",
+      "The core loop (watch cascade -> find root -> choose fix -> see repair) is satisfying when it works",
+      "Overall: a competent puzzle-action hybrid, but the fun peaks during the repair cascade rather than the deduction phase"
+    ]
+  },
+
+  "replayTester": {
+    "weight": 0.25,
+    "sessions": 3,
+    "rawScore": 58,
+    "highScorePersists": true,
+    "differentMachinesEachTime": true,
+    "difficultyScales": true,
+    "notes": [
+      "Session 1: Played 5 rounds, eventually died with score -100 (picked absurd fixes). Game Over screen worked correctly.",
+      "Session 2: Shorter aggressive session, tapped rapidly. Game handled rapid input without errors.",
+      "Session 3: Stress test with random clicks, double-click spam, pause/resume, orientation change. No crashes.",
+      "High score persistence works: gamesPlayed and highestStage saved across sessions. However highScore stayed 0 since no positive score achieved.",
+      "SeededRNG with sessionSalt ensures different machines each session - confirmed visually.",
+      "Difficulty scaling confirmed via code: 7 tiers from stage 1-999, components increase 5->15, cascade speeds up.",
+      "Replay motivation is moderate: the puzzle nature means once you understand the pattern (find glow, pick correct fix), it becomes routine.",
+      "No meta-progression beyond high score/best stage/best streak - no unlockables, no upgrades.",
+      "The 'watch ad for continue' feature works (placeholder auto-grants).",
+      "Orientation recovery bug reduces replay score - players who accidentally rotate phone need to reload."
+    ]
+  },
+
+  "compositeScore": {
+    "bugcatcher": { "raw": 70, "weight": 0.40, "weighted": 28.0 },
+    "playerOne": { "raw": 66, "weight": 0.35, "weighted": 23.1 },
+    "replayTester": { "raw": 58, "weight": 0.25, "weighted": 14.5 },
+    "total": 65.6
+  },
+
+  "verdict": "revise",
+  "verdictReason": "Game is technically solid with zero console errors and good visual polish. However, the orientation resize bug is a major issue on mobile. The core gameplay loop, while intellectually interesting, lacks the visceral 'one more round' addictiveness. Fix choice feeling random on early stages hurts engagement. Score can go negative which looks bad. Recommend: fix orientation resize, floor score at 0, and consider making the root cause identification more skill-based (e.g., visual clues beyond just the glow).",
+
+  "fixRecommendations": [
+    {
+      "priority": "high",
+      "bug": "BUG-001",
+      "fix": "In the resize handler in main.js, after game.scale.resize(), call game.scale.refresh() or setTimeout(() => game.scale.refresh(), 100). The current handler only calls resize() which doesn't trigger Phaser's internal layout recalculation after orientation changes."
+    },
+    {
+      "priority": "medium",
+      "bug": "BUG-002",
+      "fix": "In GameOverScene.create(), display Math.max(0, gs.score) instead of raw gs.score for the visible score text."
+    },
+    {
+      "priority": "low",
+      "bug": "BUG-004",
+      "fix": "In HUDScene.create(), initialize timerText with the par time text or '--' instead of '20.0'. Update to actual countdown only after cascade begins."
+    }
+  ],
+
+  "screenshots": [
+    "cause-and-defect-bc-01-load.png",
+    "cause-and-defect-bc-02-title.png",
+    "cause-and-defect-bc-03-start.png",
+    "cause-and-defect-bc-04-machine.png",
+    "cause-and-defect-bc-05-cascade.png",
+    "cause-and-defect-bc-06-scroll.png",
+    "cause-and-defect-bc-07-tap-root.png",
+    "cause-and-defect-bc-08-tap1.png",
+    "cause-and-defect-bc-09-fix1.png",
+    "cause-and-defect-bc-10-wrongfix.png",
+    "cause-and-defect-bc-11-idle-death.png",
+    "cause-and-defect-bc-11-idle-result.png",
+    "cause-and-defect-bc-12-progression.png",
+    "cause-and-defect-po-01-midgame.png",
+    "cause-and-defect-po-03-gameover.png",
+    "cause-and-defect-rt-01-menu-scores.png",
+    "cause-and-defect-rt-04-stress.png",
+    "cause-and-defect-rt-06-paused.png",
+    "cause-and-defect-rt-08-landscape.png",
+    "cause-and-defect-rt-09-portrait-back.png",
+    "cause-and-defect-rt-11-help.png"
+  ]
+}

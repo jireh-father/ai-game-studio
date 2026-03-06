@@ -1,0 +1,114 @@
+{
+  "game": "Sabotage Chef",
+  "slug": "sabotage-chef",
+  "tester": "combined-bc-po-rt",
+  "test_method": "code-review + partial-playwright (Playwright evaluate deadlocked with Phaser Canvas rendering loop; CDP session also blocked; full interactive testing not possible on this system)",
+  "bugcatcher": {
+    "score": 68,
+    "bugs": [
+      {
+        "id": "BC-1",
+        "severity": "major",
+        "desc": "Vision cone triangle recreated every frame via destroy+add.triangle in _gsUpdateVisionCone (stages.js:123-126). At 60fps this creates 60 objects/sec causing GC pressure and potential frame drops on mobile. Should reposition existing triangle or use graphics draw instead.",
+        "location": "stages.js:117-134"
+      },
+      {
+        "id": "BC-2",
+        "severity": "major",
+        "desc": "Glance cone also destroyed and recreated every frame when glanceActive is true (stages.js:128-133). Same performance issue as vision cone but only during glance windows.",
+        "location": "stages.js:127-133"
+      },
+      {
+        "id": "BC-3",
+        "severity": "minor",
+        "desc": "Pause menu RESTART and MENU buttons call self.scene.stop() then self.scene.start() on the stopped scene instance (ui.js:180-182, 186-188). After stopping UIScene, starting GameScene from the dead UIScene context is fragile. Should use game.scene.start() directly or reorder operations.",
+        "location": "ui.js:178-188"
+      },
+      {
+        "id": "BC-4",
+        "severity": "minor",
+        "desc": "GameOverScene Play Again (ui.js:280) starts GameScene which launches UIScene. But GameOverScene itself is not explicitly stopped - it relies on scene.start() auto-stopping the current scene. If the player spams Play Again during the transition, multiple GameScene instances could be created.",
+        "location": "ui.js:280"
+      },
+      {
+        "id": "BC-5",
+        "severity": "minor",
+        "desc": "AdManager.onGameStart() and AdManager.onGameOver() are never called from GameScene or GameOverScene. The ad session tracking counter never increments.",
+        "location": "ads.js:49-57, game.js, ui.js"
+      },
+      {
+        "id": "BC-6",
+        "severity": "cosmetic",
+        "desc": "Pause button ('||') at bottom-right (ui.js:108-111) may overlap with or be near the edge on devices with safe-area insets, despite CSS safe-area support. The y-position DIMENSIONS.HEIGHT-35=605 is close to the 640 game height edge.",
+        "location": "ui.js:108"
+      },
+      {
+        "id": "BC-7",
+        "severity": "cosmetic",
+        "desc": "HUD score text initialized as empty string '' + gs.score (ui.js:86). On first frame before any scoreUpdate event, this is correct. But if GameScene restarts, UIScene.create() reads the fresh state correctly. No actual bug but the pattern is fragile - should use GameState tracking.",
+        "location": "ui.js:86"
+      },
+      {
+        "id": "BC-8",
+        "severity": "minor",
+        "desc": "CONTINUE (AD) button in GameOverScene (ui.js:268-272) calls AdManager.showRewarded but the callback is empty - it doesn't actually resume the game with 1 life. The button appears but does nothing useful.",
+        "location": "ui.js:268-272"
+      }
+    ],
+    "console_errors": [],
+    "notes": "Playwright automated testing was blocked by a deadlock between Playwright's JavaScript execution context and Phaser's Canvas requestAnimationFrame loop on this Windows system. Both page.evaluate() and CDP Runtime.evaluate hung indefinitely. Page loaded successfully (confirmed: Phaser v3.90.0 Canvas mode, DOM content loaded, canvas element created). Testing was completed via thorough code review. No blocking JS errors observed in console during partial test runs. Script load order is correct (main.js loads last). Texture loading pattern (BootScene addBase64) is correct. File structure follows 8-file pattern. stageTransitioning guard prevents duplicate stage advances."
+  },
+  "player_one": {
+    "score": 72,
+    "fun_checklist": {
+      "controls_clear_in_5s": "YES - drag from belt to slot is intuitive, belt scrolls left, slots are clearly marked with dashed borders and '?' marks",
+      "first_fun_in_10s": "YES - dragging ingredients and seeing score pop-ups happens immediately. Sabotage items have distinct green borders with skull marks for visual excitement",
+      "skilled_not_lucky": "YES - timing sabotage placement when judge looks away requires spatial awareness and timing skill. Close Call bonus rewards precision.",
+      "retry_after_death": "YES - CAUGHT! feedback is dramatic (camera shake, flash, combo lost text). Dish completion bonuses and combo multipliers create 'one more try' drive.",
+      "visual_juice": "YES - floating score text, particle bursts on sabotage, camera shake on catch, scale tweens on score updates, combo multiplier display, timer color changes (green->yellow->red)",
+      "death_fair": "YES - vision cone is clearly visible with red tint. Judge patrol is predictable with pauses at edges. Timer bar shows remaining time clearly.",
+      "score_meaningful": "YES - multi-layered scoring: normal placement (10pts), sabotage (50pts base with combo multipliers up to 3x), close call bonus (25pts), dish completion bonus (scales with sabotage count up to 500pts with 5x multiplier)",
+      "improvement_path": "YES - combo system rewards consecutive sabotages. Difficulty scales across stages (faster judge, wider cone, faster belt, less sabotage items). Boss stages every 10 levels. Rest stages every 5 levels.",
+      "right_session_length": "YES - 8-second recipe timer per dish means each dish takes 5-15 seconds. A full game of 3-5 dishes before death is about 30-60 seconds. Good casual session length.",
+      "show_to_friend": "MAYBE - the stealth-cooking concept is unique and humorous (sneaking rubber ducks, socks, soap into dishes). The visual style is clean. But the core loop might feel repetitive after 5+ minutes."
+    },
+    "notes": "The stealth-cooking concept is clever and fun. The judge patrol with visible vision cone creates clear tension. Combo system with escalating multipliers provides good reward feedback. Sabotage ingredients (rubber duck, soap, glitter, hot sauce, sponge, sock) are humorous and visually distinct with green borders. Close Call bonus for placing sabotage near the edge of the vision cone is a great risk/reward mechanic. Boss stages with faster judges add difficulty spikes. Rest stages with 3 seconds of free placement provide breather moments. The 8-second recipe timer creates urgency without being oppressive. One concern: the belt auto-scrolls ingredients off-screen, so player must time grabs based on what's currently visible. This adds a second layer of timing that could be confusing initially."
+  },
+  "replay_tester": {
+    "score": 60,
+    "sessions_played": 0,
+    "notes": "Code review assessment (interactive testing blocked by Playwright deadlock): High score persistence is implemented correctly via localStorage (main.js:12-16). Games played counter tracks sessions. Difficulty scales well across stages: judge speed 60->180, cone width 100->200, belt speed 40->100, recipe timer 8s->5s. Combo multipliers (1x-3x) and dish bonus multipliers (1x-5x based on sabotage count) create depth. Boss stages every 10 levels with 1.5x judge speed and secondary cone. Glance-back mechanic starts at stage 13 adding unpredictability. Rest stages every 5 levels give breathing room. HOWEVER: no persistent progression (no unlockables, no achievements). The 12 ingredient types (6 normal, 6 sabotage) don't expand or change. No leaderboard. After learning the judge patrol pattern, skilled players may find it repetitive. The stealth mechanic relies entirely on spatial timing which has limited depth ceiling."
+  },
+  "weighted_score": 67,
+  "verdict": "REVISE",
+  "fix_required": [
+    {
+      "priority": "HIGH",
+      "desc": "Fix vision cone performance: Replace destroy+create every frame with repositioning existing triangle or using Phaser Graphics draw. This affects mobile performance critically.",
+      "file": "stages.js",
+      "lines": "117-134"
+    },
+    {
+      "priority": "HIGH",
+      "desc": "Fix glance cone same performance issue - destroy+create every frame during glance windows.",
+      "file": "stages.js",
+      "lines": "127-133"
+    },
+    {
+      "priority": "MEDIUM",
+      "desc": "Implement CONTINUE (AD) button functionality - currently callback is empty, button does nothing when clicked.",
+      "file": "ui.js",
+      "lines": "268-272"
+    },
+    {
+      "priority": "LOW",
+      "desc": "Call AdManager.onGameStart() in GameScene.create() and AdManager.onGameOver() in loseLife when gameOver=true, to properly track ad timing.",
+      "file": "game.js"
+    },
+    {
+      "priority": "LOW",
+      "desc": "Add input debounce on Play Again / Menu buttons to prevent double-start from spam clicks during scene transitions.",
+      "file": "ui.js"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "game": "Rule Thief",
+  "slug": "rule-thief",
+  "testDate": "2026-03-06",
+  "runId": "run-2026-03-06-002",
+
+  "bugcatcher": {
+    "weight": 0.40,
+    "score": 90,
+    "bugs": [
+      {
+        "id": "BC-001",
+        "severity": "minor",
+        "description": "Help scene 'Got it!' button at bottom may be partially offscreen on shorter viewports. Button positioned at Math.max(y+20, h-60) but content can extend beyond 600px height, pushing button below visible area.",
+        "steps": "Open help from menu on a 400x550 viewport",
+        "impact": "Player may not see the dismiss button without scrolling (which Phaser canvas doesn't support)"
+      },
+      {
+        "id": "BC-002",
+        "severity": "cosmetic",
+        "description": "Timer bar and Stage text overlap slightly when 'NEW BEST!' floating text appears at y=40, near the Stage label at y=16",
+        "steps": "Crack a rule when score exceeds high score",
+        "impact": "Visual clutter for ~1.5 seconds, purely cosmetic"
+      }
+    ],
+    "findings": {
+      "loadTest": "PASS - Game loads with zero console errors. Phaser canvas renders. All 16 SVG tile textures + UI icons registered via BootScene base64 pattern.",
+      "titleScreen": "PASS - RULE THIEF title, Crack the code subtitle, PLAY button, ? help button, Best score, Total Rules Cracked, tier badge, sound toggle all visible and functional.",
+      "gameStart": "PASS - Click Play starts GameScene. 4x4 grid of colored/shaped tiles renders correctly. HUD shows Score, Stage, 3 life icons, timer bar, rule display (???), streak dots, hint button, pause button.",
+      "tileTapCorrect": "PASS - Valid tile taps produce green particle burst, scale bounce tween, floating +score text, streak dot fills, ascending sound pitch.",
+      "tileTapWrong": "PASS - Invalid tile taps produce red tint + shake tween, -25 score penalty, life icon animation, camera shake, red particles.",
+      "ruleCracking": "PASS - 5 consecutive correct taps triggers rule crack: white flash, camera zoom, rule text reveal, crack particles (multi-color burst), large bonus score, NEW BEST! if applicable. Grid reshuffles with scale-in/out animation. Stage increments.",
+      "timer": "PASS - Timer counts down via update() delta. Bar color shifts green->yellow->red with pulse effect under 25%. Timer expiry = game over ('Time ran out!').",
+      "lives": "PASS - 3 lives. Wrong tap reduces by 1 with icon animation. 0 lives = game over ('Out of lives!').",
+      "inactivityDeath": "PASS - Timer runs out in ~16s at Stage 1 if no taps. Game over screen appears with 'Time ran out!' reason.",
+      "gameOverFlow": "PASS - Game Over shows score (with count-up animation), reason text, Rules Cracked, Best Streak, Stage stats. Buttons: Watch Ad for Extra Life (only on lives death), Play Again, Menu. All functional.",
+      "pauseFlow": "PASS - Pause button works. Overlay shows PAUSED + Resume/How to Play/Restart/Menu buttons. Resume unfreezes timer. Menu returns to title. Restart relaunches game.",
+      "helpScreen": "PASS - Well-designed How to Play screen with 6 sections: Grid, Secret Rule, Crack the Rule, Rule Types, Hints, Tips. Visual examples included.",
+      "rapidTapStress": "PASS - Rapid-tapping all 16 tiles 3x with 50ms intervals produced zero crashes, zero console errors. inputLocked (200ms cooldown) prevents double-registration.",
+      "consoleErrors": "PASS - Zero console errors across all test phases (load, gameplay, game over, menu transitions, stress test).",
+      "stageTransition": "PASS - stageTransitioning flag prevents input during grid reshuffle animation. No race conditions observed."
+    }
+  },
+
+  "playerOne": {
+    "weight": 0.35,
+    "score": 72,
+    "funHeuristicChecklist": {
+      "instantFeedback": { "answer": "YES", "note": "Correct taps: green particles + scale bounce + ascending chime. Wrong taps: red flash + shake + buzzer. Immediate and clear." },
+      "oneMoreRound": { "answer": "YES", "note": "Rule-cracking is satisfying - the 'aha!' moment when you figure out the pattern. Each rule is different so there's always a new puzzle to solve." },
+      "clearGoal": { "answer": "YES", "note": "??? display makes it clear there's a hidden rule to figure out. Streak dots show progress toward cracking it." },
+      "escalatingDifficulty": { "answer": "YES", "note": "8 rule categories from simple (color) to complex (compound + negation). Timer shortens from 16s to 7s. Well-designed difficulty curve." },
+      "satisfyingJuice": { "answer": "YES", "note": "Rule crack: white flash + camera zoom + multi-color particle burst + rule reveal + large bonus float. Strong juice moment." },
+      "deathFeelsDeserved": { "answer": "PARTIAL", "note": "Timer death feels fair. Lives death from wrong taps can feel random early on since you're guessing blindly with limited info. Only 3 lives is harsh for a deduction game." },
+      "restartsUnderTwoSeconds": { "answer": "YES", "note": "Play Again instantly starts new game. No loading delay." },
+      "inactivityDeathUnder30s": { "answer": "YES", "note": "Timer is 16s max at Stage 1, shorter at higher stages. Well within 30s requirement." },
+      "noConfusingUI": { "answer": "PARTIAL", "note": "HUD is mostly clear but '???' for the rule and streak dots might confuse first-time players without reading help. Hint button icon (lightbulb) is small." },
+      "mobilePlayable": { "answer": "YES", "note": "76px tiles with 8px gap on 400px width. Tap targets are adequate. Touch-action CSS applied. Landscape warning included." }
+    },
+    "funScore": 72,
+    "yesCount": 8,
+    "partialCount": 2,
+    "noCount": 0,
+    "assessment": "Rule Thief delivers a genuinely engaging deduction mechanic. The core 'crack the rule' loop is satisfying - figuring out a hidden pattern through trial and error creates real 'aha!' moments. The juice effects on rule cracking (flash, zoom, particles, reveal) feel rewarding. Timer pressure adds tension. However, the early game can feel like random guessing since you have limited info and only 3 lives. The hint system helps but 1 hint per rule with vague category hints ('It's about COLOR') may not be enough. The scoring system with streaks, speed bonuses, and perfect crack bonuses creates good incentive structure. Stage-based rule categories (color -> shape -> position -> neighbor -> compound -> negation -> complex) provide strong progression. This is a cerebral game that rewards thinking, but the fun peaks at the 'crack' moment rather than sustained throughout."
+  },
+
+  "replayTester": {
+    "weight": 0.25,
+    "score": 68,
+    "sessions": [
+      {
+        "session": 1,
+        "outcome": "Died at Stage 1 - timer expired. Score: 0. Learning curve is steep.",
+        "duration": "~18s"
+      },
+      {
+        "session": 2,
+        "outcome": "Died at Stage 1 - out of lives from wrong taps. Score: 0-150. Still guessing.",
+        "duration": "~8s"
+      },
+      {
+        "session": 3,
+        "outcome": "Cracked 2 rules using game state knowledge. Score: 1560+. Stage 2-3. Satisfying when it clicks.",
+        "duration": "~25s"
+      }
+    ],
+    "findings": {
+      "highScorePersistence": "PASS - High score saved to localStorage and displayed on menu ('Best: 150' observed after gameplay).",
+      "differentRulesPerSession": "PASS - Observed different rules across sessions: 'Only GREEN tiles', color rules with different targets. Rules are randomly generated with variety protection (lastRuleCategory check).",
+      "difficultyScaling": "PASS - Stage 1-3 color rules, 4-6 shape rules, 7-10 position, etc. Timer decreases. Rule complexity increases. Well-structured progression.",
+      "ruleVariety": "PASS - 8 rule categories with multiple variants per category. Position rules alone have 7 sub-types. Compound/negation/complex provide deep variety.",
+      "replayMotivation": "PARTIAL - 'One more try' motivation exists from wanting to crack more rules, but 3 lives is punishing for a deduction game. Players may get frustrated dying before they can figure out the pattern. Tier unlock system (rookie -> detective -> mastermind) adds long-term goal.",
+      "metaProgression": "PASS - Total Rules Cracked counter persists across sessions. Tier unlocks at 20 and 50 rules. Highest stage record saved."
+    },
+    "assessment": "Replay value is moderate. The randomized rules ensure each session feels fresh, and the tier unlock system provides a long-term goal. High score chasing works well due to the streak multiplier and speed bonus systems. However, the short sessions (often ending in Stage 1) can feel frustrating rather than motivating. The 3-life limit combined with the trial-and-error nature of deduction means many games end before the player cracks even one rule. Rest stages (every 8th) are a nice pacing feature. Different rules per session confirmed."
+  },
+
+  "composite": {
+    "bugcatcher_weighted": 36.0,
+    "playerone_weighted": 25.2,
+    "replaytester_weighted": 17.0,
+    "total": 78.2
+  },
+
+  "verdict": "SHIP",
+  "verdictReason": "Score 78.2 exceeds the 70-point SHIP threshold. Zero console errors, zero blockers, zero major bugs. Core deduction mechanic is genuinely engaging with satisfying juice effects. Rule variety and difficulty scaling are well-designed. Minor issues: help button discoverability and 3-life limit may frustrate new players, but the game is mechanically solid and fun.",
+
+  "screenshots": [
+    "./tmp/rule-thief-bc-01-load.png",
+    "./tmp/rule-thief-bc-02-start.png",
+    "./tmp/rule-thief-bc-03-after-taps.png",
+    "./tmp/rule-thief-bc-04-state.png",
+    "./tmp/rule-thief-bc-05-inactivity.png",
+    "./tmp/rule-thief-bc-06-gameover.png",
+    "./tmp/rule-thief-bc-07-after-playagain.png",
+    "./tmp/rule-thief-bc-08-stress.png",
+    "./tmp/rule-thief-bc-09-paused.png",
+    "./tmp/rule-thief-bc-10-resumed.png",
+    "./tmp/rule-thief-bc-11-menu.png",
+    "./tmp/rule-thief-bc-12-help.png",
+    "./tmp/rule-thief-bc-13-back-from-help.png",
+    "./tmp/rule-thief-po-01-start.png",
+    "./tmp/rule-thief-po-03-after-hint.png",
+    "./tmp/rule-thief-po-04-mid-game.png",
+    "./tmp/rule-thief-po-05-end.png",
+    "./tmp/rule-thief-rt-01-menu.png",
+    "./tmp/rule-thief-rt-03-session1-end.png",
+    "./tmp/rule-thief-rt-06-menu-back.png",
+    "./tmp/rule-thief-crack-03-cracked.png",
+    "./tmp/rule-thief-crack-04-new-stage.png"
+  ]
+}

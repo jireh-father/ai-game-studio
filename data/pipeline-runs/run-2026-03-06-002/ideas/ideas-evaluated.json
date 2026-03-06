@@ -1,0 +1,19 @@
+{
+  "run_id": "run-2026-03-06-002",
+  "evaluation_method": "triple-track-gate",
+  "threshold": 72,
+  "passed_threshold": 3,
+  "selection_method": "top-10 (run-005 precedent)",
+  "ideas": [
+    {"rank":1,"title":"Trust Fall","slug":"trust-fall","creator":"visionary","best_track":"brain","score":76.3,"ludus":79,"devil":81,"loop":68,"cash":74,"scout":66,"status":"PASS"},
+    {"rank":2,"title":"Sabotage Chef","slug":"sabotage-chef","creator":"visionary","best_track":"reflex","score":72.9,"ludus":65,"devil":73,"loop":69,"cash":73,"scout":78,"status":"PASS"},
+    {"rank":3,"title":"Fuse Network","slug":"fuse-network","creator":"spark","best_track":"brain","score":72.2,"ludus":74,"devil":78,"loop":68,"cash":66,"scout":68,"status":"PASS"},
+    {"rank":4,"title":"Traffic Light Conductor","slug":"traffic-light-conductor","creator":"oddball","best_track":"brain","score":70.4,"ludus":76,"devil":72,"loop":63,"cash":66,"scout":48,"status":"TOP10"},
+    {"rank":5,"title":"Grid Quarantine","slug":"grid-quarantine","creator":"trendsetter","best_track":"brain","score":69.4,"ludus":76,"devil":80,"loop":53,"cash":61,"scout":65,"status":"TOP10"},
+    {"rank":6,"title":"Rule Thief","slug":"rule-thief","creator":"puzzler","best_track":"creative","score":68.0,"ludus":75,"devil":65,"loop":50,"cash":55,"scout":75,"status":"TOP10"},
+    {"rank":7,"title":"Gravity Flip Maze","slug":"gravity-flip-maze","creator":"trendsetter","best_track":"brain","score":66.8,"ludus":65,"devil":73,"loop":61,"cash":68,"scout":43,"status":"TOP10"},
+    {"rank":8,"title":"Shadow Match","slug":"shadow-match","creator":"trendsetter","best_track":"brain","score":64.6,"ludus":65,"devil":69,"loop":49,"cash":74,"scout":58,"status":"TOP10"},
+    {"rank":9,"title":"Tile Alchemy","slug":"tile-alchemy","creator":"spark","best_track":"brain","score":62.2,"ludus":63,"devil":62,"loop":53,"cash":70,"scout":45,"status":"TOP10"},
+    {"rank":10,"title":"Cause & Defect","slug":"cause-and-defect","creator":"visionary","best_track":"creative","score":62.0,"ludus":69,"devil":65,"loop":47,"cash":55,"scout":63,"status":"TOP10"}
+  ]
+}

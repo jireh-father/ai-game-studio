@@ -1,0 +1,141 @@
+{
+  "game": "Shadow Match",
+  "slug": "shadow-match",
+  "run_id": "run-2026-03-06-002",
+  "test_date": "2026-03-06",
+  "tester": "combined-agent",
+
+  "bugcatcher": {
+    "weight": 0.40,
+    "score": 62,
+    "verdict": "revise",
+    "bugs": [
+      {
+        "id": "BC-001",
+        "severity": "major",
+        "category": "UI/Z-order",
+        "description": "Game Over screen text 'SHADOW ESCAPING!' warning overlaps with game over panel text 'Stage 1'. The warning text at depth 200 renders on top of the game over overlay at depth 300-301, causing 'SHADOWStage 1CAPING!' visual corruption. The warnText is never explicitly hidden when showGameOver triggers.",
+        "screenshot": "shadow-match-bc-10-inactivity.png",
+        "fix": "In UIScene.showGameOver(), add: if (this.warnText) this.warnText.setAlpha(0); before creating the overlay."
+      },
+      {
+        "id": "BC-002",
+        "severity": "major",
+        "category": "game-flow",
+        "description": "PLAY AGAIN and MENU buttons in game over screen redirect to MenuScene instead of properly restarting GameScene. The showGameOver() goBtn callback stops GameScene+UIScene then starts GameScene, but since UIScene was stopped, the new GameScene's 'if (!this.scene.isActive(UIScene)) this.scene.launch(UIScene)' tries to re-launch UIScene. This causes inconsistent scene state where the game appears to land on the menu after PLAY AGAIN is clicked. Confirmed: after clicking PLAY AGAIN from game over, po-01 screenshot shows menu screen instead of gameplay.",
+        "screenshot": "shadow-match-po-01-new-game.png",
+        "fix": "In PLAY AGAIN callback, ensure UIScene is properly cleaned up and re-launched. Consider using scene.restart() pattern instead of stop+start."
+      },
+      {
+        "id": "BC-003",
+        "severity": "major",
+        "category": "gameplay",
+        "description": "Piece drag-and-drop doesn't successfully snap pieces to the shadow. After multiple drag attempts across 15 rounds of testing, no piece was ever successfully placed (score stayed at 0 throughout all gameplay attempts). The trySnap() method uses shadowX offset for grid alignment but the moving shadow makes precise snapping very difficult with automated testing. This indicates the snap magnet zone (SNAP_MAGNET=20px) may be too tight for a moving target.",
+        "screenshot": "shadow-match-bc-08-after-drop.png",
+        "fix": "Increase SNAP_MAGNET from 20 to at least 30, or pause shadow drift briefly while dragging a piece to give players better snap alignment."
+      },
+      {
+        "id": "BC-004",
+        "severity": "minor",
+        "category": "UI",
+        "description": "High score shows 'BEST: 0' on menu even after playing (no score was achieved because pieces couldn't be placed). The highScore persistence logic itself is correct (localStorage), but since scoring requires successful piece placement which is very difficult, most sessions will end with 0 points.",
+        "screenshot": "shadow-match-po-02-mid-game.png"
+      },
+      {
+        "id": "BC-005",
+        "severity": "minor",
+        "category": "visual",
+        "description": "Decorative drifting shadow rectangle on MenuScene crosses over the PLAY button area, creating a slight visual overlap where the gray square partially covers the button region. Cosmetic issue but looks unpolished.",
+        "screenshot": "shadow-match-bc-01-load.png"
+      },
+      {
+        "id": "BC-006",
+        "severity": "minor",
+        "category": "UI",
+        "description": "Tray pieces remain visible behind the game over overlay panel. The pieces at depth 20 show through the gap below the game over container panel (which slides up from bottom). The tray background at depth 5 is partially visible.",
+        "screenshot": "shadow-match-bc-10-inactivity.png"
+      },
+      {
+        "id": "BC-007",
+        "severity": "cosmetic",
+        "category": "visual",
+        "description": "Drift progress bar position creates visual separation from tray. The bar at Y=488 and tray at Y=540 leaves a gap. Minor layout polish issue."
+      }
+    ],
+    "console_errors": 0,
+    "load_time_ok": true,
+    "canvas_present": true,
+    "notes": "Game loads cleanly with zero console errors. Core structure is solid. Main issues are scene management on restart, UI z-order overlap on game over screen, and piece snapping difficulty."
+  },
+
+  "playerOne": {
+    "weight": 0.35,
+    "score": 58,
+    "verdict": "revise",
+    "fun_heuristic_checklist": {
+      "1_instant_feedback": { "answer": "YES", "note": "Shadow drift bar updates in real-time. Shake and particles on snap. Red flash on wrong placement." },
+      "2_clear_goal": { "answer": "YES", "note": "Fill the shadow before it escapes. Clear and intuitive concept." },
+      "3_satisfying_core_loop": { "answer": "NO", "note": "Drag-rotate-snap loop is conceptually solid but the moving shadow target makes precise placement very frustrating. The core interaction of fitting pieces while the target moves is more stressful than fun." },
+      "4_death_feels_fair": { "answer": "YES", "note": "Shadow escaping is clearly communicated with drift bar and warning text. Inactivity acceleration at 10s is fair." },
+      "5_restart_under_2s": { "answer": "NO", "note": "PLAY AGAIN button appears to redirect to menu instead of instantly restarting gameplay. Adds unnecessary friction to retry flow." },
+      "6_one_more_round_urge": { "answer": "NO", "note": "Puzzle difficulty combined with time pressure creates frustration rather than 'one more round' motivation. Never successfully placed a piece in automated testing - real players would likely also struggle with the moving target." },
+      "7_score_feels_meaningful": { "answer": "YES", "note": "Streak multiplier system (up to x10) adds meaningful scoring depth. Perfect stage bonuses and speed bonuses are well-designed." },
+      "8_juice_and_feedback": { "answer": "YES", "note": "Camera shake on snap, particle explosions, floating score text, screen flash on perfect, piece scale tweens. Good juice implementation." },
+      "9_no_confusion_moments": { "answer": "NO", "note": "Game over warning text overlaps with game over panel, creating confusing 'SHADOWStage 1CAPING!' text mashup." },
+      "10_controls_responsive": { "answer": "YES", "note": "Tap-to-rotate and drag-to-place controls are responsive. Drag threshold of 8px is reasonable. Ghost preview during drag is helpful." }
+    },
+    "yes_count": 6,
+    "no_count": 4,
+    "notes": "Speed-tangram concept is creative and the visual presentation is attractive (sunset gradient, shadow silhouettes). However, the core challenge of snapping puzzle pieces onto a moving target creates more frustration than fun. The scoring/streak system is well-designed but inaccessible when piece placement is this difficult. PLAY AGAIN flow is broken, adding friction. The warning text z-order bug breaks immersion at the critical game over moment."
+  },
+
+  "replayTester": {
+    "weight": 0.25,
+    "score": 45,
+    "verdict": "revise",
+    "sessions_played": 3,
+    "observations": {
+      "high_score_persists": "YES - localStorage persistence for highScore, highestStage, bestStreak confirmed in code. Menu shows BEST and Highest Stage.",
+      "different_shadows": "YES - seededRandom with stage-based seeds generates different shadow shapes per stage. Rest stages (every 10) have predefined recognizable shapes (heart, star, arrow, diamond).",
+      "streak_system": "YES - Streak increments on perfect stages (no wrong placements), caps at 10, multiplies all scores. Best streak is tracked and displayed.",
+      "session_variety": "PARTIAL - Same stage 1 seed means same starting puzzle every game. Shadow shapes procedurally generated but seeded by stage number, so stage 1 is always identical.",
+      "continue_system": "YES - One continue per run via rewarded ad (placeholder). Rewinds shadow to x=160 on continue.",
+      "replay_motivation": "LOW - Difficulty of core mechanic (snapping to moving target) means most sessions end at stage 1 with score 0. No progression unlocks or collection system visible to drive replay."
+    },
+    "notes": "The game has good replay infrastructure (streak tracking, localStorage persistence, continue system, rest/boss stages), but the actual replay motivation is low because the core difficulty makes progression nearly impossible for casual players. Stage 1 always generates the same shadow shape which hurts session variety. The collection system (COLLECTION_TOTAL=30) is defined in config but never surfaced in UI."
+  },
+
+  "composite_score": 56.6,
+  "composite_calculation": "(62 * 0.40) + (58 * 0.35) + (45 * 0.25) = 24.8 + 20.3 + 11.25 = 56.35",
+  "final_verdict": "revise",
+
+  "critical_fixes_needed": [
+    "FIX-1 (MAJOR): Hide warnText in showGameOver() - add 'if (this.warnText) this.warnText.setAlpha(0);' at start of showGameOver()",
+    "FIX-2 (MAJOR): Fix PLAY AGAIN scene restart flow - ensure UIScene is properly re-launched after GameScene restart",
+    "FIX-3 (MAJOR): Make piece snapping easier - increase SNAP_MAGNET from 20 to 30+, or slow/pause shadow drift while piece is being dragged",
+    "FIX-4 (MINOR): Hide tray pieces behind game over overlay - set tray pieces alpha to 0 when game over triggers"
+  ],
+
+  "screenshots": [
+    "shadow-match-bc-01-load.png",
+    "shadow-match-bc-02-title.png",
+    "shadow-match-bc-03-start.png",
+    "shadow-match-bc-04-shadow.png",
+    "shadow-match-bc-06-dragging.png",
+    "shadow-match-bc-07-after-tap.png",
+    "shadow-match-bc-08-after-drop.png",
+    "shadow-match-bc-09-wrong-placement.png",
+    "shadow-match-bc-10-inactivity.png",
+    "shadow-match-bc-11-death.png",
+    "shadow-match-po-01-new-game.png",
+    "shadow-match-po-02-mid-game.png",
+    "shadow-match-po-03-later-game.png",
+    "shadow-match-po-04-after-play.png",
+    "shadow-match-po-05-stress.png",
+    "shadow-match-po-06-paused.png",
+    "shadow-match-po-07-resumed.png",
+    "shadow-match-po-08-death.png",
+    "shadow-match-rt-01-session1.png",
+    "shadow-match-rt-02-session1-play.png"
+  ]
+}

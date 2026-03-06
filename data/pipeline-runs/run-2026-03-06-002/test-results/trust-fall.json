@@ -1,0 +1,64 @@
+{
+  "game": "Trust Fall",
+  "slug": "trust-fall",
+  "tester": "combined-bc-po-rt",
+  "bugcatcher": {
+    "score": 88,
+    "bugs": [
+      {
+        "severity": "minor",
+        "description": "CSS landscape handling uses visibility:hidden + height:0 for canvas, which is correct (not display:none). Rotate prompt shows correctly. No bug here."
+      },
+      {
+        "severity": "minor",
+        "description": "After using Continue (AD) and dying again in the continued game, the game over screen shows the continued game's score (lower than pre-continue score) rather than the cumulative total. Score shown was 31 after a session that started at 46 from continue. The score resets if not enough points accumulated during the continued life."
+      },
+      {
+        "severity": "minor",
+        "description": "Combo counter rarely exceeds 1x in normal play. The combo increments on dodge but immediately resets on the next hit. With obstacles coming from both sides simultaneously, getting hit is very frequent. Combo milestones (5x, 10x, 15x+) and thread color changes are nearly unreachable for average players."
+      },
+      {
+        "severity": "cosmetic",
+        "description": "The '+1' floating score text for survival bonus appears at center-bottom of screen every second, creating minor visual clutter during gameplay."
+      }
+    ],
+    "console_errors": []
+  },
+  "player_one": {
+    "score": 68,
+    "fun_checklist": {
+      "controls_clear": true,
+      "first_fun_moment_under_10s": true,
+      "felt_skilled_not_lucky": false,
+      "wanted_retry_after_death": true,
+      "noticed_visual_juice": true,
+      "death_felt_fair": false,
+      "score_felt_meaningful": true,
+      "could_identify_improvement_path": true,
+      "session_right_length": true,
+      "would_show_to_friend": false
+    },
+    "notes": "The title screen is clean and appealing with animated characters and thread connecting them. Help screen is well-illustrated with clear instructions. Core concept of two characters jumping in opposite directions is unique and interesting. Visual juice is strong: particles on jump, screen shake on hit, red flash on damage, combo text scaling, thread color/width changes on dodge, squash-stretch on jump. However, the difficulty is quite punishing - obstacles come frequently from both sides and the timing window to dodge both simultaneously feels tight. Getting hit resets combo immediately, making combo milestones feel unachievable. The 5-second inactivity death is appropriately aggressive. Death often feels slightly cheap because the dual-character mechanic means you must time a single tap to dodge two independent obstacle lanes. The core mechanic is novel but frustrating - felt more lucky than skilled. Stage 1 has 4 waves that take a while to clear, creating decent session length. Game over screen is polished with animated score counter, NEW BEST indicator, and clear buttons. Continue (AD) system works correctly. Pause menu has Resume, How To Play, Restart, Quit - all functional."
+  },
+  "replay_tester": {
+    "score": 58,
+    "sessions_played": 3,
+    "notes": "Played 3 complete sessions. Scores: 61, 66, 41. All sessions ended on Stage 1. High score persists correctly via localStorage (showed 140 on title screen after multiple plays). Combo system technically works but maxed at 1x across all sessions - the combo milestones and thread color progression (5x=cyan, 20x=gold, 25x=magenta) are effectively unreachable, wasting a significant reward/progression system. Difficulty does not ramp enough within Stage 1 to feel different between early and late waves. The dual-lane dodging creates a core tension but also limits the feeling of mastery since one tap controls two characters with different dodge directions. Stage clear bonus and boss stage mechanics exist in code but were never reached in 3 sessions. Replayability is moderate - the 'one more try' impulse exists due to quick restart, but lack of progression variety (stuck on Stage 1) dampens motivation. High score tracking works. No visual glitches on repeated plays. No crashes or state corruption across retry cycles."
+  },
+  "weighted_score": 72.9,
+  "verdict": "SHIP",
+  "fix_required": [
+    {
+      "priority": "major",
+      "description": "Difficulty is too punishing in Stage 1 - obstacles deal damage too frequently, making combo system effectively broken (never exceeds 1-2x). Recommend: reduce wavesPerStage from 4 to 3 for Stage 1, increase waveGap base from 2000ms to 2400ms for first 3 stages, and/or add brief invincibility frames after game start (first 2 seconds).",
+      "file": "js/stages.js",
+      "fix_suggestion": "In calculateDifficultyParams, for stageNumber <= 3, increase waveGap (e.g., start at 2400 and decrease slower). Also consider setting wavesPerStage to 3 for stage 1."
+    },
+    {
+      "priority": "major",
+      "description": "Combo milestones are unreachable in practice. The combo resets to 0 on any hit, but getting hit is extremely common. This wastes the combo milestone system (IN SYNC, SOUL BOND, PERFECT TRUST, etc.) and thread color changes that are significant juice features. Consider: combo decrements by half on hit instead of full reset, or add a brief combo grace period.",
+      "file": "js/game.js",
+      "fix_suggestion": "In onHit(), change 'this.combo = 0' to 'this.combo = Math.floor(this.combo / 2)' so combos degrade rather than resetting completely."
+    }
+  ]
+}

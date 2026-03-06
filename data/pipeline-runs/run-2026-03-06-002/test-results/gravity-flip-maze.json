@@ -1,0 +1,137 @@
+{
+  "game": "Gravity Flip Maze",
+  "slug": "gravity-flip-maze",
+  "testDate": "2026-03-06T14:03:39.157Z",
+  "composite": 84.6,
+  "bugcatcher": {
+    "score": 99,
+    "weight": 0.4,
+    "bugs": [
+      {
+        "severity": "cosmetic",
+        "description": "Skins overlay (alpha 0.85) does not fully obscure menu text behind it - title, PLAY, HOW TO PLAY, SKINS buttons bleed through behind skin circles",
+        "context": "MenuScene.showSkins()"
+      }
+    ],
+    "consoleErrors": [],
+    "summary": {
+      "blockers": 0,
+      "majors": 0,
+      "minors": 0,
+      "cosmetics": 1,
+      "totalConsoleErrors": 0
+    },
+    "testResults": {
+      "load_no_errors": true,
+      "canvas_renders": true,
+      "title_screen_complete": true,
+      "play_button_works": true,
+      "maze_grid_visible": true,
+      "ball_renders_at_entry": true,
+      "gems_visible": true,
+      "exit_portal_visible": true,
+      "swipe_4_directions": true,
+      "ball_slides_to_wall": true,
+      "ghost_trail_renders": true,
+      "echo_boost_triggers": true,
+      "gem_collection_works": true,
+      "timer_bar_countdown": true,
+      "inactivity_death_triggers": true,
+      "game_over_screen_complete": true,
+      "pause_menu_complete": true,
+      "rapid_swipe_no_crash": true,
+      "score_incrementing": true,
+      "move_counter_works": true
+    },
+    "verdict": "ship"
+  },
+  "playerOne": {
+    "score": 80,
+    "weight": 0.35,
+    "funChecklist": {
+      "first_swipe_satisfying": true,
+      "clear_goal": true,
+      "death_feels_fair": true,
+      "juice_on_actions": true,
+      "escalating_challenge": true,
+      "one_more_try_urge": true,
+      "visual_feedback": true,
+      "satisfying_progression": true,
+      "controls_responsive": true,
+      "no_unfair_deaths": true
+    },
+    "yesCount": 10,
+    "observations": [
+      "Swipe-to-slide mechanic is intuitive with queued input support - ball slides until hitting wall",
+      "Neon aesthetic (cyan ball, gold gems, green exit, pink spikes) on dark background is visually striking",
+      "Ghost trail crossing for ECHO speed boost is a creative mechanic rewarding spatial memory",
+      "Camera shake (80ms) + ball squash/stretch on swipe provides satisfying juice",
+      "Gem collection has scale+fade particle effect, exit portal has spinning animation",
+      "Star system (1-3 per maze based on gems + par moves) adds depth to each level",
+      "Timer bar with green/yellow/red color gradient creates urgency without unfairness",
+      "Inactivity spike mechanic (10s timeout) with red vignette warning enforces active play",
+      "Pause menu with RESUME/HOW TO PLAY/RESTART MAZE/QUIT TO MENU is complete",
+      "Par move counter and under-par bonus encourage route optimization",
+      "ECHO combo system (x2, x3... scaling text size) is visually exciting and rewards skill",
+      "Score floating text (+35, +65 etc) provides immediate feedback on point gains"
+    ],
+    "verdict": "ship"
+  },
+  "replayTester": {
+    "score": 70,
+    "weight": 0.25,
+    "sessions": 3,
+    "observations": [
+      "High score persists across sessions (verified: Hi: 25 shown on menu after reload)",
+      "Best maze number persists (verified: Best: Maze 1 on menu)",
+      "Total stars tracked as meta-progression currency for skin unlocks",
+      "6 ball skins unlockable (Default free, Pulse 15 stars, Plasma 40, Nova 75, Void 120, Prismatic 200)",
+      "Procedural mazes via seeded RNG - deterministic per level number (same maze for maze N every time)",
+      "Deterministic seeding reduces variety on replays of the same level",
+      "Phasing walls (purple, cycle on/off) and moving spikes add variety at higher difficulties (maze 8+)",
+      "Rest mazes every 10 levels (easier params) provide pacing relief",
+      "7-tier difficulty system scaling grid size (7->9->11), timer, spike count, etc.",
+      "How to Play screen has animated ball demo, 6 rules with icons, 3 tips - good onboarding",
+      "Skins gallery shows all 6 skins with star requirements, current selection highlighted",
+      "Game over screen has score count-up animation, NEW BEST indicator, rewarded ad continue option"
+    ],
+    "verdict": "ship"
+  },
+  "verdict": "ship",
+  "screenshotsVerified": {
+    "bc-01-load": "Title screen renders correctly with all UI elements",
+    "bc-03-start": "Maze 1 visible: 7x7 grid, cyan ball top-left, 2 gold gems, green exit bottom-right, HUD complete",
+    "bc-04-swipes": "Ghost trail (cyan line) visible, x2 ECHO text, score 60, Moves: 2",
+    "bc-05-gameplay": "Extended play: x8 ECHO, score 480, ball near exit, ghost trails covering maze, Moves: 16",
+    "bc-06-inactivity": "GAME OVER screen after inactivity: score 25, NEW BEST, Watch Ad + Play Again + Menu buttons",
+    "bc-07-stress": "Rapid swipes: no crash, x5 ECHO, score 225, ghost trails visible, Moves: 10",
+    "po-04-pause": "Pause overlay: PAUSED title, RESUME/HOW TO PLAY/RESTART MAZE/QUIT TO MENU buttons",
+    "po-06-death": "Still in maze after death wait, score 1105, Moves: 32, timer bar nearly empty (red)",
+    "rt-02-menu": "Menu shows Hi: 25 (persisted from prior session), Stars: 0",
+    "rt-06-help": "How to Play: animated ball demo, directional arrows, 6 rules with icons, 3 tips, GOT IT button",
+    "rt-07-skins": "Ball Skins overlay: 6 skins displayed, Default selected (cyan highlight), others show star cost, BACK button"
+  },
+  "screenshots": [
+    "gravity-flip-maze-bc-01-load.png",
+    "gravity-flip-maze-bc-02-title.png",
+    "gravity-flip-maze-bc-03-start.png",
+    "gravity-flip-maze-bc-04-swipes.png",
+    "gravity-flip-maze-bc-05-gameplay.png",
+    "gravity-flip-maze-bc-06-inactivity.png",
+    "gravity-flip-maze-bc-06-inactivity2.png",
+    "gravity-flip-maze-bc-07-stress.png",
+    "gravity-flip-maze-po-01-menu.png",
+    "gravity-flip-maze-po-02-start.png",
+    "gravity-flip-maze-po-03-play.png",
+    "gravity-flip-maze-po-04-pause.png",
+    "gravity-flip-maze-po-05-extended.png",
+    "gravity-flip-maze-po-06-death.png",
+    "gravity-flip-maze-rt-01-s1.png",
+    "gravity-flip-maze-rt-02-menu.png",
+    "gravity-flip-maze-rt-03-s2.png",
+    "gravity-flip-maze-rt-04-persist.png",
+    "gravity-flip-maze-rt-05-s3.png",
+    "gravity-flip-maze-rt-06-help.png",
+    "gravity-flip-maze-rt-07-skins.png"
+  ]
+}

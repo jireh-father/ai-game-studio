@@ -1,0 +1,119 @@
+{
+  "game": "Fuse Network",
+  "slug": "fuse-network",
+  "testDate": "2026-03-06T14:09:53.648Z",
+  "composite_score": 72,
+  "verdict": "SHIP",
+  "bugcatcher": {
+    "score": 80,
+    "weight": 0.4,
+    "bugs": [
+      {
+        "severity": "major",
+        "desc": "INACTIVITY_TIMEOUT (8000ms) defined in config and lastTapTime tracked, but no code checks elapsed time to trigger inactivity death. Player can idle indefinitely as long as fires haven't reached base yet. Missing: update() should check Date.now() - lastTapTime > INACTIVITY_TIMEOUT and force speed-up or damage."
+      },
+      {
+        "severity": "minor",
+        "desc": "High score not persisted correctly - GameState.highScore remained 0 across page reloads during testing (localStorage may not persist in headless context, but worth verifying in real browser)"
+      },
+      {
+        "severity": "minor",
+        "desc": "Game over Play Again button position hard to find with automated clicking - buttons may need larger hit areas"
+      },
+      {
+        "severity": "cosmetic",
+        "desc": "At stage 20+ with aggressive tapping, cut marks (X) pile up and clutter the screen - consider fading old cut marks"
+      }
+    ],
+    "passed": [
+      "Game canvas loaded without errors",
+      "GameState accessible and properly initialized",
+      "MenuScene displayed on load with title, Play button, help, high score, sound toggle",
+      "GameScene starts correctly on Play click (HP=3, Stage=1, Score=0)",
+      "Fuse cutting works - tapping near fuses cuts them and awards points (795 points from 16 taps)",
+      "Fire propagation visible - yellow dots move along fuse lines",
+      "Stage clear mechanic works - all fires extinguished triggers STAGE CLEAR with bonus",
+      "Stage progression confirmed (reached stage 20 during active play)",
+      "Combo system works (3x multiplier + combo counter for last-second cuts)",
+      "Rapid tap stress test (80 rapid taps) - no crash or error",
+      "Pause/Resume works correctly with overlay showing Resume, How to Play, Quit to Menu",
+      "Zero console errors throughout entire test session",
+      "Multiple fuse types visible in later stages (normal, fast, delayed, split)",
+      "Safe zone nodes present on screen edges",
+      "Base shield (B icon) clearly visible at bottom"
+    ],
+    "console_errors": []
+  },
+  "playerone": {
+    "score": 80,
+    "weight": 0.35,
+    "fun_checklist": {
+      "1_instant_understand": true,
+      "2_one_more_round": true,
+      "3_satisfying_feedback": true,
+      "4_clear_fail_state": true,
+      "5_risk_reward": true,
+      "6_escalating_challenge": true,
+      "7_score_chasing": true,
+      "8_under_10s_hook": true,
+      "9_no_boring_waits": true,
+      "10_die_if_idle": false
+    },
+    "yes_count": 9,
+    "observations": [
+      "Tap fuses to cut them before fire reaches base - immediately intuitive concept",
+      "Risk/reward: last-second cuts (within 40px of fire) give 3x multiplier + combo chains - satisfying",
+      "Visual juice: red X cut marks, floating score text (+50, +150, 3x!), screen shake, camera flash on hits",
+      "Clear fail state: 3 HP shields displayed in HUD, base changes to damaged texture when hit",
+      "Stage timer creates urgency; fires speed up 5x when timer expires",
+      "Fuse types add variety: normal, fast (2x speed, orange), delayed (pauses at nodes then sprints, cyan), split (branches into 2, magenta)",
+      "Combo system rewards consecutive risky cuts",
+      "Stage clear bonus scales with stage number + remaining time bonus",
+      "CONCERN: Random tapping across screen effectively cuts all fuses - no death occurred in 20 stages of active play (HP stayed at 3). Game may be too easy with broad input.",
+      "CONCERN: Inactivity death not implemented despite being defined in config - idle player only dies when fires naturally reach base, which can take 15-25s per stage",
+      "Score reached 34,225 at stage 20 during aggressive tapping - impressive progression",
+      "Safe zones provide bonus points when fire is redirected there - adds strategic layer"
+    ]
+  },
+  "replaytester": {
+    "score": 60,
+    "weight": 0.25,
+    "sessions": [
+      {
+        "session": 1,
+        "score": 6265,
+        "stage": 7,
+        "died": false,
+        "hp": 3,
+        "note": "Active play for 30 rounds, no death reached"
+      },
+      {
+        "session": 2,
+        "score": 4610,
+        "stage": 5,
+        "died": false,
+        "hp": 3,
+        "note": "Active play for 30 rounds, no death reached"
+      },
+      {
+        "session": 3,
+        "score": 250,
+        "stage": 1,
+        "died": false,
+        "hp": 3,
+        "note": "Short session, minimal engagement"
+      }
+    ],
+    "observations": [
+      "High score did not persist across page reloads (remained 0 in session 3)",
+      "Score variation across sessions: [6265, 4610, 250] - different outcomes based on engagement",
+      "Stage variation: [7, 5, 1] - progression scales with activity",
+      "Multiple fuse types (fast, delayed, split) add variety at higher stages",
+      "Combo system rewards improving skill at last-second cuts",
+      "Stage-based difficulty ramp provides motivation to retry",
+      "CONCERN: No death in any session during active play - reduces urgency for retry",
+      "CONCERN: Without inactivity death, player can survive indefinitely with spam tapping",
+      "Difficulty does increase (more bombs, faster burn, special fuse types) but tap radius (30px) is generous enough that random input succeeds"
+    ]
+  }
+}

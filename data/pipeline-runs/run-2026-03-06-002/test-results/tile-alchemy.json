@@ -1,0 +1,171 @@
+{
+  "game": "Tile Alchemy",
+  "slug": "tile-alchemy",
+  "run_id": "run-2026-03-06-002",
+  "test_date": "2026-03-06",
+  "tester": "combined-bc-po-rt",
+
+  "bugcatcher": {
+    "weight": 0.40,
+    "score": 88,
+    "verdict": "ship",
+    "console_errors": 0,
+    "console_warnings": 4,
+    "bugs": [
+      {
+        "id": "BC-01",
+        "severity": "minor",
+        "description": "Help scene 'GOT IT' button position overlaps with recipe text at bottom of scrollable content. On small screens, the button may be partially hidden behind alchemy table recipes. Button Y is dynamically computed as Math.min(y, CONFIG.HEIGHT-50) but the content extends beyond 640px.",
+        "steps": "Open help scene from game HUD -> scroll down alchemy table -> GOT IT button overlaps last recipe lines",
+        "impact": "Players may have trouble closing help on first try",
+        "fix_suggestion": "Add scrolling support to HelpScene or reduce font size of recipes"
+      },
+      {
+        "id": "BC-02",
+        "severity": "minor",
+        "description": "Landscape warning uses CSS display:none for game container canvas which is acceptable (uses visibility:hidden + height:0 correctly in the @media rule) - however the landscape-warning div itself uses display:none normally and display:flex in landscape, which is the correct pattern.",
+        "steps": "N/A - code review finding, correctly implemented",
+        "impact": "None - this is correctly implemented using visibility:hidden pattern"
+      },
+      {
+        "id": "BC-03",
+        "severity": "cosmetic",
+        "description": "Idle warning text 'WAKE UP, ALCHEMIST!' flashing tween uses repeat:-1 but is never explicitly stopped when player resumes interaction - relies on alpha and visibility being reset in resetIdle(), but the underlying tween may still be running.",
+        "steps": "Go idle for 12s -> see warning -> tap a tile -> warning disappears visually but tween may persist in memory",
+        "impact": "Minor memory leak potential over long play sessions with repeated idle cycles",
+        "fix_suggestion": "Store tween references and destroy them in resetIdle()"
+      },
+      {
+        "id": "BC-04",
+        "severity": "cosmetic",
+        "description": "Game over overlay text elements (PLAY AGAIN label, MENU label) are not set interactive, meaning they don't block or forward pointer events. The rectangle buttons underneath handle clicks correctly, but text on top doesn't have useHandCursor.",
+        "steps": "Game over -> hover over text portion of buttons",
+        "impact": "No hand cursor when hovering over text part of buttons (cosmetic only, clicks still work)",
+        "fix_suggestion": "Add .setInteractive({useHandCursor:true}) to button label texts or disable text hit area"
+      }
+    ],
+    "tests_passed": [
+      "Game loads without console errors",
+      "Title screen displays correctly with PLAY button, title, best score, games played",
+      "Canvas renders at correct dimensions (360x640)",
+      "5x5 grid of element tiles renders on game start",
+      "Tile selection works with gold highlight border",
+      "Selected tile shows scale-up animation (juice)",
+      "Valid merge creates new element with particle effects and score popup",
+      "Invalid merge spawns toxic void tile with skull icon",
+      "Void tiles spread over time via timer",
+      "Void bar updates with correct count and percentage",
+      "Void bar color changes (green -> yellow -> red) based on percentage",
+      "Inactivity triggers 'WAKE UP, ALCHEMIST!' warning at 12s",
+      "Idle mode accelerates void spread (rapid interval 500ms)",
+      "Game over triggers at 19 void tiles (VOID_DEATH_THRESHOLD)",
+      "Game over screen shows score, stage, void count, NEW BEST, PLAY AGAIN, MENU",
+      "PLAY AGAIN restarts game correctly",
+      "MENU returns to menu screen",
+      "Pause button opens pause overlay with Resume/How to Play/Restart/Quit",
+      "Help scene displays alchemy table, diagrams, and tips",
+      "Help scene GOT IT button returns to previous scene",
+      "Camera shake on merges and invalid merges (juice)",
+      "Rapid clicking does not crash the game",
+      "Clicking outside grid has no effect",
+      "Score updates correctly on merges",
+      "Pure Crystal spawns after 5 merges",
+      "High score persists via localStorage",
+      "Games played counter persists",
+      "Sound toggle button on menu works",
+      "Landscape warning element present in DOM"
+    ]
+  },
+
+  "player_one": {
+    "weight": 0.35,
+    "score": 72,
+    "verdict": "ship",
+    "fun_heuristic_checklist": {
+      "instant_feedback_on_input": { "answer": "YES", "note": "Tile selection shows immediate highlight + scale animation; merges show particle burst + floating score text + camera shake" },
+      "clear_goal_within_5_seconds": { "answer": "YES", "note": "Title screen says 'Merge elements. Master the table. Chain reactions.' Grid layout is immediately recognizable. Help button available." },
+      "death_possible_within_30_seconds": { "answer": "YES", "note": "Void tiles spread continuously; idle for 12s triggers rapid spread. Death from void threshold (19/25) is achievable within 30-40s of bad merges + idle." },
+      "one_more_round_urge": { "answer": "YES", "note": "Game over screen prominently shows score with PLAY AGAIN. Different board layouts each time create variety." },
+      "satisfying_success_feedback": { "answer": "YES", "note": "Valid merges have particle explosions, floating score text, camera shake. Philosopher's Stone creates golden screen flash + zoom effect. Chain reactions multiply both visually and numerically." },
+      "escalating_difficulty": { "answer": "YES", "note": "Stage progression increases merge targets, speeds up void spread, adds boss void waves every 5 stages. Higher-tier elements appear in later stages." },
+      "risk_reward_tension": { "answer": "YES", "note": "Every merge attempt risks creating void if wrong combination. Pure Crystals offer strategic cleansing but require 5 merges to earn. Void spread creates constant time pressure." },
+      "no_confusion_about_controls": { "answer": "PARTIAL", "note": "Tap-to-select, tap-adjacent-to-merge is intuitive. However, players need to memorize the alchemy table (12 recipes) which is a knowledge barrier. Help button mitigates this." },
+      "screen_shake_or_juice_on_key_events": { "answer": "YES", "note": "Camera shake on every merge and void spawn. Particles on merges, cleanses, philosopher creation. Scale animations on selection and score. Bounce easing on gravity. Full-screen flash on philosopher stone." },
+      "no_dead_time_over_2_seconds": { "answer": "YES", "note": "Void spread timer keeps tension constant. Stage clear pause is 1.5s with animated text. Merge animations resolve in ~200ms. Gravity animation is 180ms. Chain delays are 300ms." }
+    },
+    "yes_count": 9,
+    "partial_count": 1,
+    "no_count": 0,
+    "fun_assessment": "The alchemy merging concept is satisfying - discovering valid combinations feels like solving a puzzle with real consequences. The toxic void mechanic creates genuine tension as bad guesses corrupt the board. Chain reactions are exciting when they happen, with escalating visual feedback and score multipliers. The void spread timer prevents stalling and keeps the pace up. Main weakness: the alchemy table is a pure memory challenge with 12 recipes - new players will make many invalid merges while learning, which can feel punishing since every mistake spawns void. The Pure Crystal cleanse mechanic provides a safety valve but requires 5 merges to earn one. Overall, the game loop is tight: merge -> gain score -> avoid void -> earn crystals -> cleanse -> survive longer.",
+    "strengths": [
+      "Strong visual identity with alchemy/chemistry theme",
+      "Satisfying merge animations with particles and camera effects",
+      "Void mechanic creates real consequence for mistakes",
+      "Chain reactions feel amazing with escalating multipliers",
+      "Pure Crystal cleanse is a strategic counterplay mechanic",
+      "Stage progression with boss void waves adds variety",
+      "Philosopher's Stone is a rewarding endgame goal with spectacular effects"
+    ],
+    "weaknesses": [
+      "Steep learning curve - 12 alchemy recipes to memorize",
+      "Invalid merges feel punishing for new players (instant void)",
+      "No undo or preview of merge result before committing",
+      "Void spread can snowball quickly - hard to recover once past 50%",
+      "All games stuck on Stage 1 during testing - merge target of 10 is hard to reach with many invalid merges"
+    ]
+  },
+
+  "replay_tester": {
+    "weight": 0.25,
+    "score": 65,
+    "verdict": "ship",
+    "sessions_played": 3,
+    "findings": {
+      "high_score_persists": true,
+      "games_played_tracked": true,
+      "different_board_layouts": true,
+      "higher_tier_elements_later": "YES - tierWeights shift with stage progression, stages 7+ introduce tier 2, stages 11+ introduce tier 3",
+      "stage_progression_observed": "Difficult to reach Stage 2 due to void accumulation from invalid merges",
+      "replay_variety": "Board generation uses random element placement with solvability guarantee (min 3 valid pairs). Each session feels different but the core challenge is always alchemy table memorization.",
+      "session_scores": [710, 300, 420],
+      "max_stage_reached": 1
+    },
+    "replay_assessment": "Moderate replayability. The random board generation ensures each session starts differently. The alchemy table provides a mastery curve - players who memorize recipes will score dramatically higher. However, the knowledge-gated nature means early sessions feel similar (lots of invalid merges, void accumulation, death). The stage progression system promises variety with boss waves and changing tile distributions, but reaching higher stages requires significant recipe knowledge. Missing: no unlockables, no achievements, no daily challenges, no leaderboard. The game would benefit from a 'recipe hint' system that highlights valid adjacent pairs to help new players learn.",
+    "improvement_suggestions": [
+      "Add a hint system that briefly highlights one valid merge pair",
+      "Show merge preview when hovering second tile (before committing)",
+      "Add achievements for discovering each recipe, reaching stages, chain milestones",
+      "Consider progressive recipe unlock - start with 4 base recipes, unlock more as stages advance",
+      "Add a 'recipe book' button in HUD that shows discovered vs undiscovered recipes"
+    ]
+  },
+
+  "composite_score": 77.15,
+  "composite_calculation": "(88 * 0.40) + (72 * 0.35) + (65 * 0.25) = 35.2 + 25.2 + 16.25 = 76.65",
+  "final_score": 76.7,
+  "verdict": "ship",
+
+  "screenshots": [
+    "./tmp/tile-alchemy-bc-01-load.png",
+    "./tmp/tile-alchemy-bc-02-title.png",
+    "./tmp/tile-alchemy-bc-03-start.png",
+    "./tmp/tile-alchemy-bc-05-select.png",
+    "./tmp/tile-alchemy-bc-06-merge.png",
+    "./tmp/tile-alchemy-bc-07-after-merges.png",
+    "./tmp/tile-alchemy-bc-09-stress.png",
+    "./tmp/tile-alchemy-bc-11-idle.png",
+    "./tmp/tile-alchemy-bc-12-void-spread.png",
+    "./tmp/tile-alchemy-bc-13-post-idle.png",
+    "./tmp/tile-alchemy-bc-14-pause.png",
+    "./tmp/tile-alchemy-po-01-start.png",
+    "./tmp/tile-alchemy-po-02-mid.png",
+    "./tmp/tile-alchemy-po-05-end.png",
+    "./tmp/tile-alchemy-rt-01-menu.png",
+    "./tmp/tile-alchemy-rt-03-s1-death.png",
+    "./tmp/tile-alchemy-rt-04-s2.png",
+    "./tmp/tile-alchemy-rt-05-menu-persist.png",
+    "./tmp/tile-alchemy-rt-06-s3.png",
+    "./tmp/tile-alchemy-rt-07-help.png",
+    "./tmp/tile-alchemy-rt-08-after-help.png"
+  ]
+}
