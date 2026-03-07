@@ -51,14 +51,19 @@ class GameScene extends Phaser.Scene {
         const cellW = 90, cellH = 80, startX = (428 - cols * cellW) / 2 + cellW / 2, startY = TRAY_Y + 30;
         pieces.forEach((pData, idx) => {
             const tx = startX + (idx % cols) * cellW, ty = startY + Math.floor(idx / cols) * cellH;
-            const con = this.add.container(tx, ty).setDepth(20), g = this.add.graphics();
+            const con = this.add.container(tx, ty).setDepth(20);
+            const g = this.add.graphics();
             this.drawPieceGfx(g, pData.cells, 0.7, COLORS_INT.PIECE_FILL);
             con.add(g);
             const maxX = Math.max(...pData.cells.map(c => c[0])), maxY = Math.max(...pData.cells.map(c => c[1]));
             const cs = GRID.CELL_SIZE * 0.7;
-            const hz = this.add.rectangle(maxX * cs / 2, maxY * cs / 2, (maxX + 1) * cs + 10, (maxY + 1) * cs + 10, 0, 0).setInteractive({ useHandCursor: true });
+            const hzW = (maxX + 1) * cs + 16, hzH = (maxY + 1) * cs + 16;
+            const hz = this.add.rectangle(maxX * cs / 2, maxY * cs / 2, hzW, hzH, 0, 0);
+            hz.setInteractive({ useHandCursor: true, draggable: true });
             con.add(hz);
-            this.pieceObjects.push({ data: pData, con, gfx: g, hz, trayX: tx, trayY: ty, placed: false, idx, rot: 0 });
+            const po = { data: pData, con, gfx: g, hz, trayX: tx, trayY: ty, placed: false, idx, rot: 0 };
+            hz.pieceRef = po;
+            this.pieceObjects.push(po);
         });
     }
 
@@ -73,48 +78,61 @@ class GameScene extends Phaser.Scene {
     }
 
     setupInput() {
-        this.input.on('pointerdown', (ptr) => {
+        // Use Phaser's built-in drag system for reliable mouse + touch support
+        this.input.on('dragstart', (ptr, gameObject) => {
             if (this.gameOver || this.stageTransitioning) return;
+            const pc = gameObject.pieceRef;
+            if (!pc || pc.placed) return;
             this.lastInputTime = Date.now();
             if (this.inactivityAccel) this.cancelInactivity();
-            const pc = this.findPieceAt(ptr.x, ptr.y);
-            if (pc && !pc.placed) { this.dragPiece = pc; this.dragStartPos = { x: ptr.x, y: ptr.y }; this.dragMoved = false; }
+            this.dragPiece = pc;
+            this.dragStartPos = { x: ptr.x, y: ptr.y };
+            this.dragMoved = false;
         });
-        this.input.on('pointermove', (ptr) => {
-            if (!this.dragPiece || this.gameOver) return;
+
+        this.input.on('drag', (ptr, gameObject) => {
+            const pc = gameObject.pieceRef;
+            if (!pc || !this.dragPiece || this.dragPiece !== pc || this.gameOver) return;
             this.lastInputTime = Date.now();
             if (!this.dragMoved) {
                 const dx = ptr.x - this.dragStartPos.x, dy = ptr.y - this.dragStartPos.y;
                 if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
                     this.dragMoved = true;
-                    this.dragPiece.con.setDepth(50).setScale(1.15);
+                    pc.con.setDepth(50).setScale(1.15);
                     this.gridGfx.setAlpha(0.6);
-                    this.pieceObjects.forEach(p => { if (p !== this.dragPiece && !p.placed) p.con.setAlpha(0.6); });
+                    this.pieceObjects.forEach(p => { if (p !== pc && !p.placed) p.con.setAlpha(0.6); });
                 }
             }
-            if (this.dragMoved) { this.dragPiece.con.setPosition(ptr.x, ptr.y - 30); this.updateGhost(ptr.x, ptr.y - 30); }
+            if (this.dragMoved) {
+                pc.con.setPosition(ptr.x, ptr.y - 30);
+                this.updateGhost(ptr.x, ptr.y - 30);
+            }
         });
-        this.input.on('pointerup', (ptr) => {
-            if (!this.dragPiece || this.gameOver) return;
+
+        this.input.on('dragend', (ptr, gameObject) => {
+            const pc = gameObject.pieceRef;
+            if (!pc || !this.dragPiece || this.dragPiece !== pc || this.gameOver) return;
             this.lastInputTime = Date.now();
-            if (!this.dragMoved) { this.rotatePiece(this.dragPiece); this.dragPiece = null; return; }
-            const pc = this.dragPiece; this.dragPiece = null;
-            this.ghostGfx.clear(); this.gridGfx.setAlpha(0);
+            if (!this.dragMoved) {
+                this.rotatePiece(pc);
+                this.dragPiece = null;
+                return;
+            }
+            this.dragPiece = null;
+            this.ghostGfx.clear();
+            this.gridGfx.setAlpha(0);
             this.pieceObjects.forEach(p => { if (!p.placed) p.con.setAlpha(1); });
             if (ptr.y > TRAY_Y - 20) { this.returnToTray(pc); return; }
             const snap = this.trySnap(pc, ptr.x, ptr.y - 30);
             snap ? this.snapPiece(pc, snap.col, snap.row) : this.bouncePiece(pc);
         });
-    }
 
-    findPieceAt(px, py) {
-        for (let i = this.pieceObjects.length - 1; i >= 0; i--) {
-            const p = this.pieceObjects[i]; if (p.placed) continue;
-            const c = p.con, b = p.hz.getBounds();
-            if (px >= c.x + b.x - b.width/2 - 15 && px <= c.x + b.x + b.width/2 + 15 &&
-                py >= c.y + b.y - b.height/2 - 15 && py <= c.y + b.y + b.height/2 + 15) return p;
-        }
-        return null;
+        // Fallback: tap on tray area registers inactivity reset
+        this.input.on('pointerdown', (ptr) => {
+            if (this.gameOver || this.stageTransitioning) return;
+            this.lastInputTime = Date.now();
+            if (this.inactivityAccel) this.cancelInactivity();
+        });
     }
 
     trySnap(pc, px, py) {

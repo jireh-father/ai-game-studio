@@ -36,30 +36,42 @@ var BootScene = new Phaser.Class({
         var keys = Object.keys(SVG_STRINGS);
         var loaded = 0;
         var total = keys.length;
+        var started = false;
 
         if (total === 0) {
             this.scene.start('MenuScene');
             return;
         }
 
-        keys.forEach(function(key) {
+        function onLoaded() {
+            if (started) return;
+            started = true;
+            self.scene.start('MenuScene');
+        }
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            if (this.textures.exists(key)) {
+                loaded++;
+                if (loaded >= total) { onLoaded(); return; }
+                continue;
+            }
+            (function(k) {
+                self.textures.once('addtexture-' + k, function() {
+                    loaded++;
+                    if (loaded >= total) onLoaded();
+                });
+            })(key);
             var svgStr = SVG_STRINGS[key];
             var b64 = 'data:image/svg+xml;base64,' + btoa(svgStr);
-            self.textures.addBase64(key, b64);
-        });
+            this.textures.addBase64(key, b64);
+        }
 
-        this.textures.on('addtexture', function() {
-            loaded++;
-            if (loaded >= total) {
-                self.scene.start('MenuScene');
-            }
-        });
-
-        // Fallback timeout in case some textures don't fire event
+        // Fallback timeout in case some textures fail to load
         setTimeout(function() {
-            if (loaded < total) {
+            if (!started) {
                 console.warn('Texture load timeout, proceeding with ' + loaded + '/' + total);
-                self.scene.start('MenuScene');
+                onLoaded();
             }
         }, 3000);
     }

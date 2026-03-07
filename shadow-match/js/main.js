@@ -92,7 +92,10 @@ const config = {
     },
     scene: [BootScene, MenuScene, HelpScene, GameScene, UIScene],
     input: {
-        activePointers: 1
+        activePointers: 3,
+        touch: {
+            capture: true
+        }
     }
 };
 

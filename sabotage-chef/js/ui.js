@@ -178,14 +178,14 @@ var UIScene = new Phaser.Class({
             }},
             { label: 'RESTART', color: 0xFF4444, y: 390, fn: function() {
                 self.hidePause();
-                self.gameScene.scene.stop();
-                self.scene.stop();
+                self.scene.stop('GameScene');
+                self.scene.stop('UIScene');
                 self.scene.start('GameScene');
             }},
             { label: 'MENU', color: 0x888888, y: 455, fn: function() {
                 self.hidePause();
-                self.gameScene.scene.stop();
-                self.scene.stop();
+                self.scene.stop('GameScene');
+                self.scene.stop('UIScene');
                 self.scene.start('MenuScene');
             }}
         ];
@@ -286,16 +286,19 @@ var GameOverScene = new Phaser.Class({
         }
 
         // Play again
+        var self2 = this;
         var playBtn = this.add.rectangle(cx, 400, 200, 55, 0x00E676).setInteractive({ useHandCursor: true });
         var playTxt = this.add.text(cx, 400, 'PLAY AGAIN', {
             fontSize: '22px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         var playFn = function() {
-            this.scene.stop('GameScene');
-            this.scene.start('GameScene');
+            self2.scene.stop('UIScene');
+            self2.scene.stop('GameScene');
+            self2.scene.stop('GameOverScene');
+            self2.scene.start('GameScene');
         };
-        playBtn.on('pointerdown', playFn, this);
-        playTxt.on('pointerdown', playFn, this);
+        playBtn.on('pointerdown', playFn);
+        playTxt.on('pointerdown', playFn);
 
         // Menu
         var menuBtn = this.add.rectangle(cx, 465, 120, 44, 0x888888).setInteractive({ useHandCursor: true });
@@ -303,11 +306,13 @@ var GameOverScene = new Phaser.Class({
             fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         var menuFn = function() {
-            this.scene.stop('GameScene');
-            this.scene.start('MenuScene');
+            self2.scene.stop('UIScene');
+            self2.scene.stop('GameScene');
+            self2.scene.stop('GameOverScene');
+            self2.scene.start('MenuScene');
         };
-        menuBtn.on('pointerdown', menuFn, this);
-        menuTxt.on('pointerdown', menuFn, this);
+        menuBtn.on('pointerdown', menuFn);
+        menuTxt.on('pointerdown', menuFn);
 
         // High score
         this.add.text(cx, 520, 'BEST: ' + (GameState.highScore || 0), {
