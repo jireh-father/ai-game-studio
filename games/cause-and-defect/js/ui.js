@@ -87,7 +87,7 @@ class HUDScene extends Phaser.Scene {
         this.timerText = this.add.text(340, 14, '--', { fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_TEXT_HEX }).setOrigin(1, 0.5).setDepth(1);
 
         // Pause button
-        const pauseBtn = this.add.image(348, 42, 'pause').setScale(0.8).setInteractive({ useHandCursor: true }).setDepth(2);
+        const pauseBtn = this.add.image(348, 42, 'pause').setScale(1.2).setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-18, -18, 68, 68), hitAreaCallback: Phaser.Geom.Rectangle.Contains }).setDepth(2);
         pauseBtn.on('pointerdown', () => this.togglePause());
 
         // Sub-HUD

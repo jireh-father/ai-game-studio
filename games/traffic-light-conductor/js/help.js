@@ -187,7 +187,10 @@ class HelpScene extends Phaser.Scene {
             fontSize: '18px', fill: textColor, fontFamily: 'Arial', fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(11);
         txt.setInteractive();
+        let tapped = false;
         const onTap = () => {
+            if (tapped) return;
+            tapped = true;
             this.tweens.add({ targets: [bg, txt], scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true, onComplete: callback });
         };
         bg.on('pointerdown', onTap);

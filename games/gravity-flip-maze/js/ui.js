@@ -70,10 +70,15 @@ class MenuScene extends Phaser.Scene {
         const txt = this.add.text(x, y, label, {
             fontSize: h > 50 ? '22px' : '14px', fontFamily: 'Arial', fontStyle: 'bold',
             color: '#FFFFFF', align: 'center'
-        }).setOrigin(0.5);
-        bg.on('pointerdown', () => {
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        let tapped = false;
+        const onTap = () => {
+            if (tapped) return;
+            tapped = true;
             this.tweens.add({ targets: [bg, txt], scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true, onComplete: () => callback() });
-        });
+        };
+        bg.on('pointerdown', onTap);
+        txt.on('pointerdown', onTap);
         return { bg, txt };
     }
 
@@ -145,7 +150,8 @@ function createGameHUD(scene) {
     // Pause button
     scene.pauseBtn = scene.add.text(W - 28, 24, '| |', {
         fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_TEXT
-    }).setOrigin(0.5).setDepth(21);
+    }).setOrigin(0.5).setDepth(21).setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
+    scene.pauseBtn.on('pointerdown', () => scene.togglePause());
 
     // Move counter
     scene.moveText = scene.add.text(16, GAME_CONFIG.GAME_HEIGHT - 20, `Moves: 0 / Par: ${scene.level.par}`, {
@@ -213,8 +219,9 @@ function showPauseMenu(scene) {
     ];
     btns.forEach(([label, y, cb]) => {
         const btnBg = scene.add.rectangle(W/2, y, 200, 44, COLORS.WALL).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.BALL_HEX).color).setDepth(31).setInteractive({ useHandCursor: true });
-        const btnTxt = scene.add.text(W/2, y, label, { fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32);
+        const btnTxt = scene.add.text(W/2, y, label, { fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
         btnBg.on('pointerdown', cb);
+        btnTxt.on('pointerdown', cb);
         scene.pauseOverlay.add(btnBg);
         scene.pauseOverlay.add(btnTxt);
     });
@@ -271,24 +278,30 @@ function showGameOver(scene) {
 
     // Buttons
     const adBtn = scene.add.rectangle(W/2, 400, 220, 48, 0x1E3A5F).setStrokeStyle(2, 0x9B30FF).setDepth(31).setInteractive({ useHandCursor: true });
-    const adTxt = scene.add.text(W/2, 400, 'WATCH AD: 3 MORE TRIES', { fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32);
-    adBtn.on('pointerdown', () => {
+    const adTxt = scene.add.text(W/2, 400, 'WATCH AD: 3 MORE TRIES', { fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
+    const adCb = () => {
         AdsManager.showRewarded(() => {
             scene.gameOver = false; scene.deaths = 0;
             if (scene.gameOverGroup) { scene.gameOverGroup.clear(true, true); scene.gameOverGroup = null; }
             scene.loadMaze(GameState.currentMaze); scene.updateHUD();
         });
     });
+    adBtn.on('pointerdown', adCb);
+    adTxt.on('pointerdown', adCb);
     scene.gameOverGroup.add(adBtn); scene.gameOverGroup.add(adTxt);
 
     const playBtn = scene.add.rectangle(W/2, 460, 200, 48, 0x1E3A5F).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(COLORS.BALL_HEX).color).setDepth(31).setInteractive({ useHandCursor: true });
-    const playTxt = scene.add.text(W/2, 460, 'PLAY AGAIN', { fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32);
-    playBtn.on('pointerdown', () => { scene.scene.start('MenuScene'); });
+    const playTxt = scene.add.text(W/2, 460, 'PLAY AGAIN', { fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
+    const playCb = () => { scene.scene.start('MenuScene'); };
+    playBtn.on('pointerdown', playCb);
+    playTxt.on('pointerdown', playCb);
     scene.gameOverGroup.add(playBtn); scene.gameOverGroup.add(playTxt);
 
-    const menuBtn = scene.add.rectangle(W/2, 520, 120, 40, 0x1E3A5F).setStrokeStyle(1, 0x4A9EFF).setDepth(31).setInteractive({ useHandCursor: true });
-    const menuTxt = scene.add.text(W/2, 520, 'MENU', { fontSize: '14px', fontFamily: 'Arial', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32);
-    menuBtn.on('pointerdown', () => { scene.scene.start('MenuScene'); });
+    const menuBtn = scene.add.rectangle(W/2, 520, 120, 44, 0x1E3A5F).setStrokeStyle(1, 0x4A9EFF).setDepth(31).setInteractive({ useHandCursor: true });
+    const menuTxt = scene.add.text(W/2, 520, 'MENU', { fontSize: '14px', fontFamily: 'Arial', color: '#FFFFFF' }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
+    const menuCb = () => { scene.scene.start('MenuScene'); };
+    menuBtn.on('pointerdown', menuCb);
+    menuTxt.on('pointerdown', menuCb);
     scene.gameOverGroup.add(menuBtn); scene.gameOverGroup.add(menuTxt);
 
     saveGameState();

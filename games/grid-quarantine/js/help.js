@@ -115,12 +115,12 @@ class HelpScene extends Phaser.Scene {
         const gotItY = Math.max(yPos, h - 50);
         const gotItBg = this.add.rectangle(w / 2, gotItY, 160, 44, 0x000000, 0)
             .setStrokeStyle(2, COLORS.UI_BUTTON).setDepth(401).setInteractive({ useHandCursor: true });
-        this.add.text(w / 2, gotItY, 'GOT IT!', {
+        const gotItTxt = this.add.text(w / 2, gotItY, 'GOT IT!', {
             fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_BUTTON_HEX,
-        }).setOrigin(0.5).setDepth(401);
-        gotItBg.on('pointerdown', () => {
-            this.scene.stop('HelpScene');
-        });
+        }).setOrigin(0.5).setDepth(401).setInteractive({ useHandCursor: true });
+        const closeHelp = () => { this.scene.stop('HelpScene'); };
+        gotItBg.on('pointerdown', closeHelp);
+        gotItTxt.on('pointerdown', closeHelp);
 
         // Enable scroll via drag
         this.input.on('pointermove', (pointer) => {

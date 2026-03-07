@@ -156,7 +156,7 @@ class GameScene extends Phaser.Scene {
     hideFixOptions() { this.fixButtons.forEach(b => { if (b && b.active) b.destroy(); }); this.fixButtons = []; this.fixOptionsVisible = false; }
 
     handleFixSelection(opt) {
-        if (this.stageTransitioning) return;
+        if (this.stageTransitioning || !this.fixOptionsVisible) return;
         this.hideFixOptions(); const gs = window.GameState;
         if (opt.type === 'correct') { if (this.cascadeTimer) this.cascadeTimer.remove(); this.playCascadeRepair(); }
         else if (opt.type === 'plausible') { this.wrongFixes++; this.boostCascade(GAME_SETTINGS.CASCADE_BOOST_PLAUSIBLE); this.shakeScreen(JUICE.WRONG_SHAKE_PLAUS); this.flashBorder(); }

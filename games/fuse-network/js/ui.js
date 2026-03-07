@@ -84,6 +84,7 @@ const GameHUD = {
                 fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
             }).setOrigin(0.5).setDepth(22);
             b.on('pointerup', cb);
+            t.setInteractive({ useHandCursor: true }).on('pointerup', cb);
             scene._pauseGroup.addMultiple([b, t]);
         };
         mkBtn(h*0.4, 'Resume', 0x00AAFF, () => scene.togglePause());
@@ -132,10 +133,12 @@ class MenuScene extends Phaser.Scene {
         playTxt.setInteractive({ useHandCursor: true }).on('pointerup', startGame);
         const helpBtn = this.add.rectangle(w/2 - 60, h*0.66, 44, 44, 0x3A3A4E)
             .setInteractive({ useHandCursor: true });
-        this.add.text(w/2 - 60, h*0.66, '?', {
+        const helpTxt = this.add.text(w/2 - 60, h*0.66, '?', {
             fontSize: '24px', fontFamily: 'Arial', fontStyle: 'bold', color: '#00AAFF'
         }).setOrigin(0.5);
-        helpBtn.on('pointerup', () => this.scene.launch('HelpScene', { returnScene: 'MenuScene' }));
+        const openHelp = () => this.scene.launch('HelpScene', { returnScene: 'MenuScene' });
+        helpBtn.on('pointerup', openHelp);
+        helpTxt.setInteractive({ useHandCursor: true }).on('pointerup', openHelp);
         this.add.text(w/2 + 60, h*0.66, 'HI: ' + (GameState.highScore || 0), {
             fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFD700'
         }).setOrigin(0.5);
@@ -181,7 +184,8 @@ class GameOverScene extends Phaser.Scene {
     }
     _btn(x, y, w, h, c, label, cb) {
         const b = this.add.rectangle(x, y, w, h, c).setInteractive({ useHandCursor: true });
-        this.add.text(x, y, label, { fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5);
+        const t = this.add.text(x, y, label, { fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5);
         b.on('pointerup', cb);
+        t.setInteractive({ useHandCursor: true }).on('pointerup', cb);
     }
 }

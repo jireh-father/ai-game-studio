@@ -93,6 +93,7 @@ class GameScene extends Phaser.Scene {
 
     startStage(stageNum) {
         this.stageTransitioning = true;
+        this.lastInputTime = Date.now();
         this.currentStage = stageNum;
         GameHUD.updateStage(this);
         var stageData = generateStage(stageNum);

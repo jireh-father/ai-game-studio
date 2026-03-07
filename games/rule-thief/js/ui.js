@@ -93,7 +93,7 @@ class UIScene extends Phaser.Scene {
 
         // Hint button
         const hintBtn = this.add.image(w - 90, 525, 'hint_icon').setDepth(10).setInteractive({ useHandCursor: true });
-        hintBtn.setDisplaySize(40, 40);
+        hintBtn.setDisplaySize(44, 44);
         this.hintCountText = this.add.text(w - 74, 540, `${GameState.hintsRemaining}`, { fontSize: '10px',
             fontFamily: 'Arial', color: '#E9C46A' }).setDepth(11);
         hintBtn.on('pointerdown', () => {
@@ -102,7 +102,7 @@ class UIScene extends Phaser.Scene {
         });
 
         // Pause button
-        const pauseBtn = this.add.rectangle(w - 35, 525, 40, 40, 0x1B2838, 0.8).setDepth(10)
+        const pauseBtn = this.add.rectangle(w - 35, 525, 44, 44, 0x1B2838, 0.8).setDepth(10)
             .setInteractive({ useHandCursor: true }).setStrokeStyle(1, 0xA8DADC);
         this.add.text(w - 35, 525, '||', { fontSize: '20px', fontFamily: 'Arial',
             fontStyle: 'bold', color: COLORS.TEXT }).setOrigin(0.5).setDepth(11);
@@ -119,6 +119,7 @@ class UIScene extends Phaser.Scene {
         // Pause overlay elements (hidden by default)
         this.pauseOverlay = this.createPauseOverlay();
         this.pauseOverlay.setVisible(false);
+        this.pauseOverlay.each(child => { if (child.input) child.disableInteractive(); });
 
         // Listen to game events
         const gameScene = this.scene.get('GameScene');
@@ -199,6 +200,12 @@ class UIScene extends Phaser.Scene {
 
     onPauseToggled(paused) {
         this.pauseOverlay.setVisible(paused);
+        this.pauseOverlay.each(child => {
+            if (child.input) {
+                if (paused) child.setInteractive();
+                else child.disableInteractive();
+            }
+        });
     }
 
     onRuleCracked(ruleText) {
