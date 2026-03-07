@@ -54,44 +54,26 @@ class BootScene extends Phaser.Scene {
     create() {
         loadState();
 
-        // Register SVG textures once
-        const svgsToLoad = [
-            { key: 'life_active', svg: SVG_STRINGS.LIFE_ACTIVE },
-            { key: 'life_empty', svg: SVG_STRINGS.LIFE_EMPTY },
-            { key: 'pause_icon', svg: SVG_STRINGS.PAUSE_ICON },
-        ];
+        const textures = {
+            life_active: 'data:image/svg+xml;base64,' + btoa(SVG_STRINGS.LIFE_ACTIVE),
+            life_empty: 'data:image/svg+xml;base64,' + btoa(SVG_STRINGS.LIFE_EMPTY),
+            pause_icon: 'data:image/svg+xml;base64,' + btoa(SVG_STRINGS.PAUSE_ICON),
+        };
 
-        let loaded = 0;
-        const totalToLoad = svgsToLoad.length;
+        let pending = 0;
+        const total = Object.keys(textures).length;
 
-        if (totalToLoad === 0) {
-            this.scene.start('MenuScene');
-            return;
+        for (const [key, src] of Object.entries(textures)) {
+            if (!this.textures.exists(key)) {
+                pending++;
+                this.textures.once('addtexture-' + key, () => {
+                    if (--pending === 0) this.scene.start('MenuScene');
+                });
+                this.textures.addBase64(key, src);
+            }
         }
 
-        for (const item of svgsToLoad) {
-            if (this.textures.exists(item.key)) {
-                loaded++;
-                if (loaded >= totalToLoad) this.scene.start('MenuScene');
-                continue;
-            }
-            const encoded = 'data:image/svg+xml;base64,' + btoa(item.svg);
-            this.textures.addBase64(item.key, encoded);
-        }
-
-        this.textures.on('addtexture', () => {
-            loaded++;
-            if (loaded >= totalToLoad) {
-                this.scene.start('MenuScene');
-            }
-        });
-
-        // Fallback: if textures load fast (already cached)
-        this.time.delayedCall(500, () => {
-            if (this.scene.isActive('BootScene')) {
-                this.scene.start('MenuScene');
-            }
-        });
+        if (pending === 0) this.scene.start('MenuScene');
     }
 }
 

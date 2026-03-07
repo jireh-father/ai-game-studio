@@ -237,7 +237,13 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: t, y: y - 60, alpha: 0, duration: 800, onComplete: () => t.destroy() });
     }
 
-    update() {}
+    update() {
+        if (this.gameOver || this.paused || this.stageTransitioning) return;
+        if (Date.now() - this.lastActivityTime > 30000) {
+            this.lastActivityTime = Date.now();
+            this.onEdgeBreach();
+        }
+    }
     pauseGame() { this.paused = true; if (this.spreadTimerEvent) this.spreadTimerEvent.paused = true; }
     resumeGame() { this.paused = false; this.lastActivityTime = Date.now(); if (this.spreadTimerEvent) this.spreadTimerEvent.paused = false; }
 }

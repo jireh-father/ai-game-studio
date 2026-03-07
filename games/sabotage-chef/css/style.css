@@ -35,3 +35,27 @@ html, body {
         padding-bottom: env(safe-area-inset-bottom);
     }
 }
+
+@media (orientation: landscape) and (max-height: 500px) {
+    #game-container {
+        visibility: hidden;
+        height: 0;
+        overflow: hidden;
+    }
+    body::after {
+        content: 'Please rotate your device to portrait mode';
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        inset: 0;
+        background: #1a1a1a;
+        color: #ffffff;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        text-align: center;
+        padding: 20px;
+        visibility: visible;
+        height: auto;
+    }
+}

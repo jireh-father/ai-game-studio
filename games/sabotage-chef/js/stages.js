@@ -237,13 +237,16 @@ function _gsShowFloatingText(x, y, text, color, size, duration) {
 }
 
 function _gsCreateBurst(x, y, count, color) {
+    var self = this;
     for (var i = 0; i < count; i++) {
-        var angle = (Math.PI * 2 / count) * i;
-        var speed = 80 + Math.random() * 80;
-        var p = this.add.circle(x, y, 4, color).setDepth(25);
-        this.tweens.add({
-            targets: p, x: x + Math.cos(angle) * speed, y: y + Math.sin(angle) * speed,
-            alpha: 0, duration: 400, onComplete: function() { p.destroy(); }
-        });
+        (function(idx) {
+            var angle = (Math.PI * 2 / count) * idx;
+            var speed = 80 + Math.random() * 80;
+            var p = self.add.circle(x, y, 4, color).setDepth(25);
+            self.tweens.add({
+                targets: p, x: x + Math.cos(angle) * speed, y: y + Math.sin(angle) * speed,
+                alpha: 0, duration: 400, onComplete: function() { p.destroy(); }
+            });
+        })(i);
     }
 }

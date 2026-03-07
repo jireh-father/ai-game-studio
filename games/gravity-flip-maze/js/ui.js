@@ -285,7 +285,7 @@ function showGameOver(scene) {
             if (scene.gameOverGroup) { scene.gameOverGroup.clear(true, true); scene.gameOverGroup = null; }
             scene.loadMaze(GameState.currentMaze); scene.updateHUD();
         });
-    });
+    };
     adBtn.on('pointerdown', adCb);
     adTxt.on('pointerdown', adCb);
     scene.gameOverGroup.add(adBtn); scene.gameOverGroup.add(adTxt);
