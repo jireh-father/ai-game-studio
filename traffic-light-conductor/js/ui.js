@@ -71,7 +71,7 @@ class MenuScene extends Phaser.Scene {
         const settings = this.getSettings();
         this.soundBtn = this.add.text(W - 30, H - 30, settings.sound ? '🔊' : '🔇', {
             fontSize: '24px'
-        }).setOrigin(0.5).setInteractive();
+        }).setOrigin(0.5).setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
         this.soundBtn.on('pointerdown', () => {
             settings.sound = !settings.sound;
             this.soundBtn.setText(settings.sound ? '🔊' : '🔇');
@@ -111,12 +111,14 @@ class MenuScene extends Phaser.Scene {
         const bg = this.add.rectangle(x, y, w, h, Phaser.Display.Color.HexStringToColor(bgColor).color)
             .setInteractive().setDepth(10);
         bg.setStrokeStyle(0);
-        // Round corners via a slightly darker outline
         const txt = this.add.text(x, y, label, {
             fontSize: h > 44 ? '20px' : '18px', fill: textColor, fontFamily: 'Arial', fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(11);
         txt.setInteractive();
+        let tapped = false;
         const onTap = () => {
+            if (tapped) return;
+            tapped = true;
             this.tweens.add({ targets: [bg, txt], scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true, onComplete: callback });
         };
         bg.on('pointerdown', onTap);
@@ -210,7 +212,10 @@ class GameOverScene extends Phaser.Scene {
             fontSize: '18px', fill: textColor, fontFamily: 'Arial', fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(11);
         txt.setInteractive();
+        let tapped = false;
         const onTap = () => {
+            if (tapped) return;
+            tapped = true;
             this.tweens.add({ targets: [bg, txt], scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true, onComplete: callback });
         };
         bg.on('pointerdown', onTap);

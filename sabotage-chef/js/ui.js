@@ -49,7 +49,7 @@ var MenuScene = new Phaser.Class({
         var soundTxt = this.add.text(DIMENSIONS.WIDTH - 40, DIMENSIONS.HEIGHT - 40,
             soundOn ? 'SND' : 'MUTE', {
             fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.HUD_TEXT
-        }).setOrigin(0.5).setDepth(3).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setDepth(3).setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
         soundTxt.on('pointerdown', function() {
             GameState.settings.sound = !GameState.settings.sound;
             soundTxt.setText(GameState.settings.sound ? 'SND' : 'MUTE');
@@ -105,10 +105,11 @@ var UIScene = new Phaser.Class({
         }
 
         // Pause button
-        var pauseBtn = this.add.text(DIMENSIONS.WIDTH - 20, DIMENSIONS.HEIGHT - 35, '||', {
+        var pauseBg = this.add.rectangle(DIMENSIONS.WIDTH - 20, DIMENSIONS.HEIGHT - 35, 48, 48, 0x000000, 0).setDepth(52).setInteractive({ useHandCursor: true });
+        this.add.text(DIMENSIONS.WIDTH - 20, DIMENSIONS.HEIGHT - 35, '||', {
             fontSize: '22px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.HUD_TEXT
-        }).setOrigin(0.5).setDepth(52).setInteractive({ useHandCursor: true });
-        pauseBtn.on('pointerdown', this.showPause, this);
+        }).setOrigin(0.5).setDepth(52);
+        pauseBg.on('pointerdown', this.showPause, this);
 
         // Pause overlay container
         this.pauseGroup = this.add.container(0, 0).setDepth(100).setVisible(false);
@@ -193,8 +194,9 @@ var UIScene = new Phaser.Class({
             var btn = self.add.rectangle(DIMENSIONS.WIDTH / 2, b.y, 180, 50, b.color).setInteractive({ useHandCursor: true });
             var txt = self.add.text(DIMENSIONS.WIDTH / 2, b.y, b.label, {
                 fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
             btn.on('pointerdown', b.fn);
+            txt.on('pointerdown', b.fn);
             self.pauseGroup.add(btn);
             self.pauseGroup.add(txt);
         });
@@ -262,9 +264,9 @@ var GameOverScene = new Phaser.Class({
         // Continue (ad placeholder)
         if (AdManager.canContinue()) {
             var contBtn = this.add.rectangle(cx, 330, 220, 50, 0xFFD700).setInteractive({ useHandCursor: true });
-            this.add.text(cx, 330, 'CONTINUE (AD)', {
+            var contTxt = this.add.text(cx, 330, 'CONTINUE (AD)', {
                 fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
             var self = this;
             contBtn.on('pointerdown', function() {
                 AdManager.showRewarded('continue', function() {
@@ -285,23 +287,27 @@ var GameOverScene = new Phaser.Class({
 
         // Play again
         var playBtn = this.add.rectangle(cx, 400, 200, 55, 0x00E676).setInteractive({ useHandCursor: true });
-        this.add.text(cx, 400, 'PLAY AGAIN', {
+        var playTxt = this.add.text(cx, 400, 'PLAY AGAIN', {
             fontSize: '22px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
-        }).setOrigin(0.5);
-        playBtn.on('pointerdown', function() {
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        var playFn = function() {
             this.scene.stop('GameScene');
             this.scene.start('GameScene');
-        }, this);
+        };
+        playBtn.on('pointerdown', playFn, this);
+        playTxt.on('pointerdown', playFn, this);
 
         // Menu
-        var menuBtn = this.add.rectangle(cx, 465, 120, 40, 0x888888).setInteractive({ useHandCursor: true });
-        this.add.text(cx, 465, 'MENU', {
+        var menuBtn = this.add.rectangle(cx, 465, 120, 44, 0x888888).setInteractive({ useHandCursor: true });
+        var menuTxt = this.add.text(cx, 465, 'MENU', {
             fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
-        }).setOrigin(0.5);
-        menuBtn.on('pointerdown', function() {
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        var menuFn = function() {
             this.scene.stop('GameScene');
             this.scene.start('MenuScene');
-        }, this);
+        };
+        menuBtn.on('pointerdown', menuFn, this);
+        menuTxt.on('pointerdown', menuFn, this);
 
         // High score
         this.add.text(cx, 520, 'BEST: ' + (GameState.highScore || 0), {

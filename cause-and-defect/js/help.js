@@ -16,7 +16,7 @@ class HelpScene extends Phaser.Scene {
         // Close button
         const closeBtn = this.add.text(340, 30, 'X', {
             fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.FAIL_RED_HEX
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setInteractive(new Phaser.Geom.Rectangle(-22, -22, 44, 44), Phaser.Geom.Rectangle.Contains);
         closeBtn.on('pointerdown', () => this.closeHelp());
 
         // Scrollable content container

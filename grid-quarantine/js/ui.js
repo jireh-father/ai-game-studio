@@ -54,13 +54,17 @@ class MenuScene extends Phaser.Scene {
 
         // Help
         const hb = this.add.circle(50, h - 50, 24, 0x000000, 0).setStrokeStyle(2, COLORS.UI_BUTTON).setInteractive({ useHandCursor: true });
-        this.add.text(50, h - 50, '?', { fontSize: '24px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5);
-        hb.on('pointerdown', () => this.scene.launch('HelpScene', { from: 'MenuScene' }));
+        const hbTxt = this.add.text(50, h - 50, '?', { fontSize: '24px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        const openHelp = () => this.scene.launch('HelpScene', { from: 'MenuScene' });
+        hb.on('pointerdown', openHelp);
+        hbTxt.on('pointerdown', openHelp);
 
         // Stats
         const sb = this.add.circle(w / 2, h - 50, 24, 0x000000, 0).setStrokeStyle(2, COLORS.UI_BUTTON).setInteractive({ useHandCursor: true });
-        this.add.text(w / 2, h - 50, '\u2606', { fontSize: '22px', fontFamily: 'Arial', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5);
-        sb.on('pointerdown', () => this.showStats());
+        const sbTxt = this.add.text(w / 2, h - 50, '\u2606', { fontSize: '22px', fontFamily: 'Arial', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        const openStats = () => this.showStats();
+        sb.on('pointerdown', openStats);
+        sbTxt.on('pointerdown', openStats);
 
         // Sound
         this.soundOn = GameState.settings.sound;
@@ -72,10 +76,11 @@ class MenuScene extends Phaser.Scene {
 
     makeBtn(x, y, bw, bh, label, fs, cb) {
         const bg = this.add.rectangle(x, y, bw, bh, 0x000000, 0).setStrokeStyle(2, COLORS.UI_BUTTON).setInteractive({ useHandCursor: true });
-        const t = this.add.text(x, y, label, { fontSize: fs + 'px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5);
-        bg.on('pointerdown', () => { bg.setFillStyle(COLORS.UI_BUTTON, 0.3); t.setColor('#FFFFFF'); });
-        bg.on('pointerup', cb);
-        bg.on('pointerout', () => { bg.setFillStyle(0x000000, 0); t.setColor(COLORS.UI_BUTTON_HEX); });
+        const t = this.add.text(x, y, label, { fontSize: fs + 'px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        const down = () => { bg.setFillStyle(COLORS.UI_BUTTON, 0.3); t.setColor('#FFFFFF'); };
+        const out = () => { bg.setFillStyle(0x000000, 0); t.setColor(COLORS.UI_BUTTON_HEX); };
+        bg.on('pointerdown', down); bg.on('pointerup', cb); bg.on('pointerout', out);
+        t.on('pointerdown', down); t.on('pointerup', cb); t.on('pointerout', out);
     }
 
     showStats() {
@@ -88,8 +93,11 @@ class MenuScene extends Phaser.Scene {
         items.forEach(([l, v], i) => els.push(this.add.text(w / 2, h * 0.35 + i * 36, l + ': ' + v, { fontSize: '18px', fontFamily: 'Arial', color: '#FFFFFF' }).setOrigin(0.5).setDepth(201)));
         const cb = this.add.rectangle(w / 2, h * 0.65, 160, 44, 0x000000, 0).setStrokeStyle(2, COLORS.UI_BUTTON).setDepth(201).setInteractive({ useHandCursor: true });
         els.push(cb);
-        els.push(this.add.text(w / 2, h * 0.65, 'CLOSE', { fontSize: '18px', fontFamily: 'Arial', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setDepth(201));
-        cb.on('pointerdown', () => els.forEach(e => e.destroy()));
+        const cbTxt = this.add.text(w / 2, h * 0.65, 'CLOSE', { fontSize: '18px', fontFamily: 'Arial', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setDepth(201).setInteractive({ useHandCursor: true });
+        els.push(cbTxt);
+        const closeFn = () => els.forEach(e => e.destroy());
+        cb.on('pointerdown', closeFn);
+        cbTxt.on('pointerdown', closeFn);
     }
 }
 
@@ -103,9 +111,11 @@ class UIScene extends Phaser.Scene {
         this.stageText = this.add.text(w / 2, 14, 'Stage ' + GameState.stage, { fontSize: '18px', fontFamily: 'Arial', color: '#B0BEC5' }).setOrigin(0.5, 0);
 
         // Pause button
-        const pb = this.add.rectangle(w - 36, 22, 36, 36, 0x000000, 0).setInteractive({ useHandCursor: true });
-        this.add.text(w - 36, 22, '||', { fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#B0BEC5' }).setOrigin(0.5);
-        pb.on('pointerdown', () => this.togglePause());
+        const pb = this.add.rectangle(w - 36, 22, 44, 44, 0x000000, 0).setInteractive({ useHandCursor: true });
+        const pbTxt = this.add.text(w - 36, 22, '||', { fontSize: '18px', fontFamily: 'Arial', fontStyle: 'bold', color: '#B0BEC5' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        const pauseFn = () => this.togglePause();
+        pb.on('pointerdown', pauseFn);
+        pbTxt.on('pointerdown', pauseFn);
 
         this.livesEls = [];
         this.drawLives();
@@ -180,8 +190,9 @@ class UIScene extends Phaser.Scene {
         this.pauseEls.push(this.add.text(w / 2, h * 0.3, 'PAUSED', { fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF' }).setOrigin(0.5).setDepth(301));
         const mk = (y, label, cb) => {
             const b = this.add.rectangle(w / 2, y, 180, 44, 0x000000, 0).setStrokeStyle(2, COLORS.UI_BUTTON).setDepth(301).setInteractive({ useHandCursor: true });
-            const t = this.add.text(w / 2, y, label, { fontSize: '18px', fontFamily: 'Arial', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setDepth(301);
+            const t = this.add.text(w / 2, y, label, { fontSize: '18px', fontFamily: 'Arial', color: COLORS.UI_BUTTON_HEX }).setOrigin(0.5).setDepth(301).setInteractive({ useHandCursor: true });
             b.on('pointerdown', cb);
+            t.on('pointerdown', cb);
             this.pauseEls.push(b, t);
         };
         mk(h * 0.45, 'RESUME', () => this.togglePause());
@@ -232,7 +243,8 @@ class GameOverScene extends Phaser.Scene {
     mkBtn(x, y, bw, bh, label, col, cb) {
         const hex = '#' + col.toString(16).padStart(6, '0');
         const bg = this.add.rectangle(x, y, bw, bh, 0x000000, 0).setStrokeStyle(2, col).setInteractive({ useHandCursor: true });
-        this.add.text(x, y, label, { fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: hex }).setOrigin(0.5);
+        const t = this.add.text(x, y, label, { fontSize: '16px', fontFamily: 'Arial', fontStyle: 'bold', color: hex }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         bg.on('pointerdown', cb);
+        t.on('pointerdown', cb);
     }
 }

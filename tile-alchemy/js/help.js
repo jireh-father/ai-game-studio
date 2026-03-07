@@ -87,18 +87,20 @@ class HelpScene extends Phaser.Scene {
     // Got it button
     const btnY = Math.min(y, CONFIG.HEIGHT - 50);
     const btn = this.add.rectangle(w / 2, btnY, 180, 50, COLORS.UI_ACCENT).setInteractive({ useHandCursor: true });
-    this.add.text(w / 2, btnY, 'GOT IT!', {
+    const gotTxt = this.add.text(w / 2, btnY, 'GOT IT!', {
       fontSize: '22px', fontFamily: 'Arial', color: '#0D0B1E', fontStyle: 'bold'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    btn.on('pointerdown', () => {
+    const closeHelp = () => {
       this.scene.stop();
       if (this.returnScene === 'GameScene') {
         this.scene.resume('GameScene');
       } else {
         this.scene.start('MenuScene');
       }
-    });
+    };
+    btn.on('pointerdown', closeHelp);
+    gotTxt.on('pointerdown', closeHelp);
   }
 
   drawMergeDiagram(cx, y) {

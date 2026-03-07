@@ -79,16 +79,18 @@ class HelpScene extends Phaser.Scene {
         yPos += 30;
         const btn = this.add.rectangle(w / 2, yPos, 160, 48, 0x00AAFF)
             .setInteractive({ useHandCursor: true }).setDepth(1);
-        this.add.text(w / 2, yPos, 'Got it!', {
+        const gotItTxt = this.add.text(w / 2, yPos, 'Got it!', {
             fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: '#FFFFFF'
         }).setOrigin(0.5, 0.5).setDepth(2);
 
-        btn.on('pointerup', () => {
+        const closeHelp = () => {
             this.scene.stop();
             if (this.returnScene === 'GameScene') {
                 this.scene.resume('GameScene');
             }
-        });
+        };
+        btn.on('pointerup', closeHelp);
+        gotItTxt.setInteractive({ useHandCursor: true }).on('pointerup', closeHelp);
     }
 
     _addSection(x, y, text, color, size) {

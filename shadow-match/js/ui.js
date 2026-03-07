@@ -59,7 +59,7 @@ class UIScene extends Phaser.Scene {
         this.driftFill = this.add.rectangle(14, DRIFT_BAR_Y, 0, 6, COLORS_INT.DRIFT_BAR_FILL).setOrigin(0, 0.5).setDepth(101);
         this.warnText = this.add.text(w / 2, 300, 'SHADOW ESCAPING!', { fontSize: '28px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.DANGER }).setOrigin(0.5).setDepth(200).setAlpha(0);
 
-        const pb = this.add.rectangle(w / 2, 720, 44, 44, COLORS_INT.HUD_BG, 0.6).setInteractive({ useHandCursor: true }).setDepth(100);
+        const pb = this.add.rectangle(w / 2, 720, 52, 52, COLORS_INT.HUD_BG, 0.6).setInteractive({ useHandCursor: true }).setDepth(100);
         this.add.text(w / 2, 720, '||', { fontSize: '20px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS.HUD_TEXT }).setOrigin(0.5).setDepth(101).disableInteractive();
         pb.on('pointerdown', () => this.togglePause());
 

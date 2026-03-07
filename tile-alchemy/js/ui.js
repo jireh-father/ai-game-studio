@@ -20,17 +20,21 @@ class MenuScene extends Phaser.Scene {
       fontSize: '13px', fontFamily: 'Arial', color: '#8B7FBB', align: 'center'
     }).setOrigin(0.5);
     const playBtn = this.add.rectangle(w / 2, h * 0.50, 200, 56, COLORS.UI_ACCENT).setInteractive({ useHandCursor: true });
-    this.add.text(w / 2, h * 0.50, 'PLAY', {
+    const playTxt = this.add.text(w / 2, h * 0.50, 'PLAY', {
       fontSize: '26px', fontFamily: 'Arial', color: '#0D0B1E', fontStyle: 'bold'
-    }).setOrigin(0.5);
-    playBtn.on('pointerdown', () => {
-      this.tweens.add({ targets: playBtn, scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const startGame = () => {
+      this.tweens.add({ targets: [playBtn, playTxt], scaleX: 0.95, scaleY: 0.95, duration: 60, yoyo: true,
         onComplete: () => { this.scene.start('GameScene'); }
       });
-    });
+    };
+    playBtn.on('pointerdown', startGame);
+    playTxt.on('pointerdown', startGame);
     const helpBtn = this.add.circle(w - 36, 36, 22, COLORS.CELL_STROKE).setInteractive({ useHandCursor: true });
-    this.add.text(w - 36, 36, '?', { fontSize: '22px', color: '#FFB300', fontStyle: 'bold' }).setOrigin(0.5);
-    helpBtn.on('pointerdown', () => { this.scene.start('HelpScene', { returnScene: 'MenuScene' }); });
+    const helpTxt = this.add.text(w - 36, 36, '?', { fontSize: '22px', color: '#FFB300', fontStyle: 'bold' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const openHelp = () => { this.scene.start('HelpScene', { returnScene: 'MenuScene' }); };
+    helpBtn.on('pointerdown', openHelp);
+    helpTxt.on('pointerdown', openHelp);
     this.add.text(w / 2, h * 0.65, 'Best: ' + GameState.highScore, {
       fontSize: '22px', fontFamily: 'Arial', color: '#FFD700'
     }).setOrigin(0.5);
@@ -59,15 +63,16 @@ class HUD {
     this.stageText = scene.add.text(w / 2, 14, 'Stage ' + GameState.stage, {
       fontSize: '18px', fontFamily: 'Arial', color: '#E8E0F0'
     }).setOrigin(0.5, 0).setDepth(11);
-    const helpBg = scene.add.circle(w - 56, 24, 18, COLORS.CELL_STROKE).setDepth(11).setInteractive({ useHandCursor: true });
-    scene.add.text(w - 56, 24, '?', { fontSize: '18px', color: '#FFB300', fontStyle: 'bold' }).setOrigin(0.5).setDepth(11);
-    helpBg.on('pointerdown', () => {
-      if (scene.gameOver || scene.paused) return;
-      scene.pauseGame(); scene.scene.launch('HelpScene', { returnScene: 'GameScene' });
-    });
-    const pauseBg = scene.add.circle(w - 18, 24, 18, COLORS.CELL_STROKE).setDepth(11).setInteractive({ useHandCursor: true });
-    scene.add.text(w - 18, 24, '||', { fontSize: '14px', color: '#E8E0F0', fontStyle: 'bold' }).setOrigin(0.5).setDepth(11);
-    pauseBg.on('pointerdown', () => { if (scene.gameOver || scene.paused) return; scene.pauseGame(); scene.showPauseOverlay(); });
+    const helpBg = scene.add.circle(w - 56, 24, 22, COLORS.CELL_STROKE).setDepth(11).setInteractive({ useHandCursor: true });
+    const helpTxt2 = scene.add.text(w - 56, 24, '?', { fontSize: '18px', color: '#FFB300', fontStyle: 'bold' }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+    const openHelp2 = () => { if (scene.gameOver || scene.paused) return; scene.pauseGame(); scene.scene.launch('HelpScene', { returnScene: 'GameScene' }); };
+    helpBg.on('pointerdown', openHelp2);
+    helpTxt2.on('pointerdown', openHelp2);
+    const pauseBg = scene.add.circle(w - 18, 24, 22, COLORS.CELL_STROKE).setDepth(11).setInteractive({ useHandCursor: true });
+    const pauseTxt2 = scene.add.text(w - 18, 24, '||', { fontSize: '14px', color: '#E8E0F0', fontStyle: 'bold' }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+    const doPause = () => { if (scene.gameOver || scene.paused) return; scene.pauseGame(); scene.showPauseOverlay(); };
+    pauseBg.on('pointerdown', doPause);
+    pauseTxt2.on('pointerdown', doPause);
     const barY = 555;
     scene.add.rectangle(w / 2, barY, 286, 24, 0x111111).setDepth(10);
     this.voidBarBg = scene.add.rectangle(w / 2 - 138, barY, 0, 20, COLORS.SUCCESS).setOrigin(0, 0.5).setDepth(10);
@@ -159,13 +164,17 @@ function gameShowGameOverOverlay(deadlock) {
     fontSize: '16px', fontFamily: 'Arial', color: '#8B7FBB'
   }).setOrigin(0.5).setDepth(31));
   const playBtn = this.add.rectangle(w/2, h*0.62, 200, 50, COLORS.UI_ACCENT).setDepth(31).setInteractive({ useHandCursor: true });
-  this.add.text(w/2, h*0.62, 'PLAY AGAIN', { fontSize: '22px', fontFamily: 'Arial', color: '#0D0B1E', fontStyle: 'bold' }).setOrigin(0.5).setDepth(31);
-  playBtn.on('pointerdown', () => this.scene.restart());
-  this.gameOverGroup.push(playBtn);
-  const menuBtn = this.add.rectangle(w/2, h*0.72, 140, 40, COLORS.CELL_STROKE).setDepth(31).setInteractive({ useHandCursor: true });
-  this.add.text(w/2, h*0.72, 'MENU', { fontSize: '18px', fontFamily: 'Arial', color: '#E8E0F0' }).setOrigin(0.5).setDepth(31);
-  menuBtn.on('pointerdown', () => this.scene.start('MenuScene'));
-  this.gameOverGroup.push(menuBtn);
+  const playTxt3 = this.add.text(w/2, h*0.62, 'PLAY AGAIN', { fontSize: '22px', fontFamily: 'Arial', color: '#0D0B1E', fontStyle: 'bold' }).setOrigin(0.5).setDepth(31).setInteractive({ useHandCursor: true });
+  const restartFn = () => this.scene.restart();
+  playBtn.on('pointerdown', restartFn);
+  playTxt3.on('pointerdown', restartFn);
+  this.gameOverGroup.push(playBtn, playTxt3);
+  const menuBtn = this.add.rectangle(w/2, h*0.72, 140, 44, COLORS.CELL_STROKE).setDepth(31).setInteractive({ useHandCursor: true });
+  const menuTxt3 = this.add.text(w/2, h*0.72, 'MENU', { fontSize: '18px', fontFamily: 'Arial', color: '#E8E0F0' }).setOrigin(0.5).setDepth(31).setInteractive({ useHandCursor: true });
+  const goMenu = () => this.scene.start('MenuScene');
+  menuBtn.on('pointerdown', goMenu);
+  menuTxt3.on('pointerdown', goMenu);
+  this.gameOverGroup.push(menuBtn, menuTxt3);
 }
 
 function gameShowPauseOverlay() {
@@ -178,8 +187,9 @@ function gameShowPauseOverlay() {
   }).setOrigin(0.5).setDepth(31));
   const makeBtn = (y, label, color, cb) => {
     const btn = this.add.rectangle(w/2, y, 180, 50, color).setDepth(31).setInteractive({ useHandCursor: true });
-    const txt = this.add.text(w/2, y, label, { fontSize: '20px', fontFamily: 'Arial', color: '#E8E0F0', fontStyle: 'bold' }).setOrigin(0.5).setDepth(31);
+    const txt = this.add.text(w/2, y, label, { fontSize: '20px', fontFamily: 'Arial', color: '#E8E0F0', fontStyle: 'bold' }).setOrigin(0.5).setDepth(31).setInteractive({ useHandCursor: true });
     btn.on('pointerdown', cb);
+    txt.on('pointerdown', cb);
     this.pauseOverlayGroup.push(btn, txt);
   };
   makeBtn(h*0.40, 'Resume', COLORS.UI_ACCENT, () => gameClosePauseOverlay.call(this));
