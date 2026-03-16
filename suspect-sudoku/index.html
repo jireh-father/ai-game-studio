@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Suspect Sudoku</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><polygon points='20,2 25,14 38,14 28,22 32,36 20,28 8,36 12,22 2,14 15,14' fill='%23FFD700' stroke='%23C9A800' stroke-width='2'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-container"></div>
+  <div id="landscape-warning">
+    <div class="rotate-icon">&#128241;</div>
+    <p>Please rotate your device</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/ads.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/help.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+
+  <script>
+    // Prevent default touch behaviors on canvas
+    document.addEventListener('touchmove', function(e) {
+      if (e.target.tagName === 'CANVAS') e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchstart', function(e) {
+      if (e.target.tagName === 'CANVAS') e.preventDefault();
+    }, { passive: false });
+  </script>
+</body>
+</html>

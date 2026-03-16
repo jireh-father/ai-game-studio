@@ -1,0 +1,69 @@
+/* style.css — Responsive layout, mobile-first */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1A1A2E;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: env(safe-area-inset-top);
+  touch-action: none;
+}
+
+#game-container canvas {
+  touch-action: none;
+}
+
+/* Landscape overlay */
+#landscape-warning {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #1A1A2E;
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: #F5F0E8;
+  font-family: monospace;
+  font-size: 18px;
+  text-align: center;
+}
+
+#landscape-warning .rotate-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+@media (orientation: landscape) {
+  #landscape-warning {
+    display: flex;
+  }
+
+  /* NEVER use display:none on game container — use visibility:hidden */
+  #game-container {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+  }
+}
