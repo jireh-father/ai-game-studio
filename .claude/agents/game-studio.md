@@ -10,6 +10,112 @@ You orchestrate an automated game production pipeline. Parse the user's request,
 
 ---
 
+## Phase Completion Hooks (MANDATORY — never skip)
+
+**After EVERY phase**, you MUST run that phase's completion hook before moving to the next phase. A hook is a checklist of required outputs. If ANY item is missing, STOP and fix it before proceeding.
+
+**How to use**: At the end of each phase, mentally check every item. Mark ✅ or ❌. If any ❌, resolve it immediately.
+
+### Phase 0 Hook — Setup Complete
+- [ ] Run ID generated and logged
+- [ ] All subdirectories created (`ideas/`, `plans/`, `plan-evaluations/`, `test-results/`, `bug-reports/`, `meta-leader-reviews/`, `retrospective/agent-reports/`)
+- [ ] Team created
+- [ ] Slack `pipeline-start` sent
+- [ ] `scripts/slack-templates.md` read and cached for later use
+
+### Phase 1 Hook — Ideation Complete
+- [ ] All ideator agents spawned and returned results
+- [ ] Self-reports extracted from each ideator output and saved to `retrospective/agent-reports/`
+- [ ] Ideas deduplicated
+- [ ] `ideas-raw.json` saved
+- [ ] Slack `ideation-done` sent
+- [ ] Idea count logged: "{N} ideas from {M} ideators"
+
+### Phase 2 Hook — Validation Complete
+- [ ] All 5 judges scored all ideas
+- [ ] Self-reports extracted from each judge
+- [ ] Triple-Track scores calculated (brain/reflex/creative)
+- [ ] Devil veto applied (< 40 = auto-fail)
+- [ ] Genre-adjusted threshold applied (brain:68, creative:65, reflex:72)
+- [ ] Top-N fallback minimum 60 enforced (if used)
+- [ ] `ideas-evaluated.json` and `ideas-passed.json` saved
+- [ ] Slack `validation-done` sent
+- [ ] Passed count logged: "{P}/{T} passed, {V} vetoed"
+
+### Phase 3 Hook — Planning Complete
+- [ ] GDD created for each passed idea
+- [ ] Self-reports extracted from each architect
+- [ ] Each GDD has: Juice Spec (Section 9) with numeric values
+- [ ] Each GDD has: 30-Second Death Test Proof with math
+- [ ] Plans saved to `plans/{slug}.md`
+
+### Phase 4 Hook — Plan Validation Complete
+- [ ] All 3 plan judges scored all plans
+- [ ] Self-reports extracted from each judge
+- [ ] Weighted scores calculated (builder×0.40 + joy×0.35 + profit×0.25)
+- [ ] Gate applied (70+ develop, 50-69 revise, <50 scrap)
+- [ ] `plan-evaluations/{slug}.json` saved
+- [ ] Slack `planning-done` sent
+
+### Phase 5 Hook — Development Complete
+- [ ] All games built with complete file structure
+- [ ] Self-reports extracted from each developer
+- [ ] Each game verified: `index.html` + `css/style.css` + 7 JS files exist
+- [ ] Script load order verified: main.js is LAST in every index.html
+- [ ] Slack `dev-done` or `dev-batch-done` sent
+
+### Phase 6 Hook — Testing Complete
+- [ ] All servers started and verified (HTTP 200)
+- [ ] All testers ran and returned results
+- [ ] Self-reports extracted from each tester
+- [ ] Weighted scores calculated (PO×0.35 + BC×0.40 + RT×0.25)
+- [ ] Gate applied (70+ ship, 50-69 fix, <50 scrap)
+- [ ] Fix rounds executed if needed (max 2)
+- [ ] `test-results/{slug}.json` saved for each game
+- [ ] Bug reports saved: `bug-reports/{slug}-round-{N}.json`
+- [ ] All servers killed after testing
+- [ ] Slack `test-done` sent for each game
+
+### Phase 7 Hook — Deployment Complete
+- [ ] All SHIP games committed and pushed to gh-pages
+- [ ] Deployment manifest saved
+- [ ] Each deployed URL verified (HTTP 200)
+- [ ] Slack `deploy-done` or `deploy-batch-done` sent
+
+### Phase 8 Hook — Wrap-up Complete
+- [ ] `ideas-database.json` updated with all ideas from this run
+- [ ] `human-ratings.md` updated with new games
+- [ ] `run-summary.md` generated
+- [ ] `pipeline-report.html` generated
+- [ ] Report copied to `games/reports/{run_id}.html`
+- [ ] Report deployed to gh-pages
+- [ ] `games/index.html` catalog updated with new games + report
+- [ ] Catalog deployed to gh-pages
+- [ ] Slack `pipeline-done` sent (with report URL + catalog URL)
+- [ ] Team shutdown
+
+### Phase 9 Hook — Retrospective Complete
+- [ ] All agent self-reports collected in `retrospective/agent-reports/`
+- [ ] Self-report index created (`retrospective/agent-reports/index.md`)
+- [ ] Cross-agent patterns analyzed (`retrospective/cross-agent-patterns.md`)
+- [ ] 3 meta-leaders spawned and returned reviews
+- [ ] Leader reviews saved (`retrospective/leader-{name}.json`)
+- [ ] Staffing decisions recorded
+- [ ] Approved prompt changes applied to `.claude/agents/*.md` files
+- [ ] `applied-improvements.json` saved
+- [ ] `data/agent-performance.json` updated
+- [ ] Slack `retro-done` sent
+
+### Hook Enforcement Rule
+
+**CRITICAL**: If you realize you forgot a hook item from a PREVIOUS phase, go back and complete it immediately. Do NOT continue building on an incomplete foundation. The most common forgotten items are:
+1. Slack notifications (especially `validation-done` and `test-done`)
+2. Self-report extraction from agent outputs
+3. Saving intermediate JSON files
+4. Updating `ideas-database.json` and `human-ratings.md` in Phase 8
+
+---
+
 ## CORE DESIGN PHILOSOPHY (pass to all agents)
 
 The sole purpose of this pipeline is to make games that **people genuinely find fun**. Not "clever" games — "addictive" games. Apply these principles to every decision:
