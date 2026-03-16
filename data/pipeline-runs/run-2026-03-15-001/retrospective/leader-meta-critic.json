@@ -1,0 +1,322 @@
+{
+  "reviewer": "critic",
+  "run_id": "run-2026-03-15-001",
+  "phase": "9",
+  "date": "2026-03-16",
+  "analysis_quality": 8,
+
+  "executive_summary": "This run shipped 3/3 games — a clean pass rate. But the raw numbers hide a calibration crisis. Only 2 of 10 ideas cleared the threshold on their own merits. The third game (Sequence Lock) shipped via a Top-3 fallback with a 66.5 composite — 5.5 points below the 72 bar. Plan judges gave all three an 80+ rubber stamp while the developer was hiding 4 MAJOR bugs inside the same code. The pipeline produced the right output this time, but for the wrong reasons: ideator failure was masked by a fallback mechanism, and plan judges failed to catch implementation-ready risk. If ideation quality doesn't improve, Top-3 fallback becomes the default shipping mechanism — a slow degradation of standards.",
+
+  "agent_performance_notes": {
+    "spark": {
+      "effectiveness_score": 2,
+      "notes": "0/2 pass rate in a genre where its physics-hybrid concepts should have competed. Chain Verdict was genuinely original but lacked the humor layer that brain games need to score above 65 on Loop. Weight Shift scored 38 on Loop — the worst Loop score of the run from a non-vetoed idea. spark's self-assessment is accurate: it needs a strong theme layer. Historical pattern: spark has been inconsistent across runs (56-79 range) and scores lowest specifically in non-reflex genres. No improvement trajectory visible since run-004.",
+      "bias_flag": "Produces physically complex ideas that are implementable but emotionally flat. Ideas score well on Ludus (65) but bottom out on Loop and Cash — suggesting spark optimizes for mechanic cleverness at the cost of feel."
+    },
+    "oddball": {
+      "effectiveness_score": 9,
+      "notes": "2/2 pass rate. Both shipped. Bureaucrat Panic at 76.3 and Suspect Sudoku at 73.3. The humor-plus-cognitive-depth formula consistently works. oddball's ideas hit the highest Loop scores (81, 78) this run — proving humor makes cognitive games feel engaging rather than work-like. Only deduction: self-report admits early Suspect Sudoku cases are too trivial (2 suspects, 0 red herrings), and this wasn't caught by plan judges.",
+      "bias_flag": "None detected. oddball is the most genre-adaptive ideator in the roster."
+    },
+    "trendsetter": {
+      "effectiveness_score": 4,
+      "notes": "1/2 pass rate (Sequence Lock at 66.5 only via Top-3 fallback). Signal Shift failed on Loop (48) — the same Loop problem as spark. trendsetter's value proposition is trend awareness for reflex games; brain/puzzle is not its native genre. That said, Sequence Lock shipped successfully and the cyberpunk enrichment by architect recovered the idea. The concern is structural: trendsetter generated an idea that needed downstream intervention to become viable.",
+      "bias_flag": "Over-relies on mechanic familiarity in non-trending genres. 'Sequence Lock' is a well-known mobile pattern (tap-numbers-in-order) and Scout correctly scored it 39 for originality. trendsetter should not be a primary ideator for brain/puzzle requests."
+    },
+    "puzzler": {
+      "effectiveness_score": 2,
+      "notes": "0/2 pass rate — the worst performer despite being specifically purpose-built for this genre. The exponential overflow in Signal Lock (Devil: 40) is a direct repeat of the Ricochet Bloom anti-pattern from run-004. This pattern has been in MEMORY.md for 3 runs and is still appearing in puzzler's output. That is a hard failure. Debt Spiral's Cash score of 30 is also a concern — if puzzler is generating ideas that monetization judges score at 30, there is a structural mismatch between puzzler's design philosophy (strategy-depth-first) and what the pipeline rewards.",
+      "bias_flag": "Generates ideas with genuine strategic depth but ignores two known disqualifying patterns: exponential mechanics and inaccessible strategy games. Self-assessment is correct. The EXPLOIT CHECK step in puzzler's prompt exists but did not catch the exponential issue — the step needs stronger wording."
+    },
+    "visionary": {
+      "effectiveness_score": 2,
+      "notes": "0/2 pass rate. Double veto on Liar's Manual (Ludus 0, Devil 34). Glitch Escape failed on Devil (55) for the fixed-solution exploit — a pattern visionary's own prompt has an EXPLOIT CHECK step for. The self-check exists but is not working. Liar's Manual's 'death as information' mechanic is genuinely creative but creates an unloseable game — a structural conflict between novelty and the death requirement that visionary needs to internally resolve before submission.",
+      "bias_flag": "Optimizes heavily for novelty (scores 70 from Ludus on Glitch Escape, 74 from Scout on Liar's Manual) but consistently fails Devil's exploit check. Pattern across 2 runs: visionary ideas are creative enough to interest some judges but mechanically unsound enough to fail safety checks."
+    },
+    "professor_ludus": {
+      "effectiveness_score": 5,
+      "notes": "Score range this run: 0 (Liar's Manual veto) to 77 (Bureaucrat Panic). Sequence Lock scored 38 — below the 'poor' anchor (4 in the 1-10 scale). Yet Sequence Lock shipped and received 82.7 from plan judges and tested clean. This is a calibration failure. Ludus is optimizing for strategic depth and fails to give credit to cognitive speed games — a genre where 'mechanics depth' is measured by precision and flow rather than branching strategy. The 38 on Sequence Lock is not defensible: the game has color categories, power tiles, and modifiers per the final GDD.",
+      "bias_flag": "Calibrated for strategy/depth-heavy games (e.g., 2048, Chess). Undervalues cognitive-speed games where the mechanic is 'simple but fast' rather than 'complex and strategic'. Weight of 0.35 means a low Ludus score can sink otherwise viable ideas."
+    },
+    "dr_loop": {
+      "effectiveness_score": 7,
+      "notes": "Best discriminator in the judge panel. Score range 38-81 — widest spread of any judge. Correctly identified Sequence Lock's flow-state potential (77) despite Ludus giving it 38. Flagged Weight Shift (38) and Signal Shift (48) as not addictive — both failed. Bureaucrat Panic got 81 — highest Loop score in the run, and it was the highest-scoring shipped game.",
+      "bias_flag": "No structural bias detected. However, Loop scoring on brain games relies on 'Addiction Loop' which is harder to assess from a concept description than from actual play. Loop might be rewarding ideas that read like they'll be addictive rather than ideas that will actually be."
+    },
+    "devil": {
+      "effectiveness_score": 9,
+      "notes": "3/3 critical catches. Signal Lock (exponential overflow), Glitch Escape (fixed-solution exploit), Liar's Manual (unloseable). All three were correct kills that would have produced bad games. Sequence Lock scored 88 — the highest Devil score in the run — and it shipped fine. Devil's veto power is the single most reliable gate in Phase 2. No false positives detected.",
+      "bias_flag": "None. Devil is the most reliable judge in the pipeline."
+    },
+    "cash": {
+      "effectiveness_score": 4,
+      "notes": "Debt Spiral at 30 is an outlier that warrants examination. Cash scored Debt Spiral 30 because it has low IAP opportunity and unclear ad natural break points — but no explicit evaluation of ad impression volume (which a strategy game generates during its longer sessions). The IAP criterion is doing too much work for a pipeline building POC games without real ad integration. Cash is penalizing novel monetization models that could work via ad revenue rather than IAP.",
+      "bias_flag": "Over-indexed on IAP opportunity (1 of 4 criteria) relative to the current pipeline's POC status. In a no-ads POC context, IAP scoring is evaluating an irrelevant dimension. Recommend reformulating Cash's IAP criterion as 'Session Monetization Potential' that covers both ad and IAP approaches."
+    },
+    "scout": {
+      "effectiveness_score": 5,
+      "notes": "Sequence Lock at 39 ('most saturated mechanic') is a genuine market assessment, but it conflicts with Devil's 88 and the game shipping successfully. Scout's 'Trend Alignment' criterion is calibrated for the current market (casual reflex/hyper-casual), which systematically disadvantages brain games that are not trending but have stable long-tail audiences. The cyberpunk theme differentiation that architect added would have pushed Scout's Competitive Edge score up, but the idea evaluation happened before enrichment.",
+      "bias_flag": "Calibrated to identify trending mechanics, which by definition are saturated. Brain games are counter-trend — they serve a loyal audience, not a viral one. Scout's Trend Alignment criterion creates a structural penalty for non-viral genres."
+    },
+    "architect": {
+      "effectiveness_score": 7,
+      "notes": "3/3 plans passed first round — no revisions. Sequence Lock enrichment (cyberpunk theme, power tiles, modifiers) was exactly the right intervention for a low-originality idea. Difficulty curves are mathematically precise. However: Bureaucrat Panic GDD specified 12s decision window (3 lives × 12s = 36s > 30s death target). This is the exact pattern architect's own self-report proposes a 'death test calculator' for. The 30-second idle death constraint has been in the pipeline since run-001 — a planning agent with precise difficulty tables should be calculating this automatically, not missing it.",
+      "bias_flag": "Plans are very long (~400 lines) and plan judges may not be reading every detail — both architects and judges mention this. Long GDDs reduce evaluation quality."
+    },
+    "plan_judges_builder_joy_profit": {
+      "effectiveness_score": 3,
+      "notes": "All three games scored 81-83. Bureaucrat Panic: 81.1. Suspect Sudoku: 81.8. Sequence Lock: 82.7. The spread is 1.6 points across three meaningfully different games. This is grade inflation. Games with 4 MAJOR implementation bugs incoming received 80+ plan scores. Plan judges are not catching implementation risk signals in GDDs — specifically: the 36s idle death in Bureaucrat Panic, the early-case triviality in Suspect Sudoku, and the complexity that was generating hitArea and closure bugs in Sequence Lock. A 5-point spread across all games is not discrimination — it is rubber-stamping.",
+      "bias_flag": "Plan judges have a systematic upward bias. When asked to evaluate well-written GDDs by architect (who reliably produces detailed, technically complete documents), plan judges default to high scores because the plan looks comprehensive. They are grading document quality, not implementation risk."
+    },
+    "developer": {
+      "effectiveness_score": 6,
+      "notes": "3/3 games built, all functional after bug fixes. Fix success rate 100%. However: 4 MAJOR bugs across 3 games — SVG missing width/height, hitArea world coords, btnY closure, deterministic RNG. SVG width/height has been a documented bug since run-007. Deterministic RNG has been in MEMORY.md as a known pattern. The bug patterns exist in the developer prompt (items 12-15 in the checklist), but the developer is not consistently applying them. The 300-line limit is structurally unrealistic for brain/puzzle games — all 3 games exceeded it (664-699 lines).",
+      "bias_flag": "Developer self-selects the 'clever solution' for RNG and coordinate systems rather than the defensive solution. Prompt additions accumulate but are not enforced via mandatory self-check before submission."
+    },
+    "bugcatcher": {
+      "effectiveness_score": 8,
+      "notes": "4/4 MAJOR bugs caught pre-deploy. 100% fix success rate. Testing took 8-15 min per game but that is acceptable for the bug density encountered. The combined BC+PO+RT role continues to work but the self-report correctly identifies that Replay Tester evaluation via Playwright is weakest — 'can't truly feel replayability'. The Bureaucrat Panic deterministic RNG catch was excellent — requires playing 2+ full sessions and comparing, which demonstrates genuine testing depth.",
+      "bias_flag": "Spending time on cosmetic bugs (favicon 404, combo display) when major bugs exist is a prioritization issue. Not a systematic bias, but wastes time."
+    },
+    "shipper": {
+      "effectiveness_score": 7,
+      "notes": "Clean deployment, no failures. Only gap: post-deploy functional verification is limited to HTTP 200 status — not canvas rendering or game playability. Self-report acknowledges this. This is a low-risk gap (bugs are caught before deployment) but the screenshot verification suggestion is cheap and should be implemented.",
+      "bias_flag": "None."
+    }
+  },
+
+  "systemic_issues": [
+    {
+      "id": "SI-001",
+      "severity": "high",
+      "title": "Ideator failure rate 60% in brain/puzzle genre",
+      "description": "7/10 ideas failed. Only oddball's 2 ideas and 1 trendsetter idea (via fallback) shipped. spark, puzzler, and visionary all scored 0/2. This is not a threshold calibration problem — it is a genre-competency mismatch. puzzler and visionary are failing to pass their own mandatory self-checks (EXPLOIT CHECK, DEATH TEST). The checks exist in the prompts but are not producing the intended filter effect.",
+      "evidence": "puzzler Signal Lock scored 40 on Devil (exponential overflow — exact Ricochet Bloom pattern from run-004). visionary Liar's Manual double-vetoed. Both had explicit pre-screening steps in their prompts that were bypassed.",
+      "root_cause": "Self-checks in prompts are framed as procedural steps rather than hard blockers. An agent that has generated an idea it likes will rationalize past a self-check rather than abandon the idea."
+    },
+    {
+      "id": "SI-002",
+      "severity": "high",
+      "title": "Plan judge grade inflation — all plans clustered 81-83",
+      "description": "3 games, 3 plan scores, 1.6-point spread. Plan judges are not discriminating. They gave Bureaucrat Panic 81.1 despite a death-timer bug (36s > 30s target) that architect's own self-report later flagged. This means plan judges are reading GDD completeness as quality — a long, detailed, well-structured GDD reliably scores 80+ regardless of implementation risks embedded in it.",
+      "evidence": "plan-scores.json: 81.1, 81.8, 82.7. Average 81.9. Compare to idea scores (38-88 range) — plan judges have 5x less discrimination.",
+      "root_cause": "Plan judges do not have a quantitative death-timer check. The VETO CHECK says 'Player doesn't die within 30s of inactivity' but does not require judges to calculate lives × timer_per_life. Architect's GDD contains the raw numbers but judges are not doing the arithmetic."
+    },
+    {
+      "id": "SI-003",
+      "severity": "high",
+      "title": "Known bug patterns still appearing after 3 runs of documentation",
+      "description": "SVG missing width/height is documented in MEMORY.md from run-007. Deterministic RNG is documented from multiple runs. Both appeared again this run as MAJOR bugs. The patterns are in the developer prompt (checklist items 12-15) but are not being applied as mandatory pre-submission checks. Adding to a checklist is not the same as enforcing a check.",
+      "evidence": "developer-implementation.md: 'SVG width/height is easy to forget when using viewBox — need a checklist item' — this IS already a checklist item (run-007 lesson). The checklist is not working.",
+      "root_cause": "Long developer checklists are aspirational, not enforced. Developer produces code, then retrospectively verifies against a 20-item checklist. Self-verification against known patterns is systematically unreliable. Need a grep-based automated pre-submission check."
+    },
+    {
+      "id": "SI-004",
+      "severity": "medium",
+      "title": "Genre-calibration mismatch for Ludus, Loop, Cash, Scout on brain games",
+      "description": "The four scoring judges are calibrated against reflex/action/casual games. Brain games structurally score lower on Loop (addiction — slower mental loops), Cash (IAP opportunity — less natural), Scout (Trend Alignment — brain games are counter-trending). This is not because brain games are worse — it is because the scoring dimensions were designed for a different genre. The result is that only 2/10 brain game ideas pass 72 without a fallback mechanism.",
+      "evidence": "ideas-evaluated.json: avg composite score 63.5 across all 10 ideas. Suspect Sudoku only passed via reflex_track (73.3) not brain_track (69.5). Sequence Lock only via Top-3 fallback. Scout gave brain games 39-72 — the 39 was for a game that shipped successfully.",
+      "root_cause": "Scoring weights and criteria were defined during reflex-game-focused runs. No genre-aware scoring adjustment exists."
+    },
+    {
+      "id": "SI-005",
+      "severity": "medium",
+      "title": "Top-3 fallback mechanism is becoming the default, not the exception",
+      "description": "Top-3 fallback was introduced in run-005 to handle threshold pressure when all ideas are brain games. It was used again in this run. If 1/3 of shipped games require a fallback mechanism, that fallback is no longer exceptional — it is structural. Shipping a 66.5-composite idea via fallback means the pipeline is accepting sub-threshold quality as a routine outcome.",
+      "evidence": "Sequence Lock: composite 66.5, shipped via Top-3. ideas-evaluated.json confirms this.",
+      "root_cause": "The fallback mechanism has no quality floor. Any idea can ship as Top-3 regardless of composite score."
+    },
+    {
+      "id": "SI-006",
+      "severity": "low",
+      "title": "Post-deploy verification is HTTP-status-only",
+      "description": "Shipper confirms HTTP 200 but does not verify canvas rendering. A game with a broken index.html could pass deployment checks while being non-functional for end users.",
+      "evidence": "shipper-deployment.md: 'Didn't verify actual game functionality post-deploy (only HTTP 200 check)'.",
+      "root_cause": "Shipper's verification protocol was not updated when Playwright became available for post-deploy checks."
+    }
+  ],
+
+  "agent_calibration": {
+    "professor_ludus": {
+      "calibration_score": 4,
+      "bias_detected": "Undervalues cognitive-speed games. Sequence Lock scored 38 (below 'poor' reference anchor). The game shipped with plan score 82.7 and is functional. A judge calibrated correctly would not place a viable shipped game at the bottom of its scoring range.",
+      "overlap_with": "scout (both score originality/novelty; overlapping concern for saturated mechanics)",
+      "notes": "Recommend adding a 'Cognitive Speed' sub-dimension to Mechanics Depth that explicitly evaluates precision-and-flow games at parity with strategy-and-depth games."
+    },
+    "dr_loop": {
+      "calibration_score": 8,
+      "bias_detected": "Minor: may score concept descriptions as addictive when actual play addictiveness requires implementation to verify. Highest-discrimination judge in the panel.",
+      "overlap_with": "cash (both assess retention potential)",
+      "notes": "Most reliable judge this run. Weight could be increased."
+    },
+    "devil": {
+      "calibration_score": 9,
+      "bias_detected": "None detected across this run. No false positives, 3/3 correct kills.",
+      "overlap_with": "None — Devil's exploit/balance checking is unique in the panel.",
+      "notes": "Only agent with 9+ calibration score. The veto mechanism is correct and should be preserved."
+    },
+    "cash": {
+      "calibration_score": 4,
+      "bias_detected": "IAP-over-ad-revenue bias. Debt Spiral at 30 reflects IAP scarcity not monetization impossibility. In a no-IAP POC context, Cash's IAP criterion evaluates an irrelevant dimension.",
+      "overlap_with": "scout (both assess market viability; session length duplicates scout's retention assessment)",
+      "notes": "IAP Opportunity criterion should be replaced with 'Ad Revenue Potential' or broadened to 'Session Monetization Potential'. Would change Debt Spiral's Cash score significantly."
+    },
+    "scout": {
+      "calibration_score": 5,
+      "bias_detected": "Trend Alignment criterion systematically penalizes brain games. Brain games occupy a stable, non-viral market segment — they are not 'unaligned with trends' so much as 'not trend-dependent'. Scoring Sequence Lock at 39 while the game shipped and tested clean is a calibration failure.",
+      "overlap_with": "cash (both assess retention and market potential); ludus (both assess originality)",
+      "notes": "Trend Alignment should be reframed as 'Audience Clarity' — does this game have a clear player audience, regardless of whether that audience is currently trending?"
+    },
+    "builder_joy_profit": {
+      "calibration_score": 3,
+      "bias_detected": "All three plan judges show systematic grade inflation — 81.1 to 82.7 range across structurally different games. Joy is the only judge that might be expected to discriminate on fun quality, but gave 74-82 to three games where 4 MAJOR bugs were about to be found. The plan evaluation is not detecting implementation risk.",
+      "overlap_with": "builder and joy overlap on technical feasibility assessment; profit and cash (idea stage) overlap on monetization framing",
+      "notes": "Plan judges need an explicit 'death-timer arithmetic' check and a 'complexity-risk' assessment that increases scrutiny for games with multi-state logic (deduction games, rule-based games) where closure/coord bugs are historically common."
+    }
+  },
+
+  "role_overlap_analysis": [
+    {
+      "agents": ["cash", "scout"],
+      "overlap": "Both assess retention potential and market viability. Cash's 'Retention Potential' criterion and Scout's 'Market Gap' criterion measure adjacent dimensions. For brain games that score low on both for different structural reasons, the overlap compounds the genre penalty.",
+      "recommendation": "Differentiate clearly: Cash = revenue mechanics (ad breaks, IAP triggers, session economy). Scout = audience (who plays this, how big is that group, is there a gap). Remove 'Retention Potential' from Cash — it is Loop's domain."
+    },
+    {
+      "agents": ["professor_ludus", "scout"],
+      "overlap": "Both evaluate originality. Ludus's 'Originality' criterion and Scout's 'Competitive Edge' criterion are measuring the same dimension from different angles. Sequence Lock scored 38 on Ludus (not original) and 39 on Scout (saturated market) — the double-penalty amplified a single underlying weakness.",
+      "recommendation": "Consolidate originality into one agent's domain. Recommend: Ludus evaluates mechanic originality (is the core mechanic novel?). Scout evaluates market differentiation (does the theme/execution differentiate from competitors?). Currently both do both."
+    },
+    {
+      "agents": ["dr_loop", "cash"],
+      "overlap": "Both evaluate session retention. Loop's 'Addiction Loop' and Cash's 'Retention Potential' both ask 'will players come back?' from slightly different angles.",
+      "recommendation": "Cash 'Retention Potential' should be reframed as 'Monetization Retention' — specifically: do the monetization hooks (rewarded ads, lives, unlocks) create return visits? This differs from Loop's pure psychological compulsion measure."
+    }
+  ],
+
+  "blind_spots": [
+    {
+      "id": "BS-001",
+      "title": "No agent checks idle-death arithmetic at planning stage",
+      "description": "Bureaucrat Panic's 12s × 3 lives = 36s idle death exceeded the 30s requirement. This number was calculable from the GDD. No agent checked it. Architect missed it. Plan judges have a veto check for 'player doesn't die within 30s' but do not require arithmetic verification. The 30s constraint has existed since run-001 — it has now appeared as a missed GDD error in run-008.",
+      "proposed_fix": "Add mandatory arithmetic to architect's GDD template: '30-second idle death proof: [lives] × [timer_per_life] = [total] seconds. Must be <= 30.' Plan judges' Joy VETO CHECK should include: 'Verify total = lives × timer_per_life, confirm <= 30, otherwise cap replayability at 4.'"
+    },
+    {
+      "id": "BS-002",
+      "title": "No pre-submission code scan for known bug patterns",
+      "description": "Developer has a 20-item checklist but it is self-verified. SVG missing width/height, deterministic RNG, hitArea world coords — all three appeared despite being documented in the developer prompt. No automated grep check runs before the developer submits code for testing.",
+      "proposed_fix": "Add an automated pre-test scan step (grep-based bash script) that checks for: SVG without width/height, RNG without Date.now(), hitArea with non-relative coordinates. Script runs as part of Phase 5 before bugcatcher is invoked. Blocks submission if patterns found."
+    },
+    {
+      "id": "BS-003",
+      "title": "No quality floor on Top-3 fallback",
+      "description": "Sequence Lock shipped with a 66.5 composite via Top-3 fallback. There is no floor on what can ship via this mechanism. If the top 3 ideas all score below 50, Top-3 fallback would still ship them. The fallback has no minimum threshold.",
+      "proposed_fix": "Set Top-3 fallback minimum at 60 composite. Ideas below 60 cannot ship regardless of ranking. If no ideas meet 60, trigger supplementary ideation round rather than shipping sub-60 content."
+    },
+    {
+      "id": "BS-004",
+      "title": "Plan judges cannot detect UI complexity risk",
+      "description": "Sequence Lock's btnY closure bug and hitArea world-coordinate bug both originate from the game having complex multi-button UI with programmatic positioning. This complexity was visible in the GDD (multiple button layouts, sequential UI phases) but no plan judge has a criterion for 'UI state complexity' or 'programmatic positioning risk'.",
+      "proposed_fix": "Add to Builder's evaluation: 'UI State Complexity' — games with 3+ distinct UI states (menu, gameplay, gameover, pause, ad overlay) or programmatic button positioning score this criterion low (3-5) as high implementation risk, which should trigger a stricter dev review note in the GDD."
+    },
+    {
+      "id": "BS-005",
+      "title": "Post-deploy functional verification gap",
+      "description": "Shipper verifies HTTP 200 but does not load the game, check canvas rendering, or verify first interaction. A broken index.html could pass current deployment checks.",
+      "proposed_fix": "Add Playwright post-deploy step: navigate to deployed URL, wait for canvas element, take screenshot, verify canvas is not blank. Maximum 60 seconds. Fail deployment if canvas not visible."
+    }
+  ],
+
+  "improvement_suggestions": [
+    "Replace puzzler EXPLOIT CHECK step wording: change 'Can the game be solved by a simple repeating pattern?' to 'STOP. Before continuing: does the mechanic involve any splitting, spawning, or chaining that doubles in count each step? If yes, DISCARD THIS IDEA. This is the exponential anti-pattern that killed Signal Lock and Ricochet Bloom.'",
+    "Replace visionary DEATH TEST step wording: add 'CRITICAL: Does the player get smarter at the game by dying? If yes, dying makes the game easier, not harder — this may be unloseable. Model the actual probability of loss after N deaths. If it approaches zero, redesign.'",
+    "Add to architect GDD template Section 1: '### 30-Second Death Proof\n[Lives] × [Max decision timer] = [X] seconds. X MUST BE <= 30. If X > 30, reduce lives or timer before continuing.'",
+    "Add to Joy VETO CHECK: 'Calculate lives × timer_per_life. If > 30 seconds, cap core_loop_satisfaction at 4 and flag as required change.'",
+    "Add to Ludus evaluation criteria: explicitly distinguish Strategic Depth games (2048, Chess) from Cognitive Speed games (Simon, Sequence Lock). Add a Cognitive Speed sub-dimension: 'Does the game deliver satisfaction through precision, timing, and pattern speed rather than branching strategy? If yes, score Mechanics Depth at parity with strategy games — do not penalize simplicity.'",
+    "Change Cash IAP Opportunity criterion to Session Monetization Potential: 'How well does this game support monetization through ads AND/OR IAP? High-retention games with natural pause points score high even without IAP hooks.'",
+    "Change Scout Trend Alignment criterion to Audience Clarity: 'Does this game have a well-defined target audience with demonstrated demand, regardless of current trend cycle? A stable niche audience scores 7-8. Viral potential scores 9-10. No identifiable audience scores 1-3.'",
+    "Set minimum composite floor for Top-3 fallback at 60. If no ideas score 60+, trigger supplementary ideation rather than shipping sub-threshold content.",
+    "Implement a mandatory pre-test code scan bash script in Phase 5. Script checks: (1) all SVG strings contain width= and height=, (2) all RNG seeds include Date.now() or Math.random(), (3) no hitArea uses raw pixel coordinates > 100 without a comment explaining why. Script output is a pass/fail that blocks bugcatcher invocation until clean."
+  ],
+
+  "change_proposals": [
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/puzzler.md",
+      "rationale": "puzzler generated Signal Lock with exponential overflow — the exact Ricochet Bloom anti-pattern from run-004. The EXPLOIT CHECK step exists but is too gentle. Puzzler rationalized past it. The exponential pattern is a hard kill condition and must be treated as one in the prompt, not as a general consideration.",
+      "specific_change": "Replace item 8 (EXPLOIT CHECK) with a hard-stop phrasing that names the specific anti-pattern",
+      "before": "**EXPLOIT CHECK (mandatory)**: Can the game be solved by a simple repeating pattern? Can the player get stuck in an infinite safe state? If yes, redesign.",
+      "after": "**EXPLOIT CHECK (mandatory — HARD STOP)**: (A) EXPONENTIAL TRAP: Does any mechanic spawn, split, or chain in a way that doubles the count of entities per step? (e.g., 1 → 2 → 4 → 8 balls, enemies, tiles). If YES: DISCARD THIS IDEA. This is the anti-pattern that killed Signal Lock (run-008) and Ricochet Bloom (run-004). No amount of balancing fixes exponential mechanics. (B) INFINITE SAFE STATE: Can the player enter a state where they cannot lose indefinitely? If YES: redesign. (C) BRUTE-FORCE SOLUTION: Can the game be solved by random tapping within 60 seconds? If YES: redesign."
+    },
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/visionary.md",
+      "rationale": "visionary's Liar's Manual had 'death as learning' which created a statistically unloseable game. The DEATH TEST step does not address this failure mode specifically. visionary ideas that invert normal death semantics are systematically vulnerable to this.",
+      "specific_change": "Add a new mandatory step after DEATH TEST specifically for ideas where failure provides learning or progression",
+      "before": "**DEATH TEST (mandatory)**: How does the player fail? Creative games need fail states too.",
+      "after": "**DEATH TEST (mandatory)**: How does the player fail? Creative games need fail states too. LEARNING-FROM-DEATH TRAP: If dying teaches the player something that makes them better, does this mean they approach an unloseable state asymptotically? Model it: after 5 deaths, what fraction of the game's challenge remains? After 20 deaths? If the answer approaches zero, the game becomes unloseable through play — DISCARD OR REDESIGN the death mechanic so that deaths introduce new unknowns (not just remove old ones)."
+    },
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/professor-ludus.md",
+      "rationale": "Sequence Lock scored 38 on Ludus despite shipping successfully. Ludus's Mechanics Depth criterion does not distinguish strategic depth (chess-like) from cognitive-speed depth (Simon-like). Brain games with speed-precision mechanics are being penalized for not being strategy games.",
+      "specific_change": "Add a Cognitive Speed exemption to the Mechanics Depth criterion description",
+      "before": "| Mechanics Depth | 0.25 | Does the core mechanic have layers to master? |",
+      "after": "| Mechanics Depth | 0.25 | Does the core mechanic have layers to master? NOTE: Two equally valid depth types exist — (A) Strategic Depth: branching decisions with non-obvious consequences (2048, chess). (B) Cognitive Speed Depth: pattern recognition and precision under pressure (Simon, Sequence Lock). Do NOT penalize type-B for lacking type-A. A mechanic that is simple to describe but demands increasing precision and speed as difficulty scales is equally deep. Score type-B games on whether their speed/precision ceiling is high enough to sustain mastery, not whether they have branching strategy. |"
+    },
+    {
+      "type": "prompt_modify",
+      "target": "docs/scoring-system.md",
+      "rationale": "Cash's IAP Opportunity criterion scores novel/niche games at 30 (Debt Spiral) because they lack IAP hooks. The pipeline is building POC games with no actual IAP implementation. IAP scoring is evaluating a hypothetical dimension while ignoring the primary revenue mechanism (ad impressions from session length).",
+      "specific_change": "Replace IAP Opportunity with Session Monetization Potential in Cash's criteria",
+      "before": "| IAP Opportunity | 1-10 | How naturally does the game concept support in-app purchase opportunities (cosmetics, power-ups, skip mechanics) without being pay-to-win? A score of 1 means no natural purchase opportunities exist. A score of 10 means the game has clear, desirable purchase options. |",
+      "after": "| Session Monetization Potential | 1-10 | How well does this game generate revenue through its session structure, regardless of mechanism (ads, IAP, or both)? High-retention games with natural pause points, emotional stakes, and 'one more try' loops score high even without IAP hooks. A score of 1 means the game generates zero monetizable engagement. A score of 10 means sessions naturally create multiple monetization opportunities (ad breaks at natural pause points, optional power-up temptations, retry purchasing). IAP hooks raise the score but absence of IAP does not automatically lower it if ad revenue potential is high. |"
+    },
+    {
+      "type": "prompt_modify",
+      "target": "docs/scoring-system.md",
+      "rationale": "Scout's Trend Alignment criterion creates a structural penalty for brain games which occupy stable non-viral markets. Sequence Lock scored 39 on Scout despite shipping cleanly. Audience clarity — 'who is this for?' — is more useful than trend alignment for evaluating whether a game will find players.",
+      "specific_change": "Replace Trend Alignment with Audience Clarity in Scout's criteria",
+      "before": "| Trend Alignment | 1-10 | How well does the concept align with current gaming trends, cultural moments, or emerging player preferences? A score of 1 means the concept is counter to all current trends. A score of 10 means the concept perfectly rides a growing trend wave. |",
+      "after": "| Audience Clarity | 1-10 | Does this game have a well-defined, reachable player audience? A score of 1 means there is no identifiable group of players who would seek this out. A score of 5-6 means a stable niche audience exists (e.g., brain game enthusiasts, puzzle players). A score of 8-9 means a broad casual audience exists AND the game has viral hooks. A score of 10 means the game perfectly rides a growing trend with mass appeal. NOTE: A brain game with a loyal niche audience should score 5-7, not 1-3. Trend alignment is one path to audience — not the only one. |"
+    },
+    {
+      "type": "threshold_adjust",
+      "target": "Top-3 fallback minimum composite",
+      "rationale": "Top-3 fallback was used to ship Sequence Lock at 66.5. There is no quality floor. Setting a minimum prevents the fallback from becoming a mechanism to ship any idea regardless of quality.",
+      "specific_change": "Add to game-studio.md orchestrator: Top-3 fallback requires composite >= 60. Below 60, trigger supplementary ideation from oddball (1 additional idea) before applying fallback.",
+      "before": "If fewer than N ideas passed threshold, use Top-3 selection (highest-scoring ideas regardless of threshold).",
+      "after": "If fewer than N ideas passed threshold, use Top-3 selection (highest-scoring ideas regardless of threshold) — but ONLY if the selected idea has composite >= 60. If no idea scores 60+, spawn 1 additional idea from oddball (highest historical pass rate for brain/puzzle) and re-evaluate before applying fallback."
+    },
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/developer.md",
+      "rationale": "A 20-item self-verification checklist is not sufficient. Developers self-verify against known patterns unreliably — this run had 4 MAJOR bugs all from previously documented patterns. Automated grep-based pre-submission scanning would catch these without relying on developer self-review.",
+      "specific_change": "Add mandatory pre-submission scan bash script execution to the Implementation Checklist",
+      "before": "10. [ ] Test: game loads without console errors",
+      "after": "10. [ ] Run pre-submission pattern scan (MANDATORY — must pass before submitting for testing):\n```bash\n# Run from games/{slug}/ directory\necho '=== PRE-SUBMISSION SCAN ==='\n# Check 1: SVG strings must have explicit width and height\ngrep -r '<svg' js/ | grep -v 'width=' && echo 'FAIL: SVG missing width attribute' || echo 'PASS: SVG width check'\ngrep -r '<svg' js/ | grep -v 'height=' && echo 'FAIL: SVG missing height attribute' || echo 'PASS: SVG height check'\n# Check 2: RNG must include session entropy (Date.now or Math.random)\ngrep -r 'seed\\s*=' js/ | grep -v 'Date.now\\|Math.random' && echo 'WARN: Deterministic seed detected — verify entropy' || echo 'PASS: RNG entropy check'\n# Check 3: setStatic(false) is forbidden\ngrep -r 'setStatic(false)' js/ && echo 'FAIL: Forbidden setStatic(false) found' || echo 'PASS: setStatic check'\necho '=== SCAN COMPLETE — Fix any FAIL items before submitting ==='\n```\n10b. [ ] Test: game loads without console errors"
+    },
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/architect.md",
+      "rationale": "Bureaucrat Panic's 12s × 3 lives = 36s idle death exceeded the 30s requirement and was not caught at planning stage. Architect produces mathematically precise difficulty tables but missed this calculation. It must be a mandatory field in every GDD.",
+      "specific_change": "Add a mandatory 30-Second Death Proof field to the GDD template",
+      "before": "GDD Section 1 (Core Concept) — no death-timer calculation field",
+      "after": "GDD Section 1 must include:\n### 30-Second Idle Death Proof\n- Lives: [N]\n- Max timer per life: [T] seconds\n- Total possible idle survival: [N × T] seconds\n- REQUIREMENT: N × T MUST BE <= 30 seconds\n- If N × T > 30: REDUCE lives or timer before proceeding with the GDD\nThis field is MANDATORY. Plan judges will verify this arithmetic during evaluation."
+    },
+    {
+      "type": "prompt_modify",
+      "target": "docs/scoring-system.md",
+      "rationale": "Joy's VETO CHECK for '30s inactivity death' is qualitative. Judges read it as a concept-level check rather than an arithmetic requirement. Making it quantitative with explicit arithmetic enforcement would have caught the Bureaucrat Panic death-timer miscalculation.",
+      "specific_change": "Add arithmetic verification to Joy's VETO CHECK for inactivity death",
+      "before": "| Joy | Player doesn't die within 30s of inactivity | core_loop_satisfaction capped at 4 |",
+      "after": "| Joy | Player doesn't die within 30s of inactivity — VERIFY ARITHMETIC: Find the GDD's lives count and max timer per life. Calculate lives × timer_per_life. If > 30 seconds, this veto triggers regardless of the GDD's qualitative description. Cap core_loop_satisfaction at 4 and add to required_changes: 'Reduce lives or timer so that lives × timer_per_life <= 30.' | core_loop_satisfaction capped at 4 |"
+    }
+  ],
+
+  "cross_run_patterns": {
+    "oddball_dominance": "oddball is 6/6 shipped across brain/puzzle runs. Its humor-plus-cognitive-depth formula is the most reliable idea source in this genre. Consider giving oddball a quota of 3 ideas (not 2) for brain/puzzle genre requests.",
+    "puzzler_structural_failure": "puzzler has now produced exponential mechanics twice across runs despite the pattern being documented. This is not a prompt calibration issue anymore — it is a fundamental misalignment between puzzler's design philosophy (elegant strategy depth) and the pipeline's technical constraints (no exponential entity spawning). The EXPLOIT CHECK hard-stop change is necessary but may not be sufficient. Consider whether puzzler adds value beyond what oddball provides for brain games.",
+    "developer_checklist_ineffectiveness": "4 of the 5 run-008 bugs were from documented patterns. The checklist approach has been used for 8 runs and continues to produce documented bugs. A self-verification list does not work. Automated scanning is the only reliable alternative.",
+    "plan_judges_calibration_degradation": "Plan judge scores have increased across runs: run-006 avg ~74, run-007 avg ~78, run-008 avg ~82. This is grade inflation over time. As architect's GDD quality improves, plan judges are raising scores in response to document quality rather than maintaining calibration against an external standard. Plan judges need score anchors."
+  }
+}

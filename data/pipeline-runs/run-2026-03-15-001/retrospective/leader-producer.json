@@ -1,0 +1,210 @@
+{
+  "reviewer": "producer",
+  "phase": "9",
+  "run_id": "run-2026-03-15-001",
+  "efficiency_score": 5,
+  "throughput_assessment": "3/3 shipped is the right output number. But the path was wasteful: 10 ideas generated for 3 slots (70% ideation waste), 4 MAJOR bugs shipped past the developer that required a full fix round, and at least 3 of those bugs are on the known-patterns list from prior runs. We are re-discovering the same failures instead of preventing them. The pipeline moved but it did not improve. Shipping is a floor, not a ceiling.",
+
+  "bottlenecks_identified": [
+    {
+      "location": "Phase 1 — Ideation",
+      "description": "5 ideators generated 10 ideas to fill 3 game slots. 7 ideas were discarded (6 failed validation, 1 vetoed). puzzler and visionary contributed 4 combined ideas, 0 of which shipped. This is a measurable dead end: 40% of ideation effort produced 0 output value.",
+      "cost": "2 full agent invocations (puzzler + visionary) = wasted LLM calls and latency with zero downstream yield",
+      "severity": "HIGH"
+    },
+    {
+      "location": "Phase 5 — Development",
+      "description": "Developer produced 4 MAJOR bugs in 3 games — all of which are on the known-bug list from previous runs: SVG missing width/height (documented run-007), Phaser hitArea local vs world coords (documented), JS closure capture in delayedCall (documented), deterministic RNG without Date.now() (documented run-006). These are not new discoveries. They are failures of the developer checklist. Each bug required a test round and a fix round — ~15-20 minutes of compounded agent time downstream.",
+      "cost": "1 full fix round across 3 games = ~3 additional developer invocations + ~25 min extra testing time",
+      "severity": "CRITICAL"
+    },
+    {
+      "location": "Phase 6 — Testing",
+      "description": "Testing takes 8-15 min per game with combined BC+PO+RT agent. 3 games = ~25 min just for first-pass testing. With 1 fix round, total testing time approaches 50 min. The combined agent also produces reports that are difficult to parse — actionable bug data mixed with subjective scoring commentary.",
+      "cost": "~50 min total testing wall time per run for only 3 games. Scales poorly.",
+      "severity": "MEDIUM"
+    },
+    {
+      "location": "Phase 2 — Idea Validation",
+      "description": "5 judges evaluate 10 ideas. Only 2 pass the 72 threshold, requiring Top-3 fallback. The fallback is not well-defined in the pipeline — it introduces manual judgment at an automated stage. Additionally Sequence Lock shipped at 66.5 (below threshold), meaning the threshold was ultimately ignored. This ambiguity costs time in deliberation and erodes trust in the gate.",
+      "cost": "Validation phase ran to completion only to fall back to manual selection — partial waste of 5-judge evaluation effort",
+      "severity": "MEDIUM"
+    }
+  ],
+
+  "resource_waste": [
+    {
+      "waste_type": "Zero-yield ideators",
+      "description": "puzzler: 0/2 pass rate. visionary: 0/2 pass rate. Together consumed 2 agent invocations for 0 shipped games. oddball: 2/2 pass rate with the same token budget. The allocation is equal but the output is not.",
+      "quantification": "2 full ideator invocations = 0 games. oddball alone could have generated 4 ideas with same budget and likely shipped more."
+    },
+    {
+      "waste_type": "Known-bug re-discovery in dev",
+      "description": "4 MAJOR bugs in this run are explicitly documented in MEMORY.md and dev prompt patterns from prior runs. Developer is either not reading the checklist or the checklist is not comprehensive enough. Each re-discovered bug wastes: 1 test invocation to find it, 1 dev invocation to fix it, 1 re-test invocation to verify. 4 bugs = up to 12 wasted agent sub-operations.",
+      "quantification": "Estimated 40% of testing time spent on bugs that should never have shipped from dev"
+    },
+    {
+      "waste_type": "game.js 300-line limit unenforced",
+      "description": "All 3 game.js files exceeded 300 lines (664, 678, 699). The limit exists in the prompt but was ignored. No automated enforcement exists. This means the limit is a suggestion, not a gate — and when it is ignored, the brain game complexity goes unmanaged.",
+      "quantification": "No direct waste but indicates prompt rules are not being enforced systematically"
+    },
+    {
+      "waste_type": "Post-deploy verification gap",
+      "description": "Shipper only checks HTTP 200. No Playwright screenshot of deployed URL. If gh-pages serves a cached or corrupted version, it would not be caught. This is a thin deploy guarantee for the cost already paid in testing.",
+      "quantification": "Low additional cost to add post-deploy screenshot — failure to add it is a risk not a direct waste"
+    }
+  ],
+
+  "improvement_suggestions": [
+    {
+      "priority": "P0",
+      "title": "Pre-ship developer checklist script (automated grep)",
+      "description": "Before the developer marks any game as complete, run an automated bash script that greps each game directory for known anti-patterns. This is the single highest-ROI change available. It catches known bugs before testing ever begins, eliminating the fix-round cost entirely for documented patterns.",
+      "implementation": "Create .claude/commands/pre-ship-check.sh. Check for: SVG tags missing explicit width/height attributes, Math.random() or seeded RNG without Date.now() entropy, hitArea definitions without comment confirming local coordinates, setTimeout/delayedCall closures over loop-mutated variables. Output: PASS/FAIL with file:line for each violation. Block developer from completing Phase 5 until script returns PASS.",
+      "estimated_time_saving": "~30 min per run (1 full fix round eliminated for the 3 most common bug classes)"
+    },
+    {
+      "priority": "P0",
+      "title": "Redirect puzzle/visionary ideator budget to oddball",
+      "description": "puzzler and visionary have combined 0% pass rate across this run. oddball has 100% pass rate. For brain/puzzle genre requests, the ideator allocation should weight toward proven performers. Running 5 equal-weight ideators when 2 have zero yield is a resource misallocation, not a diversity strategy.",
+      "implementation": "In the orchestrator (game-studio.md), add genre-conditional ideator routing: if genre=brain/puzzle, spawn oddball×3 ideas + spark×2 ideas + trendsetter×2 ideas. Skip puzzler and visionary for brain genre until their prompts are fixed. Total ideas still = 10 (or reduce to 6 if only 3 games needed). Re-evaluate puzzler/visionary after prompt updates.",
+      "estimated_time_saving": "~2 agent invocations saved per brain-genre run. More importantly: higher pass rate reduces Top-3 fallback chaos."
+    },
+    {
+      "priority": "P1",
+      "title": "Genre-adjusted validation threshold",
+      "description": "The 72 threshold was set against reflex game baselines. Brain games structurally score lower on Loop (dr-loop) and Scout due to lower inherent replayability and less novel mechanic surfaces. Applying the same threshold penalizes a genre the pipeline is now explicitly targeting. This caused 2 of 3 games to rely on Top-3 fallback — the threshold is effectively non-functional for brain games.",
+      "implementation": "Add to orchestrator: if genre=brain/puzzle, apply threshold=68. If genre=creative/experimental, threshold=65. Default (action/reflex) threshold remains 72. Encode in scoring-system.md. This makes the Top-3 fallback unnecessary for normally-distributed brain game batches.",
+      "estimated_time_saving": "Reduces deliberation time and ambiguity at Phase 2 gate"
+    },
+    {
+      "priority": "P1",
+      "title": "Two-phase testing: smoke test before full evaluation",
+      "description": "Current pipeline launches full BC+PO+RT combined testing immediately. A 5-minute smoke test catching rendering failures (SVG sizing, blank canvas, script load errors) before the 15-minute full evaluation would allow early kill and faster iteration. Suspect Sudoku's SVG bug was immediately visible in the first screenshot — the remaining 10 minutes of that test session were wasted work.",
+      "implementation": "Add Phase 5.5: Smoke Test. Load game in browser, take screenshot, check for: canvas renders (non-blank), no JS console errors, title screen clickable. If smoke test FAIL, return to developer immediately without running full test. Full BC+PO+RT only runs on smoke-test-passing games. Smoke test budget: 3 min max.",
+      "estimated_time_saving": "When a game has a rendering bug, saves ~10-12 min of full test time per game"
+    },
+    {
+      "priority": "P1",
+      "title": "Formalize the idle death time calculator in architect GDD",
+      "description": "Bureaucrat Panic shipped a 12s decision window × 3 lives = 36s idle death, exceeding the 30s requirement. Architect noted this and suggested an automated check. This is a pure arithmetic gate that should never require human judgment. It is also the type of error that does not get caught by testing (tester would have to actually wait 36s idle to observe it).",
+      "implementation": "Add to architect.md prompt: 'MANDATORY: Before finalizing any GDD, calculate idle_death_time = max_lives * max_timer_per_life. If idle_death_time > 30, reduce timer or reduce lives until constraint is satisfied. Include this calculation explicitly in GDD Section 3 (death mechanics) as: IDLE DEATH PROOF: N lives * Xs timer = Ns (must be ≤30).' Also add grep check to pre-ship-check.sh for games with life-timer patterns.",
+      "estimated_time_saving": "Prevents a class of bugs that are invisible to automated testing"
+    },
+    {
+      "priority": "P2",
+      "title": "Increase game.js line limit to 500 for complex genres",
+      "description": "The 300-line limit was set for simple reflex games. Brain games with state machines, multi-stage logic, and complex UI have 664-699 line game.js files in this run — all exceeding the limit by 2x. The limit is not being enforced. A limit that is always broken is not a limit — it is noise in the prompt that reduces developer trust in all other rules.",
+      "implementation": "Update developer.md: 'game.js line limit: 300 for reflex/action games, 500 for brain/puzzle/strategy games. If exceeding 500, split logic into a separate state-machine.js file.' Update docs/pipeline.md to reflect the adjusted limits per genre.",
+      "estimated_time_saving": "Removes a known prompt rule violation — increases overall prompt reliability"
+    },
+    {
+      "priority": "P2",
+      "title": "Post-deploy Playwright screenshot verification",
+      "description": "Shipper currently only checks HTTP 200. Add a post-deploy Playwright step that loads each deployed URL, waits 3 seconds, and takes a screenshot. Store in tmp/{slug}-deploy-verify.png. This closes the gap between 'file was deployed' and 'game actually works on gh-pages'.",
+      "implementation": "Add to shipper.md post-deploy checklist: after URL HTTP 200 check, run Playwright screenshot for each deployed game URL. Verify canvas is non-blank. Save to tmp/. If blank canvas, flag for manual review — do not silently pass.",
+      "estimated_time_saving": "Catches post-deploy rendering issues that have occurred in previous runs (gh-pages cache, CDN delay)"
+    },
+    {
+      "priority": "P2",
+      "title": "Exploit self-check requirement for ideators",
+      "description": "visionary produced a double-vetoed idea (Liar's Manual) and puzzler reproduced the exponential-overflow pattern from run-004 (Signal Lock). Both patterns are in MEMORY.md. Ideators are not reading prior run lessons before generating. Adding an explicit self-check step — 'read MEMORY.md anti-patterns before generating' — or embedding the top-5 anti-patterns directly in each ideator prompt would prevent re-discovery.",
+      "implementation": "Add to puzzler.md and visionary.md prompts: a 'KNOWN ANTI-PATTERNS' section with: (1) no exponential spawning/splitting, (2) no fixed-solution puzzles (memorization exploit), (3) no 'death as information' mechanics that make game unloseable, (4) player must be able to die within 30s of idle. This is already in MEMORY.md — surface it directly in the prompts.",
+      "estimated_time_saving": "Prevents Devil veto chain — each veto wastes the entire idea slot and downstream judge evaluation time"
+    }
+  ],
+
+  "agent_performance_notes": {
+    "spark": {
+      "efficiency_score": 3,
+      "notes": "0/2 pass rate this run. Generated 2 ideas (Chain Verdict 64.9, Weight Shift 58.0) — neither passed. spark's physics-brain hybrids are interesting but consistently score low on Loop/Cash dimensions for brain genre. Not zero value — the concepts were original — but the output-to-cost ratio is poor for brain runs specifically. Efficiency score reflects the 0% yield, not the idea quality per se."
+    },
+    "oddball": {
+      "efficiency_score": 10,
+      "notes": "2/2 pass rate, both games shipped. Bureaucrat Panic (76.3) and Suspect Sudoku (73.3). These are the two highest idea scores in the batch. Humor-plus-cognitive formula works extremely well for brain games. oddball is the only ideator that understood genre requirements without prompt adjustment. Running oddball at higher quota for brain genre runs is the obvious call. Efficiency score: maximum — every token spent on oddball generated a shipped game."
+    },
+    "trendsetter": {
+      "efficiency_score": 5,
+      "notes": "1/2 pass rate (Sequence Lock shipped via Top-3 at 66.5, below threshold). Sequence Lock only shipped because architect enriched it substantially with cyberpunk theme and power tiles — trendsetter's raw idea needed significant post-processing. Signal Shift (60.4) was a clean fail. Trendsetter's approach is calibrated for reflex/trend-following games and struggles with brain genre depth requirements. Efficiency is mediocre: half the budget produced output, but that output required extra architect work to become shippable."
+    },
+    "puzzler": {
+      "efficiency_score": 2,
+      "notes": "0/2 pass rate. Debt Spiral (59.7) and Signal Lock (53.5) — the latter reproduced the exponential-overflow anti-pattern documented in MEMORY.md from run-004. This is a recidivism failure: the same design flaw appeared 2 runs later in a different ideator. The puzzler prompt either lacks the anti-pattern warnings or the agent is not reading them. Zero downstream yield from 2 idea slots. Efficiency score: near-minimum — the conceptual work was thoughtful but mechanically flawed in known ways."
+    },
+    "visionary": {
+      "efficiency_score": 2,
+      "notes": "0/2 pass rate. Liar's Manual received a double veto (Ludus 0, Devil 34) — statistically unloseable design. Glitch Escape (62.8) had a fixed-solution memorization exploit. Both failure modes are described as known anti-patterns. visionary's creative concepts are genuinely novel but mechanically unsound in exploitability dimensions. The double veto is particularly costly — it consumes all 5 judge evaluations and returns zero. Efficiency score: near-minimum, identical to puzzler."
+    },
+    "judges": {
+      "efficiency_score": 6,
+      "notes": "Judges did their jobs correctly — Devil caught 3 real design flaws, dr-loop correctly read Sequence Lock's flow potential. But calibration mismatch for brain genre (Ludus and Scout over-penalizing cognitive speed games) caused 2 of 3 shipped games to rely on Top-3 fallback rather than clean passes. The threshold system is not adapted for genre variance, which creates ambiguity at the gate. Running 5 full judge evaluations against ideas that mostly fail because of genre mismatch rather than quality is a calibration waste. Efficiency would improve significantly with genre-adjusted thresholds."
+    },
+    "architect": {
+      "efficiency_score": 8,
+      "notes": "3/3 plans passed first round — no revision waste, excellent. Successfully enriched Sequence Lock from a 66.5 idea into a 82.7 plan, demonstrating strong compensatory ability. The 12s timer × 3 lives idle death miscalculation (36s > 30s requirement) is a solvable gap — it is arithmetic, not judgment. GDDs at ~400 lines may be over-specified but there is no evidence this caused downstream problems this run. Architect is functioning well. Minor deduction for the idle-death arithmetic miss."
+    },
+    "developer": {
+      "efficiency_score": 4,
+      "notes": "3/3 games built and all shipped, so output was complete. But 4 MAJOR bugs in 3 games — all documented in MEMORY.md — represent a significant quality failure. The developer is not applying the known-bug checklist before marking work complete. SVG width/height, hitArea local coords, delayedCall closure capture, and deterministic RNG are all listed in prior run lessons. This is not bad code — it is incomplete code review against a known list. Efficiency score is penalized heavily because these bugs compounded into a full extra test-and-fix cycle, adding ~50% overhead to the development phase. If the pre-ship check script existed, these would have been caught in seconds instead of 25+ minutes of testing."
+    },
+    "bugcatcher": {
+      "efficiency_score": 7,
+      "notes": "Found all 4 MAJOR bugs before deployment — this is the job done correctly. Fix suggestions were accurate (all worked first attempt), which is high-quality output. Deduction for: (1) testing time is too long at 8-15 min per game, driven partly by bugs that should not have survived dev; (2) cosmetic bugs (favicon 404) consumed time better spent on replayability assessment; (3) combined BC+PO+RT role produces reports that mix triage-priority bugs with fun-scoring commentary in ways that are hard to action quickly. The role works but could be sharper with a smoke-test pre-filter."
+    },
+    "shipper": {
+      "efficiency_score": 8,
+      "notes": "Clean deployment with no failures. Manifest created, all URLs verified at HTTP 200. Deduction only for the post-deploy verification gap — HTTP 200 is a necessary but not sufficient check. A 3-minute Playwright screenshot after deploy would close the last quality gap at trivial additional cost. Otherwise shipper ran efficiently with no waste."
+    }
+  ],
+
+  "change_proposals": [
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/developer.md",
+      "rationale": "4 MAJOR bugs this run were all on the known-pattern list. The developer prompt needs a MANDATORY PRE-COMPLETION CHECKLIST section that requires the developer to verify known failure modes before marking work complete. This is the highest-ROI change in the pipeline.",
+      "specific_change": "Add section 'MANDATORY PRE-COMPLETION CHECKLIST' to developer.md with these required checks before calling any game complete: (1) Every SVG element has explicit width AND height attributes (not just viewBox). (2) All Phaser hitArea definitions use local coordinates relative to zone origin — add comment confirming this. (3) All delayedCall/setTimeout closures capture loop-mutated variables via snapshot const (e.g., const capturedY = btnY; then use capturedY inside callback). (4) All stage/puzzle generation RNG uses Date.now() or Math.random() with session entropy — no seeded deterministic sequences unless seed is session-randomized. (5) game.js line count: if brain/puzzle genre, max 500 lines; if reflex/action genre, max 300 lines. Failure to satisfy any check = do not submit, fix and re-check."
+    },
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/puzzler.md",
+      "rationale": "puzzler reproduced the exponential-overflow anti-pattern from run-004. The known failure modes must be surfaced directly in the ideator prompt, not buried in MEMORY.md which agents may not read.",
+      "specific_change": "Add 'KNOWN ANTI-PATTERNS — DO NOT PROPOSE' section at top of puzzler.md: (1) Exponential spawning or splitting mechanics (e.g., ball splits into 2 balls which each split again — creates 2^N scaling, game becomes unloseable). (2) Pure strategy games without time pressure or humor — they score below threshold on Loop and Cash consistently. (3) Mechanics where player death teaches the solution to a fixed puzzle — fixed solutions are memorizable exploits. (4) Any mechanic where successful actions make later stages easier rather than harder. Each idea submitted must include a one-line 'Devil check: how does a skilled player exploit this mechanic?'"
+    },
+    {
+      "type": "prompt_modify",
+      "target": ".claude/agents/visionary.md",
+      "rationale": "visionary produced a double-vetoed unloseable design. Creative novelty without mechanical robustness is a recurring failure mode. Prompt needs explicit exploit self-screening before submission.",
+      "specific_change": "Add 'MECHANICAL ROBUSTNESS CHECK' section to visionary.md: Before submitting any idea, answer these questions explicitly in the submission: (1) Can a skilled player reach a state where dying is impossible? If yes, redesign death condition. (2) Is there a fixed solution sequence the player can memorize? If yes, add session-randomized elements. (3) Does the game require the player to die to learn core mechanics (death-as-tutorial loops)? If this creates an inversion where more deaths = better performance, flag and redesign. The creative concept is only valuable if it survives these three checks."
+    },
+    {
+      "type": "agent_add",
+      "target": "pre-ship-check script (.claude/commands/pre-ship-check.sh)",
+      "rationale": "3 of 4 MAJOR bugs this run are grepp-able text patterns. An automated script running before testing would catch them in seconds versus the 25+ minutes they cost in test-and-fix cycles. This is not a new agent — it is a 20-line bash script that pays for itself in the first run it catches a bug.",
+      "specific_change": "Create .claude/commands/pre-ship-check.sh. Script takes a game directory path as argument. Checks: (1) grep -r '<svg' --include='*.js' to find SVGs, then verify each has width= and height= attributes. (2) grep -r 'Math.random\\|new Phaser.Math.RandomDataGenerator' --include='*.js' to find RNG, verify Date.now() or performance.now() appears in same file. (3) grep -r 'hitArea' --include='*.js' to find custom hit areas — flag each for manual confirmation of local coords. (4) grep -r 'delayedCall\\|setTimeout' --include='*.js' to find deferred closures — flag for manual closure-capture review. Output: JSON with pass/fail per check and file:line for each violation. Orchestrator runs this script at end of Phase 5 before advancing to Phase 6. FAIL blocks advancement."
+    },
+    {
+      "type": "threshold_adjust",
+      "target": "docs/scoring-system.md — idea validation pass threshold",
+      "rationale": "72 threshold was calibrated against reflex/action games. Brain/puzzle games structurally score 3-5 points lower on Loop and Scout judges. Applying the same threshold caused 2 of 3 shipped games this run to use Top-3 fallback instead of clean passes. The threshold is functionally non-operative for brain games — it is bypassed every run via the fallback mechanism. Make the genre adjustment explicit.",
+      "specific_change": "Update scoring-system.md and game-studio.md orchestrator logic: Pass threshold by genre — reflex/action: 72, brain/puzzle/strategy: 68, creative/experimental: 65. If genre is not specified, default to 72. Top-3 fallback is still available as a last resort but should not be required for genre-appropriate batches with a properly calibrated threshold."
+    },
+    {
+      "type": "weight_adjust",
+      "target": ".claude/agents/game-studio.md — Phase 1 ideator allocation for brain genre",
+      "rationale": "oddball: 100% pass rate for brain genre. puzzler: 0%. visionary: 0%. Allocating equal idea slots to all 5 ideators regardless of genre performance is treating a known-bad allocation as if it were neutral. It is not neutral — it consumes 40% of the ideation budget for 0% of the output.",
+      "specific_change": "In game-studio.md orchestrator Phase 1 section, add genre-conditional routing: IF genre contains 'brain' OR 'puzzle' OR 'strategy': assign oddball=3 ideas, spark=2 ideas, trendsetter=2 ideas, skip puzzler and visionary until their prompts are updated and re-validated. ELSE (default): run all 5 ideators with 2 ideas each. This reduces brain-genre ideation cost from 5 agents to 3 agents while increasing expected pass rate from 30% (3/10) to an estimated 50%+ (oddball 2/3 + spark/trendsetter upside)."
+    }
+  ],
+
+  "pipeline_timing_assessment": {
+    "phase_1_ideation": "Normal. 5 agents × 2 ideas each is fast.",
+    "phase_2_validation": "Slightly slow due to Top-3 fallback deliberation. Genre threshold adjustment eliminates this.",
+    "phase_3_planning": "Efficient. 3/3 first-round passes. No waste.",
+    "phase_5_development": "Appears fast but is deceptively expensive — 4 known bugs shipped through that created downstream cost.",
+    "phase_6_testing": "Bottleneck. ~50 min for 3 games including fix round. Pre-ship check script + smoke test phase would reduce this to ~30 min.",
+    "phase_7_deployment": "Fast and clean.",
+    "total_assessment": "The pipeline's efficiency ceiling is being limited almost entirely by preventable developer bugs. Fix the checklist, add the script, and testing time drops 30-40%. Everything else is operating at acceptable levels."
+  },
+
+  "summary_verdict": "This run shipped 3/3 games, which is the correct outcome. But the path was 40% ideation waste and 100% fix-round rate — every single game needed a bug fix that the developer should have caught. The four MAJOR bugs were all on the known-pattern list. The top priority for the next run is not more agents, better ideas, or stricter judges — it is a 20-line bash script that prevents developers from submitting work with documented failure modes. Implement pre-ship-check.sh, add the developer mandatory checklist, adjust the brain-genre threshold to 68, and route brain-genre ideation away from puzzler/visionary until their prompts are updated. These four changes together will reduce Phase 5-6 overhead by an estimated 30-40% and eliminate the 70% ideation waste in brain genre runs."
+}

@@ -1,0 +1,65 @@
+{
+  "run_id": "run-2026-03-15-001",
+  "applied_at": "2026-03-16",
+  "changes": [
+    {
+      "type": "prompt_modify",
+      "file": ".claude/agents/puzzler.md",
+      "change": "Added BANNED PATTERNS section with 5 anti-patterns (exponential spawning, fixed solutions, infinite safe states, success-spawns-targets, statistical unlosability) + self-check calculator",
+      "vote": "3/3 unanimous",
+      "reason": "puzzler reproduced run-004 exponential overflow anti-pattern (Signal Lock)"
+    },
+    {
+      "type": "prompt_modify",
+      "file": ".claude/agents/visionary.md",
+      "change": "Added MANDATORY DEVIL PRE-CHECK with 5 exploit tests + required devil_precheck output field",
+      "vote": "3/3 unanimous",
+      "reason": "visionary had 0/2 pass rate, double-vetoed Liar's Manual was statistically unloseable"
+    },
+    {
+      "type": "prompt_modify",
+      "file": ".claude/agents/developer.md",
+      "change": "Added Run-008 Bug Patterns (items 12-16): SVG width/height, hitArea local coords, closure capture, deterministic RNG, shutdown() method",
+      "vote": "3/3 unanimous",
+      "reason": "All 4 MAJOR bugs were documented patterns that developer re-discovered"
+    },
+    {
+      "type": "threshold_adjust",
+      "file": ".claude/agents/game-studio.md",
+      "change": "Genre-adjusted validation thresholds: reflex 72, brain 68, creative 65. Top-N fallback minimum 60.",
+      "vote": "3/3 unanimous",
+      "reason": "Only 2/10 brain ideas passed 72 threshold — genre structurally scores lower"
+    },
+    {
+      "type": "prompt_modify",
+      "file": ".claude/agents/architect.md",
+      "change": "Added '30-Second Death Test Proof' mandatory section with calculation template",
+      "vote": "2/3 majority",
+      "reason": "Bureaucrat Panic shipped with 36s idle death (3×12s), needed 9s timer reduction"
+    },
+    {
+      "type": "protocol_add",
+      "file": ".claude/agents/game-studio.md",
+      "change": "Added Agent Self-Report Protocol — all agents must include ## Self-Report at end of output. Phase 9.0 collects and indexes reports. Phase 9.1 uses reports as primary input for meta-leader review.",
+      "vote": "user request",
+      "reason": "User requested agents write their own retrospective reports for future runs"
+    }
+  ],
+  "deferred": [
+    {
+      "proposal": "Pre-ship automated check script (grep for known bug patterns)",
+      "reason": "Good idea but needs implementation — defer to next run",
+      "vote": "3/3 unanimous to implement"
+    },
+    {
+      "proposal": "Brain-genre ideator routing (oddball×3, skip puzzler/visionary until validated)",
+      "reason": "Producer proposed but Director rejected removal — give updated puzzler/visionary one more run",
+      "vote": "1/3 (Producer only)"
+    },
+    {
+      "proposal": "Post-deploy Playwright screenshot verification",
+      "reason": "Shipper suggestion — useful but low priority",
+      "vote": "2/3 majority, defer implementation"
+    }
+  ]
+}
