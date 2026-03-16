@@ -1,0 +1,13 @@
+{
+  "run_id": "run-2026-03-15-001",
+  "deployed_at": "2026-03-16T00:00:00Z",
+  "commit_hash": "caef8300f26570a54c09aae168c4eef91d21aab4",
+  "games_deployed": ["bureaucrat-panic", "suspect-sudoku", "sequence-lock"],
+  "report_deployed": false,
+  "urls": {
+    "bureaucrat-panic": "https://jireh-father.github.io/ai-game-studio/bureaucrat-panic/",
+    "suspect-sudoku": "https://jireh-father.github.io/ai-game-studio/suspect-sudoku/",
+    "sequence-lock": "https://jireh-father.github.io/ai-game-studio/sequence-lock/"
+  },
+  "verification_passed": true
+}

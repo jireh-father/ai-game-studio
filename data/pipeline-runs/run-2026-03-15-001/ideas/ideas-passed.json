@@ -1,0 +1,47 @@
+[
+  {
+    "id": "idea-20260315-004",
+    "title": "Bureaucrat Panic",
+    "slug": "bureaucrat-panic",
+    "creator": "oddball",
+    "composite": 76.3,
+    "game_type": "brain",
+    "one_liner": "You are the world's most important paper-pusher and you have 12 seconds per form.",
+    "mechanic_tags": ["brain", "logic", "swipe", "rules", "humor"],
+    "core_loop": "Read one absurd permit form (3 visible attributes), check against 2-3 pinned rules, swipe right to APPROVE or left to DENY — every 8-12 seconds.",
+    "death_condition": "Idle 12s = auto-wrong swipe = stress meter fills. Three incorrect rulings = fired = game over.",
+    "why_fun": "At stage 5, holding 3 simultaneous rules while reading a form for a werewolf's noise exemption is genuinely mentally engaging and funny. The swipe gesture is satisfying.",
+    "difficulty_curve": "Stage 1: 1 rule, 12s. Stage 3: 2 rules, 10s. Stage 5: 3 rules + rule-flip. Stage 8: 4 rules + OVERRIDE, 8s. Stage 12+: contradicting rules.",
+    "juice": "Loud rubber-stamp THWACK on correct. Approved forms fly into OUT tray. Denied forms get shredded with crunch. Game-over: sad desk-clear animation."
+  },
+  {
+    "id": "idea-20260315-003",
+    "title": "Suspect Sudoku",
+    "slug": "suspect-sudoku",
+    "creator": "oddball",
+    "composite": 73.3,
+    "game_type": "brain",
+    "one_liner": "You have 15 seconds to solve a crime — yes, every single crime.",
+    "mechanic_tags": ["brain", "logic", "speed", "deduction", "humor"],
+    "core_loop": "Read 2-4 clue tags on 2-4 suspects, mentally intersect constraints, tap the guilty party — all within a ticking window. Repeat every 8-15 seconds.",
+    "death_condition": "Timer expires (15s down to 8s) OR tapping innocent suspect. Three wrong verdicts end the run.",
+    "why_fun": "Each case is a 10-second logic snap — the 'it must be the cat' deduction high, delivered repeatedly. Humor makes each puzzle feel like a joke setup.",
+    "difficulty_curve": "Stage 1: 2 suspects, 2 clues, 15s. Stage 3: 3 suspects, 1 red herring, 12s. Stage 6: 4 suspects, 2 red herrings, 10s. Stage 10+: 5 suspects, rule-inversion clues, 8s.",
+    "juice": "Rubber-stamp THUD on correct verdict + confetti pop. Wrong: sad trombone + 'INNOCENT' stamp. Timer ticks louder in final 5 seconds."
+  },
+  {
+    "id": "idea-20260315-006",
+    "title": "Sequence Lock",
+    "slug": "sequence-lock",
+    "creator": "trendsetter",
+    "composite": 66.5,
+    "game_type": "brain",
+    "one_liner": "Tap scrambled numbers in order against a draining timer — the higher the stage, the more numbers hide in plain sight.",
+    "mechanic_tags": ["number-scanning", "time-pressure", "pattern-recognition", "visual-search", "cognitive-speed"],
+    "core_loop": "A grid of scrambled numbered tiles appears with draining timer. Tap lowest remaining number. Correct: tile vanishes + green flash + micro-refill. Wrong: red flash + time penalty.",
+    "death_condition": "Timer bar empties mid-sequence. Two consecutive wrong taps at high stages are nearly fatal.",
+    "why_fun": "The 'where is 7?' visual scan delivers a tiny burst of recognition satisfaction every tap. Players feel genuinely faster after 10 stages.",
+    "difficulty_curve": "Stage 1-4: 3x3 (9 tiles), 10s. Stage 5-12: 4x4 (16 tiles), 9s, colored tiles. Stage 13-25: 5x5, 8s, similar hues. Stage 26+: tiles drift and flip face-down.",
+    "juice": "Correct: tile shatters with number fragment particles. Chain-tap combo counter. Full clear: all tiles explode simultaneously. Combo x5+: sounds pitch up in musical run."
+  }
+]

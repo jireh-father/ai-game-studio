@@ -1,0 +1,8 @@
+{
+  "run_id": "run-2026-03-15-001",
+  "results": [
+    {"slug": "bureaucrat-panic", "builder": 88, "joy": 74, "profit": 80, "weighted": 81.1, "result": "DEVELOP"},
+    {"slug": "suspect-sudoku", "builder": 82, "joy": 80, "profit": 84, "weighted": 81.8, "result": "DEVELOP"},
+    {"slug": "sequence-lock", "builder": 85, "joy": 82, "profit": 80, "weighted": 82.7, "result": "DEVELOP"}
+  ]
+}

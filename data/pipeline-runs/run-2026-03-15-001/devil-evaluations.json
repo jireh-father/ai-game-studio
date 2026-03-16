@@ -1,0 +1,678 @@
+[
+  {
+    "idea_id": "idea-20260315-001",
+    "title": "Chain Verdict",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-6: First statement appears, player taps TRUE or FALSE. s7-13: Second statement. s14-20: Third statement — contradiction window opens (prior answers constrain this one). s21-40: Statements 4-6, each logically constrained by prior chain. s41-60: Statements 7-10, contradiction density peaks, player must track 6+ prior answers.",
+      "first_death_scenario": "Statement 3-4 (~18-24s): player answers TRUE to a statement that logically contradicts their answer to statement 1. Paradox death triggers.",
+      "death_time_estimate_seconds": 18
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Always tap TRUE",
+        "survives_stages": 2,
+        "why_it_works_or_fails": "Fails at stage 3-4 when a statement must be FALSE to avoid contradiction with prior TRUE answers. Well-designed contradiction engine forces at least one FALSE in any chain of 4+ answers."
+      },
+      {
+        "strategy": "Tap randomly (50/50 each statement)",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "0.5^10 = 0.1% chance of surviving 10 statements without contradiction. Random play dies in expected 3-4 statements."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "Zero — no resources, no powerups, no persistent knowledge",
+      "difficulty_growth_rate": "Moderate — longer chains, trickier semantics, shorter timers",
+      "crossover_point": "Never — player cannot outpace increasing chain complexity"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Contradiction death in 3-4 statements (~18-24s) is real but not as brutally fast as Flappy Bird. A careful player can avoid death for 30-40s by tracking their own logic, but complexity eventually overwhelms everyone."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Always-TRUE strategy fails within 3-4 stages when forced contradictions arise. Random fails even faster. No safe zone or loop exists. Main residual risk: if contradiction detection has bugs, the engine may not force the always-TRUE player to face a forced FALSE."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "Longer logical chains, trickier wordings, and compressed timers (6s→4s) create genuine scaling. Player knowledge helps but can't prevent eventual contradiction mistakes."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "Description accurately represents the core loop. 'Paradox death' is a clear and honest mechanic. Does not oversell the experience."
+      }
+    ],
+    "category_score": 70,
+    "weighted_score": 14.0,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Implementation risk: contradiction tracking logic must be correct or always-TRUE becomes viable indefinitely",
+      "Fun at scale uncertain: tracking own logical history is mentally taxing, not necessarily fun"
+    ],
+    "reasoning": "Chain Verdict has solid mechanical bones. Both degenerate strategies (always-TRUE, random) die within 3-4 statements. No exponential flags. The contradiction engine is the linchpin — if implemented correctly, the game cannot be exploited. Score 70 reflects honest mechanics with implementation dependency risk."
+  },
+  {
+    "idea_id": "idea-20260315-002",
+    "title": "Weight Shift",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-5: Beam level, first block falls. Player positions touch to counterbalance. s6-15: 2-3 blocks accumulated on each side, beam slightly tilting, player compensates. s16-30: Block density increases, player actively shifting touch position. s31-45: Block weights become mixed, tilt oscillations harder to predict. s46-60: High block density, multiple simultaneous compensations needed, 45-degree tilt approaching.",
+      "first_death_scenario": "~25-35s: A cluster of heavy blocks lands on the unguarded side during a split-second repositioning delay. Beam reaches 45 degrees and holds for 3s. Physical death guaranteed.",
+      "death_time_estimate_seconds": 30
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Hold one side of screen permanently",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "Adaptive spawning places blocks on the held side specifically, making the held side heavier and causing it to drop. Degenerate strategy actively punished by design."
+      },
+      {
+        "strategy": "Oscillate rhythmically left-right",
+        "survives_stages": 3,
+        "why_it_works_or_fails": "Timed oscillation can work at low block density but fails when block mass accumulates faster than rhythmic compensation can handle. Not a guaranteed exploit but survives longer than pure idle."
+      },
+      {
+        "strategy": "Idle (no input)",
+        "survives_stages": 0,
+        "why_it_works_or_fails": "Blocks spawn randomly, beam tips in <15s per spec. Confirmed idle death."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "Zero — hold mechanic does not improve with time",
+      "difficulty_growth_rate": "Strong — more blocks, heavier blocks, faster spawn rate",
+      "crossover_point": "Never — player cannot accumulate advantage, only react"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 8,
+        "weight": 0.30,
+        "reasoning": "Block accumulation is irreversible (blocks stay on beam once landed), so tilt pressure increases monotonically. Even skilled players face inevitable death as mass differential grows beyond compensation range. Idle death <15s confirmed."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Adaptive spawning directly counters the one-side-holding exploit. Oscillation survives a few extra stages but cannot sustain indefinitely. No safe zone exists. Minor concern: the oscillation strategy could survive 3-4 stages in skilled hands."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 8,
+        "weight": 0.20,
+        "reasoning": "Block speed, weight, and spawn rate scale cleanly. No player power to outgrow the challenge. Physics simulation ensures analog difficulty — small errors compound over time."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 8,
+        "weight": 0.20,
+        "reasoning": "Hold-to-balance is exactly what it sounds like. Adaptive spawning is a genuine design feature, not marketing language. Accurately represents the play experience."
+      }
+    ],
+    "category_score": 76,
+    "weighted_score": 15.2,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Oscillation strategy survives 3+ stages — needs block spawn timing tight enough to punish rhythm-gaming",
+      "3-second tilt threshold is generous; consider reducing to 2s at higher stages"
+    ],
+    "reasoning": "Weight Shift is mechanically robust. Adaptive spawning counter to degenerate hold strategy is a thoughtful design choice. Physics-based difficulty that compounds over time guarantees death. Score 76 reflects strong mechanical integrity with minor oscillation exploit concern."
+  },
+  {
+    "idea_id": "idea-20260315-003",
+    "title": "Suspect Sudoku",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-8: First suspects shown, player evaluates clues and taps. s9-15: Second round. s16-30: Stages 2-3, more suspects added (3-4). s31-60: Stages 4-6, 3-4 suspects with red herrings, timer shrinking.",
+      "first_death_scenario": "~20-30s: Player makes 3 wrong guesses (3 lives exhausted) from incorrect deductions or bad luck on 2-suspect coin-flips. With 50% hit rate, expected wrong guesses per 2 correct = 2, burning lives quickly.",
+      "death_time_estimate_seconds": 25
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Always tap the first (leftmost) suspect",
+        "survives_stages": 2,
+        "why_it_works_or_fails": "At 2-suspect stages (50% hit rate), first-suspect strategy gets lucky ~50% of the time. At 4-suspect stages (25% hit rate), first-suspect fails 75% of the time, burning through 3 lives in ~4 rounds."
+      },
+      {
+        "strategy": "Random tap any suspect",
+        "survives_stages": 2,
+        "why_it_works_or_fails": "Mathematically equivalent to first-suspect strategy. 50% early, 25% late. Expected failure on 3 lives = ~3-6 rounds at stage 4+."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "None — player gets no resources or abilities",
+      "difficulty_growth_rate": "Moderate — more suspects, red herrings, shorter timers",
+      "crossover_point": "Never — more suspects strictly lower success probability"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "3 lives deplete from wrong guesses. At 4 suspects, expected wrong guesses per 4 rounds = 3 (75% wrong rate). Death is guaranteed within ~12-16 rounds at stage 4+. Earlier stages have gentler death curve."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 6,
+        "weight": 0.30,
+        "reasoning": "No exploitable pattern or safe-zone. But early 2-suspect stages are coin-flips — 50% hit rate makes a random player statistically likely to pass early stages. This is not an exploit per se but undermines skill differentiation at stage 1-2."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "More suspects + red herrings + timer compression creates genuine scaling. Hit rate drops from 50% to 25% as suspect count grows, mathematically guaranteed to kill random players."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 6,
+        "weight": 0.20,
+        "reasoning": "The 'Sudoku' branding is misleading — no grid-logic deduction is involved. This is suspect elimination, not Sudoku. The description oversells the puzzle complexity implied by the Sudoku name."
+      }
+    ],
+    "category_score": 65,
+    "weighted_score": 13.0,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Name 'Sudoku' misleads — no grid-logic is present. Risk of player disappointment when they discover it's suspect-tapping not Sudoku-style deduction",
+      "Stage 1-2 are essentially coin-flips (50% hit rate) — undermines skill differentiation",
+      "Clue quality determines if this is a skill game or pure luck — description does not specify clue types or how well they distinguish suspects"
+    ],
+    "reasoning": "Suspect Sudoku has valid death mechanics (lives deplete via probability) but weak skill differentiation in early stages. The 'Sudoku' branding is a mechanical honesty problem. Score 65 reflects a game that works mechanically but has meaningful design and naming concerns."
+  },
+  {
+    "idea_id": "idea-20260315-004",
+    "title": "Bureaucrat Panic",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-6: Form 1 appears, simple approve case. Player swipes approve. s7-14: Form 2, still approve-safe. s15-22: Stage 2 begins — first deny-rule form. Player who always approves loses a life. s23-45: Multiple rule types active simultaneously, player must cross-reference 3+ rules per form. s46-60: Stage 4-5, 4+ rules stacked, correct answer requires parsing multiple conditions.",
+      "first_death_scenario": "~15-22s: Stage 2 introduces the first deny-rule. An always-approve player hits a mandatory deny form and loses a life. With 3 lives and ~40% random accuracy at stage 5, all 3 lives burn in ~8-12 wrong decisions.",
+      "death_time_estimate_seconds": 20
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Always approve",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "Fails immediately at stage 2 when deny-rule forms appear. Design explicitly blocks this strategy."
+      },
+      {
+        "strategy": "Always deny",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "Fails on approval-only forms present from stage 1. Cannot survive even one full stage."
+      },
+      {
+        "strategy": "Random swipe (50/50)",
+        "survives_stages": 3,
+        "why_it_works_or_fails": "~40% accuracy at stage 1, ~20% at stage 5 per description. With 3 lives and 20% accuracy, expected wrong answers to exhaust lives = 3 wrong in ~15 attempts. Survives 3 stages at best."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "Knowledge accumulation — skilled players memorize rules and reduce error rate",
+      "difficulty_growth_rate": "New rules added each stage, existing rules retained, rule volume exceeds working memory",
+      "crossover_point": "Stage 8-10 if rules accumulate without retirement — potential plateau where all rules are memorized"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Both degenerate strategies die in stage 1-2. Random play dies in ~3 stages. Skilled play dies when rule count exceeds cognitive capacity. Timer pressure per form guarantees mistakes under load."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 8,
+        "weight": 0.30,
+        "reasoning": "Both extremes (all-approve, all-deny) fail at stage 2. Random fails by stage 3-4. No exploitable loop or safe zone. Papers Please precedent shows rule-complexity scaling kills even expert players."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "Rule accumulation creates real scaling. Concern: if rules stop adding after stage 10, a memorization-complete player plateaus. Description doesn't specify rule retirement or obfuscation mechanics to prevent this ceiling."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 8,
+        "weight": 0.20,
+        "reasoning": "Papers Please comparison is accurate and honest. Description correctly represents the approve/deny core loop. No overselling."
+      }
+    ],
+    "category_score": 74,
+    "weighted_score": 14.8,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Rule memorization plateau: if all rules are learnable, veteran players may reach a difficulty ceiling",
+      "Cognitive load game on mobile risks frustration over fun — reading rules on small screen under timer is potentially un-fun rather than challenging"
+    ],
+    "reasoning": "Bureaucrat Panic has exceptional exploit resistance — both obvious degenerate strategies (all-approve, all-deny) die at stage 2. Rule complexity scaling is proven by Papers Please. Score 74 reflects strong mechanical design with a knowledge-plateau risk at high stages."
+  },
+  {
+    "idea_id": "idea-20260315-005",
+    "title": "Signal Shift",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-3: Single pulse traveling grid. Player rotates one arrow to redirect. s4-9: Pulse redirected successfully. Second pulse enters. s10-18: Two pulses simultaneously active, player must track both. s19-30: Third pulse at stage 3, arrows shared between pulse paths create conflicts. s31-60: 3 strikes system under pressure, one mis-rotation crashes a pulse.",
+      "first_death_scenario": "~10-15s: Two simultaneous pulses require conflicting arrow rotations. Player optimizes for pulse A, pulse B crashes. First strike taken at ~12s.",
+      "death_time_estimate_seconds": 12
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Random rotation of any arrow",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "With 4 rotation states, random rotation has 25% correct chance per arrow per pulse. Multi-pulse stages require simultaneous correct paths — probability collapses quickly. Fails by stage 2-3."
+      },
+      {
+        "strategy": "Never rotate (idle)",
+        "survives_stages": 0,
+        "why_it_works_or_fails": "Pulse crashes in 3s per spec. Idle death confirmed and aggressive."
+      }
+    ],
+    "exponential_flags": [
+      "WARNING: If pulse count grows per stage without a hard cap, the number of simultaneous paths to manage could become exponential in cognitive load even if not literally exponential in entity count. Spec does not state max pulse count."
+    ],
+    "power_scaling": {
+      "player_growth_rate": "None — no resources accumulated, each stage starts fresh",
+      "difficulty_growth_rate": "Additive pulse count per stage (assumed) — linear growth in cognitive load",
+      "crossover_point": "Never if pulse count is additive; potentially Stage 6-8 if pulses share arrows and conflict resolution becomes impossible"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 8,
+        "weight": 0.30,
+        "reasoning": "3s idle death is extremely aggressive. Multi-pulse conflicts guarantee errors. 3 strikes create a fast-failure system that ensures death within 60s for all skill levels eventually."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Random rotation fails fast. No idle strategy. No safe corner or waiting-out mechanic. Minor concern: pulse count cap not specified — if max is 2-3 pulses, some systematic arrow arrangements might trivialize management."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "More pulses, faster speed, more complex grids scales cleanly ASSUMING additive (not exponential) pulse spawning. Cap needs to be specified in GDD. If pulses spawn from successful redirects, this becomes an exponential flag."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "Grid-rotation puzzle with pulse tracking is accurately described. The '3s crash' is an honest mechanic. Description doesn't oversell."
+      }
+    ],
+    "category_score": 73,
+    "weighted_score": 14.6,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Pulse spawning mechanism not specified — if redirected pulses spawn new pulses, exponential flag triggers and score is capped at 40",
+      "GDD MUST specify max simultaneous pulse count (recommend hard cap of 4)",
+      "Arrow conflict resolution (two pulses needing opposite rotations on same arrow) must be addressed in design"
+    ],
+    "reasoning": "Signal Shift has aggressive death timing (3s idle) and multi-pulse complexity that resists exploitation. Score 73 is contingent on pulses being additively spawned per stage — NOT spawned from successful redirects. The GDD must explicitly state this or the exponential flag applies."
+  },
+  {
+    "idea_id": "idea-20260315-006",
+    "title": "Sequence Lock",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-8: 3-number sequence displayed, player taps 1-2-3 in order. One wrong tap drains ~30% of timer. s9-18: Sequence 2, 4 numbers. s19-28: Sequence 3, 4 numbers, distractors added. s29-45: Stage 3+, 5-number sequences, numbers scattered across screen. s46-60: Stage 4-5, 6+ numbers, timer base reduced, no recovery from two wrong taps.",
+      "first_death_scenario": "~15-20s: Player taps wrong number in sequence 2-3 (timer drained), then idles for 2-3s trying to find next correct number. Timer empties. Death from timer exhaustion.",
+      "death_time_estimate_seconds": 18
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Tap randomly across all numbers",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "Wrong taps drain timer severely. With N numbers on screen, random correct tap = 1/N. For N=8, expected wrong taps before correct = 7, draining ~210% of timer (dead after ~3 wrong taps). Fails on sequence 2-3."
+      },
+      {
+        "strategy": "Tap methodically left-to-right scanning",
+        "survives_stages": 2,
+        "why_it_works_or_fails": "Systematic scanning finds the right number eventually but timer drain from wrong taps mid-scan kills player. Not a survivable strategy past stage 2 with larger numbers and shorter timers."
+      },
+      {
+        "strategy": "Idle (no input)",
+        "survives_stages": 0,
+        "why_it_works_or_fails": "Timer empties in 8-10s per spec. Confirmed idle death."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "None — no resources, no powerups, no persistent state",
+      "difficulty_growth_rate": "Strong — longer sequences, more distractor numbers, faster timer depletion rate, smaller number fonts",
+      "crossover_point": "Never — player cannot accumulate any advantage"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 9,
+        "weight": 0.30,
+        "reasoning": "Timer drain from wrong taps + 8-10s idle death creates two independent death vectors. Both are mechanically guaranteed. Even perfect play faces longer sequences and shorter timers that eventually exceed human reaction speed. This is the cleanest death mechanic in the batch."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 8,
+        "weight": 0.30,
+        "reasoning": "No strategy survives without reading the sequence correctly. Random taps drain timer instantly. Idle kills in <10s. The mechanic cannot be bypassed — there is no shortcut to knowing the correct order. No safe zone, no degenerate loop."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 9,
+        "weight": 0.20,
+        "reasoning": "Sequence length, distractor count, timer duration, and number arrangement all scale independently. Each dimension adds pure difficulty. No player power growth to counterbalance. Linear difficulty growth guaranteed."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 9,
+        "weight": 0.20,
+        "reasoning": "What you read is exactly what you play. Tap numbers in order, wrong taps drain timer, timer kills you. Zero gap between description and experience. Most mechanically transparent idea in the batch."
+      }
+    ],
+    "category_score": 88,
+    "weighted_score": 17.6,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Risk of being too pure/punishing for casual players — wrong tap penalty must be tuned carefully (too harsh = frustrating, too lenient = trivial)",
+      "Visual design matters heavily: number readability under time pressure is the core UX challenge"
+    ],
+    "reasoning": "Sequence Lock is the strongest mechanical design in the batch. Two independent death vectors, no exploitable strategies, clean difficulty scaling with zero player power growth. Score 88 reflects near-Flappy-Bird-level mechanical certainty. The simplicity is its greatest strength — it cannot be broken by design."
+  },
+  {
+    "idea_id": "idea-20260315-007",
+    "title": "Debt Spiral",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-10: Initial board, player swipes to merge tiles normally. 2-3 merges per swipe. s11-20: First debt tiles appear. Player continues merging. s21-35: Debt countdowns active, player must merge before they trigger. s36-50: Board starts filling as debt tiles spread and merging can't keep pace. s51-60: Board nearing corrupt state, available merge moves decreasing.",
+      "first_death_scenario": "~50-70s: Board fills with unmergeable debt tiles, blocking all valid merge paths. Game ends when no moves remain. Skilled players can survive 90-120s before board corruption.",
+      "death_time_estimate_seconds": 60
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Spam-swipe one direction (classic 2048 corner strategy)",
+        "survives_stages": 2,
+        "why_it_works_or_fails": "Debt spawns in opposite direction to held direction. Board fills with debt on the opposite side, blocking tile flow. Corner strategy collapses faster than in standard 2048. Fails by stage 3."
+      },
+      {
+        "strategy": "Alternate swipes randomly",
+        "survives_stages": 2,
+        "why_it_works_or_fails": "Random swipes don't create efficient merges, debt accumulates faster than merges clear it. Board corrupts in ~25s per spec."
+      },
+      {
+        "strategy": "Idle (no input)",
+        "survives_stages": 0,
+        "why_it_works_or_fails": "Debt countdowns continue, board corrupts without any merges happening. Death in ~25s."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "None — no persistent power, each board starts fresh",
+      "difficulty_growth_rate": "Moderate — more debt tile types, faster countdowns, denser initial debt",
+      "crossover_point": "Never — debt rate outpaces merge rate by design"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 5,
+        "weight": 0.30,
+        "reasoning": "Random play dies in 25s. Skilled play lasts 90-120s — well outside the 60s window. This is a 2048-class death timeline, not a Flappy Bird class. Death is certain over a longer session but the 60s test is borderline. Scored 5 per the 2048 score anchor (6/10) with harsher penalty for slower death than standard 2048."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "The anti-corner-strategy debt spawning is a genuine design improvement over standard 2048. No safe zone exists. Main exploit concern: a highly skilled player who can merge faster than debt spawns could potentially survive indefinitely — the debt rate must be tuned to outpace even expert play."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "More debt tile types and faster countdowns scale well. Stage-to-stage progression is honest. No player power accumulation to outpace challenge."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 7,
+        "weight": 0.20,
+        "reasoning": "2048-merge with debt twist is accurately described. Description does not oversell. The 'Spiral' in the name implies escalating pressure which the debt mechanic delivers."
+      }
+    ],
+    "category_score": 64,
+    "weighted_score": 12.8,
+    "verdict": "pass",
+    "kill_reasons": [],
+    "concerns": [
+      "Death timeline is too slow for skilled players (90-120s) — needs tighter debt accumulation to guarantee death within 60s even for experts",
+      "Debt spawn rate vs merge rate balance is critical and fragile — easy to tune wrong and create either trivially easy or instantly impossible board states",
+      "Slow death curve is a retention risk on mobile — players may quit before dying naturally"
+    ],
+    "reasoning": "Debt Spiral has valid anti-exploit mechanics (no safe corner) and honest scaling, but fails the 60-second death certainty standard for skilled players. Score 64 reflects a sound concept with a critical tuning problem: death timeline needs compression to be mechanically honest about its threat level."
+  },
+  {
+    "idea_id": "idea-20260315-008",
+    "title": "Signal Lock",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-2: First overflow node highlighted. Player taps to lock it. s3-5: Second node. s6-8: Third node — overflow from first unlocked node has spread to one adjacent node. s9-15: Player locking nodes but overflow spreading every 2s means 3-4 nodes are now overflowing. s16-20: Player overshoots (locks wrong nodes) per spec — cascade begins. s21-40: Cascade propagates, more nodes overflow than player can lock per 2s cycle.",
+      "first_death_scenario": "~20s: Player locks 2-3 wrong nodes (overshoots), overflow spreads from unlocked nodes to adjacent nodes, cascade failure as overflow count exceeds lock rate.",
+      "death_time_estimate_seconds": 20
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Tap random nodes",
+        "survives_stages": 1,
+        "why_it_works_or_fails": "Locking wrong nodes wastes the 2s window between overflow spreads. Overflow propagates to 2+ new nodes per wrong lock. Cascade failure in ~20s per spec."
+      },
+      {
+        "strategy": "Memorize fixed lock pattern",
+        "survives_stages": 0,
+        "why_it_works_or_fails": "Random targets each run eliminates pattern memorization. Cannot pre-plan the sequence."
+      }
+    ],
+    "exponential_flags": [
+      "CRITICAL: Overflow spreads every 2s from each overflowed node. If each overflowed node independently spreads to 1-2 adjacent nodes, this creates exponential spread: 1 → 2-3 → 4-9 → 8-27 nodes overflowing per 2s cycle. This is mechanically equivalent to the Ricochet Bloom ball-splitting problem — failure states self-replicate without bound. Even if technically a failure-spread (not success-spread), the player faces an exponentially growing set of required simultaneous actions, making all stages beyond the first few literally impossible to recover from rather than progressively harder."
+    ],
+    "power_scaling": {
+      "player_growth_rate": "None",
+      "difficulty_growth_rate": "Exponential if overflow spreads from each overflowed node — difficulty becomes vertical rather than linear",
+      "crossover_point": "Stage 2-3 where overflow nodes exceed lockable rate — game becomes mechanically impossible rather than merely hard"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 8,
+        "weight": 0.30,
+        "reasoning": "Overflow spread every 2s with cascade failure is a very aggressive death mechanic. 20s to cascade failure is confirmed even in the spec. Death certainty is high."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Random targets prevent memorization. Random tapping fails fast. However, the exponential spread may actually be the game's biggest problem — not that it can be exploited, but that it makes the game impossible rather than merely hard at stage 3+."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 3,
+        "weight": 0.20,
+        "reasoning": "Exponential overflow spread creates a vertical difficulty cliff, not a slope. Stage 1 may be manageable; stage 3-4 becomes literally impossible when overflow nodes outnumber the player's lock rate by 4:1. This is not difficulty scaling — it is an impossibility ceiling."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 5,
+        "weight": 0.20,
+        "reasoning": "Description presents cascade failure as a challenging mechanic, but exponential spread means player agency disappears entirely at stage 3+. The experience is 'react to growing crisis' that transitions into 'watch helplessly as everything overflows'. This is not honestly presented as a puzzle."
+      }
+    ],
+    "category_score": 40,
+    "weighted_score": 8.0,
+    "verdict": "fail",
+    "kill_reasons": [
+      "EXPONENTIAL FLAG: Overflow-spreads-from-each-overflowed-node creates exponential failure propagation. At stage 3+, overflow count exceeds player lock rate by an exponential factor, making the game literally impossible rather than progressively difficult. This is the failure-direction equivalent of Ricochet Bloom's success-direction exponential ball spawning.",
+      "Difficulty cliff at stage 2-3 means the game has a hard ceiling after which player agency is zero — not a valid difficulty scaling model for a mobile game."
+    ],
+    "concerns": [
+      "Could be rescued if: overflow spread is strictly LINEAR (each stage adds N fixed new overflow nodes per cycle, not exponential), player lock speed scales proportionally, and hard cap on simultaneous overflow nodes is enforced",
+      "Random target requirement is good design — worth preserving if overflow mechanic is fixed"
+    ],
+    "reasoning": "Signal Lock triggers the exponential mechanic flag. Overflow-from-each-overflowed-node is mechanically identical to entity-splitting: 1 node becomes 2-3 becomes 4-9. Score capped at 40. The idea has salvageable elements (random targets, cascade pressure) but the core overflow propagation model must be redesigned to be additive per stage rather than multiplicative per node. FAIL."
+  },
+  {
+    "idea_id": "idea-20260315-009",
+    "title": "Glitch Escape",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-5: Level loaded, player examines tile grid and exit path. s6-15: Player taps tiles to invert them, creating a path toward exit. s16-25: Repair timer starts closing already-inverted tiles. Player must move efficiently. s26-40: Player reaches exit (first attempt) OR dead end from spam-tapping. s41-60: Second level loaded with different layout. Player applies learned approach.",
+      "first_death_scenario": "~20-30s: Repair timer closes the player's inverted path before they reach the exit. Player is trapped with no valid path and repair timer has closed all escape routes.",
+      "death_time_estimate_seconds": 25
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Spam-tap all tiles",
+        "survives_stages": 0,
+        "why_it_works_or_fails": "Chain reactions seal own path per spec. Spam is directly punished."
+      },
+      {
+        "strategy": "Memorize the solution after one attempt",
+        "survives_stages": 999,
+        "why_it_works_or_fails": "CRITICAL EXPLOIT: Each level has a unique fixed solution path. After dying on level 1, the player knows the exact correct tap sequence. Second attempt is trivial execution. This is not a degenerate play style — it is how puzzle games with fixed solutions ALWAYS work. The game becomes a memorization exercise after the first death, not a skill challenge."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "Knowledge of solutions grows with each attempt — player power increases per retry",
+      "difficulty_growth_rate": "New levels introduce new complexity, but each level is independently solvable after 1-2 attempts",
+      "crossover_point": "Every level after first death — solution known, execution trivial"
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 7,
+        "weight": 0.30,
+        "reasoning": "Repair timer creates genuine pressure on first blind attempt. Spam punishment is real. Death is possible and likely on first attempt of each level. However, second+ attempt on same level has near-zero death probability."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 4,
+        "weight": 0.30,
+        "reasoning": "The solution memorization exploit is inherent to fixed-solution puzzle design. After one death, every subsequent attempt on that level is a known-path execution. This is not a bug — it is a structural property of fixed-solution puzzles. The game cannot be designed around this exploit without making solutions randomized each run, which the description does not indicate."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 5,
+        "weight": 0.20,
+        "reasoning": "New levels add new tile configurations, but solution memorization means difficulty never truly scales within a level. Players who die quickly learn solutions and replay trivially. Only new unseen levels provide genuine difficulty — a finite resource."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 6,
+        "weight": 0.20,
+        "reasoning": "The description presents this as a reflex/puzzle game but fixed solutions make it primarily a memorization game on replay. The 'glitch' aesthetic suggests dynamic chaos; fixed-solution puzzle delivers static memorization. Minor dishonesty in framing."
+      }
+    ],
+    "category_score": 55,
+    "weighted_score": 11.0,
+    "verdict": "fail",
+    "kill_reasons": [
+      "MEMORIZATION EXPLOIT: Fixed unique solution per level means after one death, every retry is trivial execution of known path. The difficulty mechanic (repair timer, chain reactions) is fully bypassed on second attempt. This is a structural design flaw, not a tuning issue.",
+      "Solution memorization trivializes the game after 1-2 plays per level — replay value collapses to zero once all level solutions are known."
+    ],
+    "concerns": [
+      "Could be rescued if: solutions are procedurally generated (different path each run), or tile inversion is non-deterministic (chain reactions have randomness), or the exit position randomizes each attempt",
+      "The glitch-inversion visual concept is genuinely compelling — the design flaw is in fixed solutions, not the core mechanic"
+    ],
+    "reasoning": "Glitch Escape has a fatal structural flaw: fixed solutions per level mean the game devolves into memorization after the first death. Score 55 reflects the anti-spam and repair-timer mechanics working correctly, offset by the exploit_resistance failure from inherent solution memorability. FAIL. The concept can be saved by procedural solution generation."
+  },
+  {
+    "idea_id": "idea-20260315-010",
+    "title": "Liar's Manual",
+    "judge": "devil",
+    "judge_weight": 0.20,
+    "playthrough_simulation": {
+      "second_by_second": "s0-10: Stage 1, 4 rules shown. Player reads rules, performs action to test rule 1. Correct 75% chance. s11-20: Tests rule 2 with remaining 2 attempts. s21-40: Stage 2 (assuming pass), 5 rules. 80% correct per action, 3 attempts. s41-60: Stage 3, still manageable with 3 attempts at high success rate.",
+      "first_death_scenario": "~40-60s if player uses all 3 attempts incorrectly twice consecutively. But probability of this: 0.25 × 0.25 × 0.25 = 1.6% at stage 1. Effectively impossible to fail in first 60s.",
+      "death_time_estimate_seconds": 120
+    },
+    "degenerate_strategies": [
+      {
+        "strategy": "Brute-force all 3 attempts on each stage",
+        "survives_stages": 5,
+        "why_it_works_or_fails": "With 4 rules and 1 false (75% correct), brute-forcing guarantees finding the false rule in maximum 4 attempts. But player only has 3 attempts — however, 75% first-attempt success means brute-force almost never needs attempt 3. This is not a degenerate strategy because it IS the intended play. The issue is that the success rate is so high that brute-force and skilled play are indistinguishable."
+      },
+      {
+        "strategy": "Guess randomly among rules",
+        "survives_stages": 4,
+        "why_it_works_or_fails": "75% success rate per action. P(exhausting all 3 attempts) = (0.25)^3 = 1.56%. Expected stages survived before all 3 attempts wrong = 1/0.0156 ≈ 64 stages. Random play survives ~64 stages statistically. This is an unsurvivably easy game for random play."
+      }
+    ],
+    "exponential_flags": [],
+    "power_scaling": {
+      "player_growth_rate": "Knowledge of false-rule patterns increases — skilled players recognize common false-rule types",
+      "difficulty_growth_rate": "More rules, but 3 attempts remain constant. Win rate per action increases (more rules = larger denominator = lower false rate = harder to find false rule by elimination)",
+      "crossover_point": "Stage 8-10 where 8 rules/1 false = 87.5% correct rate per action. Paradoxically, more rules makes random guessing more likely to succeed rather than less."
+    },
+    "criteria": [
+      {
+        "name": "death_certainty",
+        "score": 2,
+        "weight": 0.30,
+        "reasoning": "VETO CHECK TRIGGERED. With 75% correct rate per action and 3 attempts, probability of failing a stage = (0.25)^3 = 1.56%. Expected stages before failure = ~64. A random player cannot die within 60s of normal play with statistical reliability. This fails the mandatory veto check."
+      },
+      {
+        "name": "exploit_resistance",
+        "score": 3,
+        "weight": 0.30,
+        "reasoning": "Random guessing IS a viable strategy that survives ~64 stages. The 3-attempt buffer with 75% correct rate makes random play effectively indistinguishable from skilled play in the early game. No degenerate strategy needed — the game itself is the exploit."
+      },
+      {
+        "name": "difficulty_scalability",
+        "score": 4,
+        "weight": 0.20,
+        "reasoning": "Counterintuitively, more rules with a fixed 1 false rule makes random guessing MORE successful (higher correct rate per action), not less. The difficulty ceiling is broken — the game gets easier for random play as stages progress."
+      },
+      {
+        "name": "mechanical_honesty",
+        "score": 5,
+        "weight": 0.20,
+        "reasoning": "Described as a tense 3-attempts experience. The math shows early stages are essentially risk-free for any strategy including random. The tense framing is dishonest about the early game experience."
+      }
+    ],
+    "category_score": 34,
+    "weighted_score": 6.8,
+    "verdict": "fail",
+    "kill_reasons": [
+      "VETO CHECK FAILED: Player cannot die within 60s of normal play. With 75% correct rate per action and 3 attempts, P(stage failure) = 1.56%. Expected stages before death = ~64 stages. Game is statistically unloseable in the first 60 seconds.",
+      "RANDOM PLAY SURVIVES 64+ STAGES: The degenerate strategy (random guessing) is effectively as good as skilled play in early stages. This is the definition of an exploitable game.",
+      "PARADOXICAL DIFFICULTY INVERSION: Adding more rules (higher stages) increases correct rate per random action (fewer false rules relative to total rules), making random guessing MORE effective at higher stages, not less."
+    ],
+    "concerns": [
+      "Could be rescued if: attempts reduced to 1 (no second chances), OR false rule count scales faster than total rule count (2 false in 5 rules = 40% correct rate), OR time pressure per action is extreme enough to prevent methodical testing"
+    ],
+    "reasoning": "Liar's Manual is an AUTO-FAIL by veto check. The 75% correct rate with 3 attempts creates a game that statistically cannot kill a player in the first 60s. Random play survives ~64 stages. Counterintuitively, more rules at higher stages makes random guessing MORE successful by increasing the true-rule ratio. FAIL."
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "run_id": "run-2026-03-15-001",
+  "evaluation_method": "triple-track (brain/reflex/creative), best track used",
+  "threshold": 72,
+  "results": [
+    {"id": "idea-20260315-004", "title": "Bureaucrat Panic", "slug": "bureaucrat-panic", "creator": "oddball", "scores": {"ludus": 77, "loop": 81, "devil": 74, "cash": 73, "scout": 67}, "brain_track": 76.3, "reflex_track": 74.6, "creative_track": 74.2, "best_track": "brain", "composite": 76.3, "result": "PASS"},
+    {"id": "idea-20260315-003", "title": "Suspect Sudoku", "slug": "suspect-sudoku", "creator": "oddball", "scores": {"ludus": 63, "loop": 78, "devil": 65, "cash": 78, "scout": 72}, "brain_track": 69.5, "reflex_track": 73.3, "creative_track": 69.1, "best_track": "reflex", "composite": 73.3, "result": "PASS"},
+    {"id": "idea-20260315-006", "title": "Sequence Lock", "slug": "sequence-lock", "creator": "trendsetter", "scores": {"ludus": 38, "loop": 77, "devil": 88, "cash": 52, "scout": 39}, "brain_track": 61.1, "reflex_track": 66.5, "creative_track": 56.1, "best_track": "reflex", "composite": 66.5, "result": "PASS (Top-3 selection)"},
+    {"id": "idea-20260315-001", "title": "Chain Verdict", "slug": "chain-verdict", "creator": "spark", "scores": {"ludus": 65, "loop": 68, "devil": 70, "cash": 55, "scout": 56}, "best_track": "brain", "composite": 64.9, "result": "FAIL"},
+    {"id": "idea-20260315-009", "title": "Glitch Escape", "slug": "glitch-escape", "creator": "visionary", "scores": {"ludus": 70, "loop": 49, "devil": 55, "cash": 70, "scout": 70}, "best_track": "creative", "composite": 62.8, "result": "FAIL (Devil: fixed-solution exploit)"},
+    {"id": "idea-20260315-005", "title": "Signal Shift", "slug": "signal-shift", "creator": "trendsetter", "scores": {"ludus": 61, "loop": 48, "devil": 73, "cash": 56, "scout": 53}, "best_track": "brain", "composite": 60.4, "result": "FAIL"},
+    {"id": "idea-20260315-007", "title": "Debt Spiral", "slug": "debt-spiral", "creator": "puzzler", "scores": {"ludus": 62, "loop": 47, "devil": 64, "cash": 30, "scout": 63}, "best_track": "creative", "composite": 59.7, "result": "FAIL"},
+    {"id": "idea-20260315-002", "title": "Weight Shift", "slug": "weight-shift", "creator": "spark", "scores": {"ludus": 57, "loop": 38, "devil": 76, "cash": 57, "scout": 47}, "best_track": "brain", "composite": 58.0, "result": "FAIL"},
+    {"id": "idea-20260315-008", "title": "Signal Lock", "slug": "signal-lock", "creator": "puzzler", "scores": {"ludus": 66, "loop": 47, "devil": 40, "cash": 55, "scout": 44}, "best_track": "brain", "composite": 53.5, "result": "FAIL (Devil: exponential overflow)"},
+    {"id": "idea-20260315-010", "title": "Liar's Manual", "slug": "liars-manual", "creator": "visionary", "scores": {"ludus": 0, "loop": 59, "devil": 34, "cash": 81, "scout": 74}, "best_track": null, "composite": null, "result": "FAIL (DOUBLE VETO: Ludus 0, Devil <40)"}
+  ]
+}

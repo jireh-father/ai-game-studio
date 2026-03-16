@@ -59,6 +59,18 @@
     {"id":"idea-20260306-007","title":"Pipe Paradox","slug":"pipe-paradox","creator":"spark","score":67,"status":"shipped","run_id":"run-2026-03-06-001","mechanic_tags":["puzzle","pipes","flow","rules","shifting"]},
     {"id":"idea-20260306-008","title":"Fold Fit","slug":"fold-fit","creator":"trendsetter","score":64.5,"status":"shipped","run_id":"run-2026-03-06-001","mechanic_tags":["puzzle","origami","folding","silhouette","spatial"]},
     {"id":"idea-20260306-009","title":"Num Collapse","slug":"num-collapse","creator":"spark","score":56,"status":"shipped","run_id":"run-2026-03-06-001","mechanic_tags":["puzzle","hex-grid","numbers","merge","collapse"]},
-    {"id":"idea-20260306-010","title":"Trash Sort Panic","slug":"trash-sort-panic","creator":"oddball","score":46.8,"status":"shipped","run_id":"run-2026-03-06-001","mechanic_tags":["puzzle","sorting","drag","trash","time-pressure"]}
-  ]
+    {"id":"idea-20260306-010","title":"Trash Sort Panic","slug":"trash-sort-panic","creator":"oddball","score":46.8,"status":"shipped","run_id":"run-2026-03-06-001","mechanic_tags":["puzzle","sorting","drag","trash","time-pressure"]},
+    {"id":"idea-20260315-004","title":"Bureaucrat Panic","slug":"bureaucrat-panic","creator":"oddball","score":76.3,"status":"shipped","run_id":"run-2026-03-15-001","mechanic_tags":["brain","logic","swipe","rules","humor"]},
+    {"id":"idea-20260315-003","title":"Suspect Sudoku","slug":"suspect-sudoku","creator":"oddball","score":73.3,"status":"shipped","run_id":"run-2026-03-15-001","mechanic_tags":["brain","logic","speed","deduction","humor"]},
+    {"id":"idea-20260315-006","title":"Sequence Lock","slug":"sequence-lock","creator":"trendsetter","score":66.5,"status":"shipped","run_id":"run-2026-03-15-001","mechanic_tags":["number-scanning","time-pressure","pattern-recognition","visual-search","cognitive-speed"]},
+    {"id":"idea-20260315-001","title":"Chain Verdict","slug":"chain-verdict","creator":"spark","score":64.9,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["logic-deduction","chain-reaction","timer-pressure","binary-choice","paradox-death"]},
+    {"id":"idea-20260315-002","title":"Weight Shift","slug":"weight-shift","creator":"spark","score":58.0,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["physics-balancing","hold-input","spatial-math","weight-distribution","real-time-strategy"]},
+    {"id":"idea-20260315-005","title":"Signal Shift","slug":"signal-shift","creator":"trendsetter","score":60.4,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["spatial-reasoning","real-time-routing","drag-rotate","chain-reaction","grid-puzzle"]},
+    {"id":"idea-20260315-007","title":"Debt Spiral","slug":"debt-spiral","creator":"puzzler","score":59.7,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["merge","resource-management","chain-planning","constraint-satisfaction","risk-reward"]},
+    {"id":"idea-20260315-008","title":"Signal Lock","slug":"signal-lock","creator":"puzzler","score":53.5,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["deduction","chain-planning","constraint-satisfaction","logic","spatial-reasoning"]},
+    {"id":"idea-20260315-009","title":"Glitch Escape","slug":"glitch-escape","creator":"visionary","score":62.8,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["meta-mechanics","reverse-mechanics","puzzle","time-pressure","chain-reaction"]},
+    {"id":"idea-20260315-010","title":"Liar's Manual","slug":"liars-manual","creator":"visionary","score":0,"status":"vetoed","run_id":"run-2026-03-15-001","mechanic_tags":["deduction","meta-mechanics","asymmetric-information","death-as-mechanic","social-deception"]}
+  ],
+  "version": 8,
+  "last_updated": "2026-03-15T00:00:00Z"
 }
