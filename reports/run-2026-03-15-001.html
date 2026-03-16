@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Report — run-2026-03-15-001</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#334155;
+  --border:#475569;--text:#e2e8f0;--text2:#94a3b8;
+  --accent:#38bdf8;--accent2:#a78bfa;--accent3:#34d399;
+  --red:#f87171;--yellow:#fbbf24;--green:#34d399;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:32px 24px}
+
+/* Header */
+.header{text-align:center;padding:48px 0 40px;border-bottom:1px solid var(--border)}
+.header h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.header .subtitle{color:var(--text2);font-size:0.95rem}
+.meta-cards{display:flex;gap:16px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.meta-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 28px;text-align:center;min-width:120px}
+.meta-card .num{font-size:2rem;font-weight:800;color:var(--accent)}
+.meta-card .label{font-size:0.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
+
+/* Section */
+.section{margin-top:48px}
+.section-title{font-size:1.4rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.section-title::before{content:'';display:inline-block;width:4px;height:24px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:2px}
+.section-title .toggle{margin-left:auto;font-size:0.8rem;color:var(--text2);transition:transform 0.2s}
+.section-content{overflow:hidden;transition:max-height 0.4s ease}
+.collapsed .section-content{max-height:0!important}
+.collapsed .toggle{transform:rotate(-90deg)}
+
+/* Tables */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+thead{background:var(--surface2)}
+th{padding:12px 14px;text-align:left;font-weight:600;color:var(--text2);text-transform:uppercase;font-size:0.7rem;letter-spacing:0.08em;white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--border)}
+tr:hover td{background:rgba(56,189,248,0.04)}
+.pass{color:var(--green);font-weight:700}
+.fail{color:var(--red);font-weight:600}
+.veto{color:var(--red);font-weight:800;text-transform:uppercase}
+.top3{color:var(--yellow);font-weight:700}
+.score-high{color:var(--green)}
+.score-mid{color:var(--yellow)}
+.score-low{color:var(--red)}
+
+/* Cards */
+.game-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.game-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s}
+.game-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.game-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3))}
+.game-card h3{font-size:1.15rem;margin-bottom:8px}
+.game-card .pitch{color:var(--text2);font-size:0.85rem;margin-bottom:16px;line-height:1.5}
+.game-card .instructions{font-size:0.82rem;line-height:1.6}
+.game-card .instructions strong{color:var(--accent);display:inline}
+.game-card .play-link{display:inline-block;margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0f172a;font-weight:700;border-radius:8px;text-decoration:none;font-size:0.85rem;transition:opacity 0.2s}
+.game-card .play-link:hover{opacity:0.85}
+
+/* Test results */
+.test-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600}
+.badge-fixed{background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
+.badge-shipped{background:rgba(56,189,248,0.15);color:var(--accent);border:1px solid rgba(56,189,248,0.3)}
+
+/* Catalog link */
+.catalog-link{display:block;text-align:center;margin-top:48px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--accent);text-decoration:none;font-weight:700;font-size:1rem;transition:all 0.2s}
+.catalog-link:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(56,189,248,0.15)}
+
+/* Footer */
+.footer{text-align:center;padding:40px 0 32px;color:var(--text2);font-size:0.8rem;margin-top:48px;border-top:1px solid var(--border)}
+
+/* Responsive */
+@media(max-width:640px){
+  .container{padding:16px}
+  .meta-cards{flex-direction:column;align-items:center}
+  .game-cards{grid-template-columns:1fr}
+  table{font-size:0.75rem}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Pipeline Report</h1>
+    <div class="subtitle">run-2026-03-15-001 &mdash; 2026-03-15</div>
+    <div class="meta-cards">
+      <div class="meta-card"><div class="num">3</div><div class="label">Requested</div></div>
+      <div class="meta-card"><div class="num">3</div><div class="label">Shipped</div></div>
+      <div class="meta-card"><div class="num">100%</div><div class="label">Ship Rate</div></div>
+      <div class="meta-card"><div class="num">10</div><div class="label">Ideas Generated</div></div>
+      <div class="meta-card"><div class="num">5</div><div class="label">Ideators</div></div>
+    </div>
+  </div>
+
+  <!-- Idea Phase -->
+  <div class="section" id="ideas">
+    <div class="section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+      Idea Phase — 10 Ideas from 5 Ideators
+      <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-content" style="max-height:2000px">
+      <p style="color:var(--text2);margin-bottom:16px;font-size:0.9rem">
+        Ideators: <strong>spark</strong>, <strong>oddball</strong>, <strong>trendsetter</strong>, <strong>puzzler</strong>, <strong>visionary</strong> &mdash; 3 passed threshold, 1 selected as TOP-3, 5 failed, 1 vetoed.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Idea</th><th>Creator</th><th>Ludus</th><th>Loop</th><th>Devil</th><th>Cash</th><th>Scout</th><th>Best Track</th><th>Score</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Bureaucrat Panic</strong></td><td>oddball</td><td>77</td><td>81</td><td>74</td><td>73</td><td>67</td><td>Brain 76.3</td><td class="score-high">76.3</td><td class="pass">PASS</td></tr>
+            <tr><td><strong>Suspect Sudoku</strong></td><td>oddball</td><td>63</td><td>78</td><td>65</td><td>78</td><td>72</td><td>Reflex 73.3</td><td class="score-mid">73.3</td><td class="pass">PASS</td></tr>
+            <tr><td><strong>Sequence Lock</strong></td><td>trendsetter</td><td>38</td><td>77</td><td>88</td><td>52</td><td>39</td><td>Reflex 66.5</td><td class="score-mid">66.5</td><td class="top3">TOP-3</td></tr>
+            <tr><td>Chain Verdict</td><td>spark</td><td>65</td><td>68</td><td>70</td><td>55</td><td>56</td><td>Brain 64.9</td><td>64.9</td><td class="fail">FAIL</td></tr>
+            <tr><td>Glitch Escape</td><td>visionary</td><td>70</td><td>49</td><td>55</td><td>70</td><td>70</td><td>Creative 62.8</td><td>62.8</td><td class="fail">FAIL</td></tr>
+            <tr><td>Signal Shift</td><td>trendsetter</td><td>61</td><td>48</td><td>73</td><td>56</td><td>53</td><td>Brain 60.4</td><td>60.4</td><td class="fail">FAIL</td></tr>
+            <tr><td>Debt Spiral</td><td>puzzler</td><td>62</td><td>47</td><td>64</td><td>30</td><td>63</td><td>Creative 59.7</td><td>59.7</td><td class="fail">FAIL</td></tr>
+            <tr><td>Weight Shift</td><td>spark</td><td>57</td><td>38</td><td>76</td><td>57</td><td>47</td><td>Brain 58.0</td><td>58.0</td><td class="fail">FAIL</td></tr>
+            <tr><td>Signal Lock</td><td>puzzler</td><td>66</td><td>47</td><td>40</td><td>55</td><td>44</td><td>Brain 53.5</td><td>53.5</td><td class="fail">FAIL</td></tr>
+            <tr><td>Liar's Manual</td><td>visionary</td><td>0</td><td>59</td><td>34</td><td>81</td><td>74</td><td>&mdash;</td><td class="veto">VETO</td><td class="veto">VETO</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan Phase -->
+  <div class="section" id="plans">
+    <div class="section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+      Plan Phase — 3 Game Design Documents
+      <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-content" style="max-height:800px">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Game</th><th>Builder</th><th>Joy</th><th>Profit</th><th>Weighted</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Bureaucrat Panic</strong></td><td>88</td><td>74</td><td>80</td><td class="score-high">81.1</td></tr>
+            <tr><td><strong>Suspect Sudoku</strong></td><td>82</td><td>80</td><td>84</td><td class="score-high">81.8</td></tr>
+            <tr><td><strong>Sequence Lock</strong></td><td>85</td><td>82</td><td>80</td><td class="score-high">82.7</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Results -->
+  <div class="section" id="tests">
+    <div class="section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+      Test Results — All 3 Fixed &amp; Shipped
+      <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-content" style="max-height:600px">
+      <p style="color:var(--text2);margin-bottom:16px;font-size:0.9rem">
+        All 3 games had bugs detected during testing. Bugs were fixed before deployment via the fix-before-ship gate.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Game</th><th>Bugs Found</th><th>Fix Status</th><th>Ship Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Bureaucrat Panic</strong></td><td>Bugs detected</td><td><span class="test-badge badge-fixed">Fixed</span></td><td><span class="test-badge badge-shipped">Shipped</span></td></tr>
+            <tr><td><strong>Suspect Sudoku</strong></td><td>Bugs detected</td><td><span class="test-badge badge-fixed">Fixed</span></td><td><span class="test-badge badge-shipped">Shipped</span></td></tr>
+            <tr><td><strong>Sequence Lock</strong></td><td>Bugs detected</td><td><span class="test-badge badge-fixed">Fixed</span></td><td><span class="test-badge badge-shipped">Shipped</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deployed Games -->
+  <div class="section" id="games">
+    <div class="section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+      Deployed Games
+      <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-content" style="max-height:3000px">
+      <div class="game-cards">
+
+        <!-- Bureaucrat Panic -->
+        <div class="game-card">
+          <h3>Bureaucrat Panic</h3>
+          <div class="pitch">Papers Please meets Tinder &mdash; swipe approve or deny absurd permits under time pressure</div>
+          <div class="instructions">
+            <p><strong>Controls:</strong> Swipe right = APPROVE, left = DENY. Check active rules in top bar. 3 strikes = fired. Rules change every few stages.</p>
+          </div>
+          <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/bureaucrat-panic/" target="_blank" rel="noopener">Play Bureaucrat Panic &#8599;</a>
+        </div>
+
+        <!-- Suspect Sudoku -->
+        <div class="game-card">
+          <h3>Suspect Sudoku</h3>
+          <div class="pitch">15-second crime solving &mdash; read clues, find the guilty suspect before time runs out</div>
+          <div class="instructions">
+            <p><strong>Controls:</strong> Read clue tags on suspects. Tap the guilty one before timer expires. 3 wrong verdicts = game over. Red herrings appear at higher cases.</p>
+          </div>
+          <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/suspect-sudoku/" target="_blank" rel="noopener">Play Suspect Sudoku &#8599;</a>
+        </div>
+
+        <!-- Sequence Lock -->
+        <div class="game-card">
+          <h3>Sequence Lock</h3>
+          <div class="pitch">Hack the vault &mdash; tap scrambled numbers in order before the security timer locks you out</div>
+          <div class="instructions">
+            <p><strong>Controls:</strong> Tap numbers in ascending order (1,2,3...). Timer drains continuously. Correct taps refill timer. Wrong taps penalize. Clear grid to advance.</p>
+          </div>
+          <a class="play-link" href="https://jireh-father.github.io/ai-game-studio/sequence-lock/" target="_blank" rel="noopener">Play Sequence Lock &#8599;</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Catalog Link -->
+  <a class="catalog-link" href="https://jireh-father.github.io/ai-game-studio/" target="_blank" rel="noopener">
+    View Full Game Catalog &#8599;
+  </a>
+
+  <div class="footer">
+    AI Game Studio &mdash; Pipeline Report &mdash; run-2026-03-15-001 &mdash; Generated 2026-03-15
+  </div>
+
+</div>
+</body>
+</html>
