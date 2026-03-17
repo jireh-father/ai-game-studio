@@ -1,0 +1,72 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0D1B2A;
+    touch-action: none;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 428px;
+    margin: 0 auto;
+    position: relative;
+}
+
+#game-container canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+#landscape-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #0D1B2A;
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.rotate-message {
+    text-align: center;
+    color: #F8F9FA;
+    font-family: monospace;
+    font-size: 18px;
+}
+
+.rotate-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (orientation: landscape) {
+    #game-container {
+        visibility: hidden;
+        height: 0;
+        overflow: hidden;
+    }
+    #landscape-overlay {
+        display: flex;
+    }
+}
