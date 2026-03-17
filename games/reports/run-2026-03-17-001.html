@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Report — run-2026-03-17-001</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--s1:#13131f;--s2:#1a1a2a;--bd:#2a2a3e;--t:#e8e6f2;--t2:#8a88a0;--ac:#ff3366;--ac2:#7b2ff7;--ok:#00e5a0;--warn:#ffaa00;--err:#ff4444}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.6;padding:20px}
+.container{max-width:900px;margin:0 auto}
+h1{font-size:1.8rem;background:linear-gradient(135deg,#fff,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+h2{font-size:1.2rem;color:var(--ac);margin:32px 0 16px;border-bottom:1px solid var(--bd);padding-bottom:8px}
+h3{font-size:1rem;color:var(--t);margin:20px 0 8px}
+.meta{color:var(--t2);font-size:0.85rem;margin-bottom:24px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:20px;margin:12px 0}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.card-title{font-size:1.1rem;font-weight:700}
+.badge{padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:700}
+.badge-ship{background:#00e5a020;color:var(--ok);border:1px solid var(--ok)}
+.badge-fix{background:#ffaa0020;color:var(--warn);border:1px solid var(--warn)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.85rem}
+th{background:var(--s2);padding:10px 12px;text-align:left;color:var(--t2);font-weight:600;border-bottom:2px solid var(--bd)}
+td{padding:8px 12px;border-bottom:1px solid var(--bd)}
+tr:hover td{background:var(--s2)}
+.score{font-weight:700;font-size:1rem}
+.score-high{color:var(--ok)}
+.score-mid{color:var(--warn)}
+.score-low{color:var(--err)}
+a{color:var(--ac);text-decoration:none}
+a:hover{text-decoration:underline}
+.phase{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.phase-step{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:8px 16px;font-size:0.8rem;text-align:center;flex:1;min-width:80px}
+.phase-step.active{border-color:var(--ok);color:var(--ok)}
+.link-row{margin:4px 0}
+.catalog-link{display:inline-block;margin-top:16px;padding:12px 24px;background:var(--ac);color:#fff;border-radius:8px;font-weight:700;text-decoration:none}
+.catalog-link:hover{background:var(--ac2)}
+details{margin:8px 0}
+summary{cursor:pointer;color:var(--ac);font-weight:600;padding:4px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Pipeline Report</h1>
+<p class="meta">Run ID: <strong>run-2026-03-17-001</strong> | Date: 2026-03-17 | Requested: 10 | Shipped: 10</p>
+
+<div class="phase">
+<div class="phase-step active">Ideation<br><small>30 ideas</small></div>
+<div class="phase-step active">Validation<br><small>10 passed</small></div>
+<div class="phase-step active">Planning<br><small>10 GDDs</small></div>
+<div class="phase-step active">Development<br><small>10 built</small></div>
+<div class="phase-step active">Testing<br><small>20 bugs</small></div>
+<div class="phase-step active">Fix<br><small>20 fixed</small></div>
+<div class="phase-step active">Deploy<br><small>10 shipped</small></div>
+</div>
+
+<h2>Shipped Games</h2>
+
+<div class="card">
+<div class="card-header"><span class="card-title">1. Flatline</span><span class="badge badge-ship">SHIPPED</span></div>
+<p>Tap to keep a heartbeat rhythm alive — the heart fights back with false beats and tempo changes.</p>
+<p><strong>Creator:</strong> visionary | <strong>Idea:</strong> <span class="score score-high">77.8</span> | <strong>Plan:</strong> <span class="score score-high">86.2</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/flatline/">Play Flatline</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Tap within green timing windows on the ECG waveform.<br><strong>Rules:</strong> Miss 3 beats = flatline. False beats appear at higher stages — don't tap those.<br><strong>Tips:</strong> Tall green spikes are real beats. Short bumps are false. Build streaks for multipliers.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">2. Snooze Surgeon</span><span class="badge badge-ship">SHIPPED</span></div>
+<p>Surgery on a snoring patient — tap to wake them before the scalpel flies out of your hand.</p>
+<p><strong>Creator:</strong> oddball | <strong>Idea:</strong> <span class="score score-high">77.2</span> | <strong>Plan:</strong> <span class="score score-high">85.3</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/snooze-surgeon/">Play Snooze Surgeon</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Tap nose to reset snore meter. Tap blinking organs for surgery tasks.<br><strong>Rules:</strong> 3 lives. Snore meter fills faster each stage. Complete surgery tasks to advance.<br><strong>Tips:</strong> Keep meter below 50% while doing surgery. Watch for fake organs in later stages.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">3. Speed Dating Dodge</span><span class="badge badge-fix">FIXED</span></div>
+<p>Dodge red-flag topics while speed dating — swipe answers to keep the date alive.</p>
+<p><strong>Creator:</strong> oddball | <strong>Idea:</strong> <span class="score score-high">73.3</span> | <strong>Plan:</strong> <span class="score score-mid">73.3</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/speed-dating-dodge/">Play Speed Dating Dodge</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Swipe left/right to answer questions. Match to your date's personality.<br><strong>Rules:</strong> Red-flag answers end the date. 3 failed dates = game over.<br><strong>Tips:</strong> Check personality icon before answering. Build chemistry combos for spark bonuses.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">4. Cat Burglar</span><span class="badge badge-fix">FIXED</span></div>
+<p>You're a cat stealing things off shelves — don't wake the sleeping dog!</p>
+<p><strong>Creator:</strong> oddball | <strong>Idea:</strong> <span class="score score-high">73.1</span> | <strong>Plan:</strong> <span class="score score-high">81.5</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/cat-burglar/">Play Cat Burglar</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Swipe items off shelves. Watch the noise meter.<br><strong>Rules:</strong> Dog wakes if noise maxes. Complete escape swipes or die. Dog auto-wakes after idle.<br><strong>Tips:</strong> Cheap items are quiet. Fast combos reduce noise. Valuable items score big but are loud.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">5. Gravity Waiter</span><span class="badge badge-fix">FIXED</span></div>
+<p>Balance dishes on a tray while the restaurant rotates 90 degrees every few seconds.</p>
+<p><strong>Creator:</strong> oddball | <strong>Idea:</strong> <span class="score score-high">72.2</span> | <strong>Plan:</strong> <span class="score score-high">82.0</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/gravity-waiter/">Play Gravity Waiter</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Drag left/right to tilt tray and balance dishes.<br><strong>Rules:</strong> 3 dropped dishes = game over. Gravity shifts with rotation.<br><strong>Tips:</strong> Anticipate rotation arrow. Center before rotation hits. Heavy dishes need extra counter-tilt.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">6. Gravity Liar</span><span class="badge badge-fix">FIXED</span></div>
+<p>The arrow tells you gravity's direction — but it lies, and you have to figure out when.</p>
+<p><strong>Creator:</strong> visionary | <strong>Idea:</strong> <span class="score score-high">71.9</span> | <strong>Plan:</strong> <span class="score score-high">81.9</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/gravity-liar/">Play Gravity Liar</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Tap walls to push the ball away from death zone.<br><strong>Rules:</strong> Arrow claims gravity direction but sometimes lies. 3 lives. Survive to clear stage.<br><strong>Tips:</strong> Stages 1-2 arrows are truthful. Purple flash means lie pattern is switching.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">7. Echo Thief</span><span class="badge badge-fix">FIXED</span></div>
+<p>You ARE a sound wave sneaking through sleeping creatures — absorb too much noise and you explode.</p>
+<p><strong>Creator:</strong> visionary | <strong>Idea:</strong> <span class="score score-high">71.9</span> | <strong>Plan:</strong> <span class="score score-high">83.8</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/echo-thief/">Play Echo Thief</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Drag to steer your sound wave through the room.<br><strong>Rules:</strong> Touching creatures fills noise meter. 100% = burst = death. Silence zones reduce noise.<br><strong>Tips:</strong> Navigate gaps between clusters. Creatures flicker before shifting positions.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">8. Voltage Rush</span><span class="badge badge-fix">FIXED</span></div>
+<p>Tap electrical nodes before they overload — chain discharge arcs for combos.</p>
+<p><strong>Creator:</strong> trendsetter | <strong>Idea:</strong> <span class="score score-high">71.8</span> | <strong>Plan:</strong> <span class="score score-high">86.5</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/voltage-rush/">Play Voltage Rush</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Tap nodes to discharge them. Electricity arcs to neighbors.<br><strong>Rules:</strong> Any node overloading = chain explosion = game over. Keep all nodes discharged.<br><strong>Tips:</strong> Tap most charged node first. Insulated nodes block arcs. SafeChain bonus for keeping all below 80%.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">9. Knife Magnet</span><span class="badge badge-fix">FIXED</span></div>
+<p>Hold to magnetize flying knives — release timing is everything.</p>
+<p><strong>Creator:</strong> trendsetter | <strong>Idea:</strong> <span class="score score-high">71.4</span> | <strong>Plan:</strong> <span class="score score-high">83.8</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/knife-magnet/">Play Knife Magnet</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Hold to activate magnet. Release to catch knives.<br><strong>Rules:</strong> Hold too long = drop. Too early = stabbed. Cursed knives (purple) explode if caught. 3 lives.<br><strong>Tips:</strong> Ring color shows timing. Multi-catch waves give bonuses. Spot cursed knives by subtle purple glow.</p></details>
+</div>
+
+<div class="card">
+<div class="card-header"><span class="card-title">10. Echo Strike</span><span class="badge badge-fix">FIXED</span></div>
+<p>Hit targets now — your echo auto-hits the same spot 2 seconds later for combo chains.</p>
+<p><strong>Creator:</strong> spark | <strong>Idea:</strong> <span class="score score-mid">70.3</span> | <strong>Plan:</strong> <span class="score score-high">78.1</span></p>
+<p class="link-row"><a href="https://jireh-father.github.io/ai-game-studio/echo-strike/">Play Echo Strike</a></p>
+<details><summary>How to Play</summary><p><strong>Controls:</strong> Tap pulsing targets during bright windows.<br><strong>Rules:</strong> Missed targets close walls. Walls converge = death. Each hit echoes 2s later at same position.<br><strong>Tips:</strong> Plan echo positions for where targets might appear. Echo hits push walls back. Watch countdown arcs.</p></details>
+</div>
+
+<h2>Idea Validation Results</h2>
+<table>
+<tr><th>#</th><th>Game</th><th>Creator</th><th>Ludus</th><th>Loop</th><th>Devil</th><th>Cash</th><th>Scout</th><th>Best</th><th>Result</th></tr>
+<tr><td>1</td><td>Flatline</td><td>visionary</td><td>80</td><td>82</td><td>72</td><td>77</td><td>76</td><td class="score score-high">77.8</td><td>PASS</td></tr>
+<tr><td>2</td><td>Snooze Surgeon</td><td>oddball</td><td>65</td><td>78</td><td>76</td><td>76</td><td>78</td><td class="score score-high">77.2</td><td>PASS</td></tr>
+<tr><td>3</td><td>Speed Dating Dodge</td><td>oddball</td><td>52</td><td>76</td><td>73</td><td>73</td><td>70</td><td class="score score-high">73.3</td><td>PASS</td></tr>
+<tr><td>4</td><td>Cat Burglar</td><td>oddball</td><td>61</td><td>69</td><td>78</td><td>71</td><td>75</td><td class="score score-high">73.1</td><td>PASS</td></tr>
+<tr><td>5</td><td>Gravity Waiter</td><td>oddball</td><td>68</td><td>70</td><td>72</td><td>78</td><td>72</td><td class="score score-high">72.2</td><td>PASS</td></tr>
+<tr><td>6</td><td>Gravity Liar</td><td>visionary</td><td>78</td><td>66</td><td>67</td><td>65</td><td>73</td><td class="score score-high">71.9</td><td>PASS</td></tr>
+<tr><td>7</td><td>Echo Thief</td><td>visionary</td><td>76</td><td>79</td><td>65</td><td>66</td><td>66</td><td class="score score-high">71.9</td><td>PASS</td></tr>
+<tr><td>8</td><td>Voltage Rush</td><td>trendsetter</td><td>71</td><td>73</td><td>75</td><td>68</td><td>60</td><td class="score score-high">71.8</td><td>PASS</td></tr>
+<tr><td>9</td><td>Knife Magnet</td><td>trendsetter</td><td>67</td><td>71</td><td>70</td><td>75</td><td>71</td><td class="score score-high">71.4</td><td>PASS</td></tr>
+<tr><td>10</td><td>Echo Strike</td><td>spark</td><td>79</td><td>65</td><td>68</td><td>63</td><td>64</td><td class="score score-mid">70.3</td><td>PASS</td></tr>
+</table>
+
+<h2>Plan Validation Results</h2>
+<table>
+<tr><th>Game</th><th>Builder</th><th>Joy</th><th>Profit</th><th>Weighted</th></tr>
+<tr><td>Voltage Rush</td><td>89</td><td>86</td><td>83</td><td class="score score-high">86.5</td></tr>
+<tr><td>Flatline</td><td>84</td><td>88</td><td>87</td><td class="score score-high">86.2</td></tr>
+<tr><td>Snooze Surgeon</td><td>87</td><td>82</td><td>87</td><td class="score score-high">85.3</td></tr>
+<tr><td>Echo Thief</td><td>85</td><td>78</td><td>90</td><td class="score score-high">83.8</td></tr>
+<tr><td>Knife Magnet</td><td>86</td><td>84</td><td>80</td><td class="score score-high">83.8</td></tr>
+<tr><td>Gravity Waiter</td><td>78</td><td>85</td><td>84</td><td class="score score-high">82.0</td></tr>
+<tr><td>Gravity Liar</td><td>90</td><td>76</td><td>77</td><td class="score score-high">81.9</td></tr>
+<tr><td>Cat Burglar</td><td>88</td><td>80</td><td>73</td><td class="score score-high">81.5</td></tr>
+<tr><td>Echo Strike</td><td>83</td><td>71</td><td>80</td><td class="score score-high">78.1</td></tr>
+<tr><td>Speed Dating Dodge</td><td>72</td><td>75</td><td>73</td><td class="score score-mid">73.3</td></tr>
+</table>
+
+<h2>Bugs Fixed (Round 1)</h2>
+<table>
+<tr><th>Game</th><th>Severity</th><th>Bug</th><th>Status</th></tr>
+<tr><td>Speed Dating Dodge</td><td style="color:var(--err)">BLOCKER</td><td>BootScene TDZ — class referenced before definition</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Voltage Rush</td><td style="color:var(--err)">BLOCKER</td><td>createHUD called after loadStage — undefined setText</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Knife Magnet</td><td style="color:var(--err)">BLOCKER</td><td>Game freeze on knife miss — missing checkWaveComplete</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Flatline</td><td style="color:var(--warn)">MAJOR</td><td>drawImage null crash in heartbreak animation</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Echo Thief</td><td style="color:var(--warn)">MAJOR</td><td>Noise decay too strong — game unloseable</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Echo Thief</td><td style="color:var(--warn)">MAJOR</td><td>No inactivity death — wave bounces forever</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Gravity Waiter</td><td style="color:var(--warn)">MAJOR</td><td>Inactivity death declared but not implemented</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Echo Strike</td><td style="color:var(--warn)">MAJOR</td><td>Stage never advances beyond Stage 1</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Echo Strike</td><td style="color:var(--warn)">MAJOR</td><td>Idle death at 60s not 30s</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Knife Magnet</td><td style="color:var(--warn)">MAJOR</td><td>No inactivity death mechanic</td><td style="color:var(--ok)">FIXED</td></tr>
+<tr><td>Snooze Surgeon</td><td style="color:var(--warn)">MAJOR</td><td>Organs spawn outside patient body</td><td style="color:var(--ok)">FIXED</td></tr>
+</table>
+
+<h2>Catalog</h2>
+<p><a class="catalog-link" href="https://jireh-father.github.io/ai-game-studio/">View Full Game Catalog</a></p>
+
+</div>
+</body>
+</html>
