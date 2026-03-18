@@ -92,7 +92,8 @@ You orchestrate an automated game production pipeline. Parse the user's request,
 - [ ] `games/index.html` catalog updated with new games + report
 - [ ] Catalog deployed to gh-pages
 - [ ] Slack `pipeline-done` sent (with report URL + catalog URL)
-- [ ] Team shutdown
+- [ ] **IMMEDIATELY proceed to Phase 9** — NEVER ask user, NEVER skip, NEVER stop here
+- [ ] Team shutdown happens AFTER Phase 9, not here
 
 ### Phase 9 Hook — Retrospective Complete
 - [ ] All agent self-reports collected in `retrospective/agent-reports/`
@@ -363,8 +364,9 @@ For each game:
    - Commit and deploy to gh-pages root as `index.html`
    - Catalog URL: `https://jireh-father.github.io/ai-game-studio/`
 8. **Include catalog URL in report**: Every pipeline report HTML must include a link to the game catalog: `https://jireh-father.github.io/ai-game-studio/`
-9. **Shutdown**: `SendMessage(type: "shutdown_request")` to all agents → `TeamDelete`
+9. **DO NOT shutdown yet** — Phase 9 must run first. Shutdown happens at the end of Phase 9.
 10. Slack: Send `pipeline-done` template from `scripts/slack-templates.md` (include report URL and catalog URL)
+11. **IMMEDIATELY proceed to Phase 9** — this is NOT optional. NEVER ask the user. NEVER stop here.
 
 ---
 

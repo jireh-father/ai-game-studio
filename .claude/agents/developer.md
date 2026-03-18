@@ -279,3 +279,20 @@ this.tweens.add({ targets: txt, y: y - 60, alpha: 0, duration: 600, onComplete: 
 - **At least 1 screen shake or explosion event every 10 seconds**
 - **Player must die within 30 seconds of inactivity**
 - **Death→restart under 2 seconds**
+
+## Pre-Submission Checklist (MANDATORY — verify ALL before completing build)
+
+You MUST confirm each item before outputting any file. These are the most common bugs from runs 002-009:
+
+- [ ] **Inactivity death implemented**: `this.lastInputTime = Date.now()` tracked in create(). Reset on every pointer event. In update(): `if (Date.now() - this.lastInputTime > 25000 && !this.gameOver) { this.triggerDeath(); }`. This is NOT optional.
+- [ ] **createHUD() before loadStage()**: In scene create(), HUD creation MUST run before any method that calls updateHUD() or reads HUD text objects.
+- [ ] **BootScene class before phaserConfig**: In main.js, ALL scene class declarations MUST appear BEFORE the phaserConfig object that references them. Class declarations are NOT hoisted in JavaScript.
+- [ ] **Wave/round completion in ALL paths**: If game uses waves/rounds, `checkWaveComplete()` (or equivalent) MUST be called in EVERY resolution path — success AND failure (catch, miss, dodge, explode, timeout).
+- [ ] **No Body.setStatic(false)** on previously static bodies
+- [ ] **No this.time.timeScale = 0** with delayedCall — use setTimeout()
+- [ ] **No addBase64()** outside BootScene
+- [ ] **Script load order**: main.js is LAST in index.html
+- [ ] **No CSS display:none** on game container — use visibility:hidden
+- [ ] **HUD from GameState**: Score/lives text initialized from game state variables, not literal '0'
+- [ ] **stageTransitioning flag**: Guards advanceStage() from multi-frame calls
+- [ ] **Resource decay check**: If game uses passive decay/drain, verify: idle player dies within 25s even accounting for decay (decay rate must NOT exceed damage rate)
