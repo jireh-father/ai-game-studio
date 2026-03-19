@@ -1,4 +1,4 @@
-# AI Game Studio
+# AI Game Studio for Claude Code CLI
 
 Agent-team-based automated game production pipeline. Just say "Make N games" and it handles everything end-to-end: ideation, validation, planning, development, testing, bug fixing, deployment, and Slack notification — fully automated.
 
