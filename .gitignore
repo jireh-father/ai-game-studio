@@ -26,3 +26,24 @@ npm-debug.log*
 
 # Local server
 .http-server/
+.superpowers/
+
+games-for-release/
+
+test-results/
+tmp/
+tmp_test/
+
+*.png
+data/
+*.jpeg
+*.js
+fridge-tetris-console-errors.txt
+package-lock.json
+package.json
+data/human-ratings.md
+docs/
+docs/meta-leaders-protocol.md
+docs/pipeline.md
+docs/scoring-system.md
+docs/templates/game-design-doc-template.md
