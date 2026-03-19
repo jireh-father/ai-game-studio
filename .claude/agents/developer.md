@@ -34,18 +34,36 @@ js/config.js        - Game constants, difficulty parameters, color palette
 js/main.js          - Phaser config, scene management, state initialization
 js/game.js          - Core gameplay scene, physics, collision, input handling
 js/stages.js        - Stage generation, difficulty scaling, element spawning
+js/effects.js       - Visual effects, particles, screen shake, hit-stop, audio (STANDARD — always create this file)
 js/ui.js            - Menu scenes, HUD overlay, transitions, popups
 js/ads.js           - Ad trigger points, reward callbacks, placeholder UI
 js/help.js          - Help/How to Play scene with illustrated instructions
 ```
 
-When `game.js` approaches 250+ lines, split into logical modules:
+**effects.js is MANDATORY** — every game needs juice effects. Use Object.assign(GameScene.prototype, {...}) pattern to keep game.js under 300 lines.
+
+When `game.js` still approaches 250+ lines after effects.js split, further split into:
 ```
-js/render.js        - Drawing, animation, visual effects
 js/hud.js           - HUD overlay, score display, health bars
 js/input.js         - Input handling, gesture recognition
 js/entities.js      - Game object classes, enemy behaviors
 ```
+
+### Help Page Resume Pattern (MANDATORY)
+When HelpScene's GOT IT button is clicked, it MUST resume the parent scene:
+```javascript
+btnGotIt.on('pointerdown', () => {
+  this.scene.stop();
+  if (this.returnTo === 'GameScene') {
+    const gs = this.scene.get('GameScene');
+    if (gs && gs.paused) gs.togglePause(); // Clear pause state
+    this.scene.resume('GameScene');
+  } else {
+    this.scene.resume('MenuScene'); // Resume menu if opened from menu
+  }
+});
+```
+**Failure to resume the parent scene is a blocker bug.** Test this flow: Menu → Help → GOT IT → Play must work.
 
 ## Coding Standards
 
