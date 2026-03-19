@@ -69,8 +69,18 @@
     {"id":"idea-20260315-007","title":"Debt Spiral","slug":"debt-spiral","creator":"puzzler","score":59.7,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["merge","resource-management","chain-planning","constraint-satisfaction","risk-reward"]},
     {"id":"idea-20260315-008","title":"Signal Lock","slug":"signal-lock","creator":"puzzler","score":53.5,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["deduction","chain-planning","constraint-satisfaction","logic","spatial-reasoning"]},
     {"id":"idea-20260315-009","title":"Glitch Escape","slug":"glitch-escape","creator":"visionary","score":62.8,"status":"failed","run_id":"run-2026-03-15-001","mechanic_tags":["meta-mechanics","reverse-mechanics","puzzle","time-pressure","chain-reaction"]},
-    {"id":"idea-20260315-010","title":"Liar's Manual","slug":"liars-manual","creator":"visionary","score":0,"status":"vetoed","run_id":"run-2026-03-15-001","mechanic_tags":["deduction","meta-mechanics","asymmetric-information","death-as-mechanic","social-deception"]}
+    {"id":"idea-20260315-010","title":"Liar's Manual","slug":"liars-manual","creator":"visionary","score":0,"status":"vetoed","run_id":"run-2026-03-15-001","mechanic_tags":["deduction","meta-mechanics","asymmetric-information","death-as-mechanic","social-deception"]},
+    {"id":"idea-20260319-017","title":"Nail the Landing","slug":"nail-the-landing","creator":"trendsetter","score":82.7,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["timing","precision","one-tap","combo","reflex"]},
+    {"id":"idea-20260319-007","title":"Bubble Wrap Boss","slug":"bubble-wrap-boss","creator":"oddball","score":80.0,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["tap","rhythm","escalation","precision","reflex"]},
+    {"id":"idea-20260319-027","title":"Copycat Killer","slug":"copycat-killer","creator":"visionary","score":79.3,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["temporal-ghost","self-avoidance","movement-discipline","novel-temporal"]},
+    {"id":"idea-20260319-024","title":"Traitor Tiles","slug":"traitor-tiles","creator":"visionary","score":77.4,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["meta-spatial","memory-pressure","self-generated-danger","strategic-reflex"]},
+    {"id":"idea-20260319-025","title":"Wrong Answer","slug":"wrong-answer","creator":"visionary","score":77.3,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["anti-mechanic","cognitive-override","reflex-suppression","meta-humor"]},
+    {"id":"idea-20260319-029","title":"Shrinking Stage","slug":"shrinking-stage","creator":"visionary","score":77.0,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["platform-collapse","imprecise-control","momentum-management","survival-tension"]},
+    {"id":"idea-20260319-028","title":"Permission Denied","slug":"permission-denied","creator":"visionary","score":74.5,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["meta-UI","fourth-wall-humor","moving-targets","absurd-bureaucracy"]},
+    {"id":"idea-20260319-005","title":"Torque Tower","slug":"torque-tower","creator":"spark","score":73.5,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["rotation-physics","stacking","timing","angular-momentum","precision"]},
+    {"id":"idea-20260319-014","title":"Stack Quake","slug":"stack-quake","creator":"trendsetter","score":72.9,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["timing","precision","one-tap","physics","survival"]},
+    {"id":"idea-20260319-008","title":"Grocery Gamble","slug":"grocery-gamble","creator":"oddball","score":72.8,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["timing","drag-drop","humor","precision","escalation"]}
   ],
-  "version": 8,
-  "last_updated": "2026-03-15T00:00:00Z"
+  "version": 9,
+  "last_updated": "2026-03-19T00:00:00Z"
 }
