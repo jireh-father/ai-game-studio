@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Traitor Tiles</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='4' fill='%231E2A45'/><rect x='2' y='2' width='12' height='12' rx='2' fill='%2300E5FF'/><rect x='18' y='2' width='12' height='12' rx='2' fill='%238B1A1A'/><rect x='2' y='18' width='12' height='12' rx='2' fill='%238B1A1A'/><rect x='18' y='18' width='12' height='12' rx='2' fill='%23FFD700'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+  <div id="game-container"></div>
+  <div id="landscape-warning">
+    <p>Please rotate your device to portrait mode</p>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/ads.js"></script>
+  <script src="js/help.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+  </script>
+</body>
+</html>
