@@ -114,6 +114,31 @@ class HelpScene extends Phaser.Scene {
         });
         y += 10;
 
+        // Stage rules section
+        this.add.text(30, y, 'STAGE RULES', {
+            fontFamily: FONT_FAMILY, fontSize: '14px', color: COLORS.ORANGE
+        });
+        y += 22;
+
+        const stageRules = [
+            { label: 'NORMAL', color: '#00E5FF', desc: 'Tap 1\u21922\u21923\u2192...\u2192N' },
+            { label: 'REVERSE \u2193', color: '#FF6B00', desc: 'Tap N\u2192...\u21922\u21921 (backwards!)' },
+            { label: 'ODD ONLY', color: '#39FF14', desc: 'Only odd numbers. Tap in order.' },
+            { label: 'EVEN ONLY', color: '#B24BF3', desc: 'Only even numbers. Tap in order.' },
+            { label: 'GAPS \u2014', color: '#FF1744', desc: 'Some numbers missing. Skip gaps.' },
+            { label: 'COMBOS', color: '#FFD700', desc: 'Rules combine at higher stages!' }
+        ];
+        stageRules.forEach(r => {
+            this.add.text(30, y, r.label, {
+                fontFamily: FONT_FAMILY, fontSize: '11px', color: r.color, fontStyle: 'bold'
+            });
+            this.add.text(150, y, r.desc, {
+                fontFamily: FONT_FAMILY, fontSize: '10px', color: COLORS.HUD_TEXT
+            });
+            y += 16;
+        });
+        y += 10;
+
         // Tips section
         this.add.text(30, y, 'TIPS', {
             fontFamily: FONT_FAMILY, fontSize: '14px', color: COLORS.CYAN
