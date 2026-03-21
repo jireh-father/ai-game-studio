@@ -58,6 +58,24 @@ const SCORE_VALUES = {
 
 const MODIFIER_TYPES = ['MIRROR', 'ROTATION', 'GHOST', 'DECOY', 'DRIFT'];
 
+const STAGE_RULES = ['NORMAL', 'REVERSE', 'ODD_ONLY', 'EVEN_ONLY', 'GAPS', 'REVERSE_GAPS', 'ODD_REVERSE', 'EVEN_GAPS'];
+
+const RULE_COLORS = {
+    NORMAL: { border: '#00E5FF', bg: '#050A0F', label: '' },
+    REVERSE: { border: '#FF6B00', bg: '#1A0800', label: 'REVERSE' },
+    ODD_ONLY: { border: '#39FF14', bg: '#001A00', label: 'ODD ONLY' },
+    EVEN_ONLY: { border: '#B24BF3', bg: '#0D001A', label: 'EVEN ONLY' },
+    GAPS: { border: '#FF1744', bg: '#1A0005', label: 'GAPS' },
+    REVERSE_GAPS: { border: '#FF6B00', bg: '#1A0005', label: 'REVERSE + GAPS' },
+    ODD_REVERSE: { border: '#39FF14', bg: '#1A0800', label: 'ODD REVERSE' },
+    EVEN_GAPS: { border: '#B24BF3', bg: '#1A0005', label: 'EVEN + GAPS' }
+};
+
+const RULE_INTRO_STAGES = {
+    NORMAL: 1, REVERSE: 8, GAPS: 12, ODD_ONLY: 15, EVEN_ONLY: 18,
+    REVERSE_GAPS: 25, ODD_REVERSE: 30, EVEN_GAPS: 35
+};
+
 const FONT_FAMILY = "'Courier New', Courier, monospace";
 
 // Difficulty table: returns params for a given stage range

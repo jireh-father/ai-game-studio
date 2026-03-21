@@ -77,22 +77,35 @@ class GameScene extends Phaser.Scene {
         this.hintText = this.add.text(cx, CANVAS_HEIGHT - 60, '', {
             fontFamily: FONT_FAMILY, fontSize: '15px', color: COLORS.CYAN
         }).setOrigin(0.5).setDepth(50);
+
+        // Rule indicator (persistent HUD badge)
+        this.ruleIndicator = this.add.text(10, CANVAS_HEIGHT - 30, '', {
+            fontFamily: FONT_FAMILY, fontSize: '12px', color: '#666'
+        }).setDepth(101);
     }
 
     loadStage(stageNum) {
         // Clear old tiles
-        this.tileSprites.forEach(s => { if (s && s.sprite) s.sprite.destroy(); if (s && s.text) s.text.destroy(); });
+        this.tileSprites.forEach(s => { if (s && s.sprite) s.sprite.destroy(); if (s && s.text) s.text.destroy(); if (s && s.arrow) s.arrow.destroy(); });
         this.tileSprites = [];
         this.tileTexts = [];
 
-        const { tiles, params, layout } = generateGrid(stageNum);
+        const gridData = generateGrid(stageNum);
+        const { tiles, params, layout } = gridData;
         this.stageParams = params;
         this.timerMs = params.timeBudget;
-        this.nextExpected = 1;
         this.wrongTaps = 0;
         this.lastColorCategory = -1;
         this.sameColorRun = 0;
         this.stageTransitioning = false;
+
+        // Rule-based sequence
+        this.expectedSequence = gridData.expectedSequence || [];
+        this.sequenceIndex = 0;
+        this.nextExpected = this.expectedSequence.length > 0 ? this.expectedSequence[0] : 1;
+        this.currentRule = params.rule || 'NORMAL';
+        this.inactiveNumbers = gridData.inactiveNumbers || [];
+        this.gapNumbers = gridData.gapNumbers || [];
 
         // Update HUD
         this.stageText.setText('\u2605 STAGE ' + stageNum);
@@ -107,9 +120,13 @@ class GameScene extends Phaser.Scene {
             this.modifierText.setText('');
         }
 
-        // Hint for stages 1-4
+        // Hint text
         if (stageNum <= 4) {
             this.hintText.setText('NEXT: 1').setAlpha(1);
+        } else if (this.currentRule !== 'NORMAL' && this.expectedSequence.length > 0) {
+            const first3 = this.expectedSequence.slice(0, 3).join('\u2192');
+            this.hintText.setText(first3 + '\u2192...').setAlpha(1);
+            this.tweens.add({ targets: this.hintText, alpha: 0, duration: 800, delay: 2000 });
         } else {
             this.hintText.setAlpha(0);
         }
@@ -128,6 +145,29 @@ class GameScene extends Phaser.Scene {
                 fontFamily: FONT_FAMILY, fontSize: '22px', color: '#FFD700'
             }).setOrigin(0.5).setDepth(200);
             this.tweens.add({ targets: chalText, alpha: 0, y: chalText.y - 40, duration: 1000, delay: 600, onComplete: () => chalText.destroy() });
+        }
+
+        // Rule banner for non-NORMAL rules
+        if (params.rule && params.rule !== 'NORMAL') {
+            const ruleInfo = RULE_COLORS[params.rule];
+            const ruleBanner = this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50, ruleInfo.label, {
+                fontFamily: FONT_FAMILY, fontSize: '26px', color: ruleInfo.border, fontStyle: 'bold'
+            }).setOrigin(0.5).setDepth(200);
+            this.tweens.add({
+                targets: ruleBanner, scaleX: { from: 2, to: 1 }, scaleY: { from: 2, to: 1 },
+                alpha: { from: 1, to: 0 }, duration: 1200, delay: 300,
+                onComplete: () => ruleBanner.destroy()
+            });
+        }
+
+        // Update rule indicator in HUD
+        if (this.ruleIndicator) {
+            if (this.currentRule !== 'NORMAL') {
+                const rc = RULE_COLORS[this.currentRule];
+                this.ruleIndicator.setText(rc.label).setColor(rc.border).setAlpha(1);
+            } else {
+                this.ruleIndicator.setAlpha(0);
+            }
         }
 
         // Create tile sprites with stagger animation
@@ -158,8 +198,34 @@ class GameScene extends Phaser.Scene {
                 fontStyle: 'bold'
             }).setOrigin(0.5).setDepth(11).setAlpha(0);
 
+            // Inactive tiles (filtered out by ODD/EVEN rule) — dark, not tappable
+            if (tile.isInactive) {
+                sprite.setAlpha(0.15).setTint(0x222233);
+                sprite.disableInteractive();
+                numText.setText('\u2014').setAlpha(0.2);
+            }
+
+            // Gap tiles (removed by GAPS rule) — dark hole, not tappable
+            if (tile.isGap) {
+                sprite.setAlpha(0.2).setTint(0x331111);
+                sprite.disableInteractive();
+                numText.setText('\u2014').setAlpha(0.3);
+            }
+
             // Stagger entrance
-            this.tweens.add({ targets: [sprite, numText], alpha: 1, scale: { from: 0.5, to: 1 }, duration: 200, delay: index * 40, ease: 'Back.easeOut' });
+            const targetAlpha = (tile.isInactive || tile.isGap) ? sprite.alpha : 1;
+            this.tweens.add({ targets: [sprite], alpha: targetAlpha, scale: { from: 0.5, to: 1 }, duration: 200, delay: index * 40, ease: 'Back.easeOut' });
+            const textTargetAlpha = (tile.isInactive) ? 0.2 : (tile.isGap ? 0.3 : 1);
+            this.tweens.add({ targets: [numText], alpha: textTargetAlpha, scale: { from: 0.5, to: 1 }, duration: 200, delay: index * 40, ease: 'Back.easeOut' });
+
+            // REVERSE arrow indicator on active tiles
+            let arrowRef = null;
+            if (params.rule && params.rule.includes('REVERSE') && !tile.isInactive && !tile.isGap) {
+                arrowRef = this.add.text(tile.x + tile.tileSize - 4, tile.y + 4, '\u2193', {
+                    fontFamily: FONT_FAMILY, fontSize: '10px', color: RULE_COLORS[params.rule].border
+                }).setOrigin(1, 0).setDepth(12).setAlpha(0);
+                this.tweens.add({ targets: arrowRef, alpha: 0.7, duration: 200, delay: index * 40 });
+            }
 
             // Reveal ghost tiles after 1.2s
             if (tile.isFaceDown) {
@@ -171,14 +237,14 @@ class GameScene extends Phaser.Scene {
                 });
             }
 
-            this.tileSprites.push({ sprite, text: numText, tileData: tile });
+            this.tileSprites.push({ sprite, text: numText, tileData: tile, arrow: arrowRef });
         });
     }
 
     onTileTap(sprite) {
         if (this.isGameOver || this.isPaused || this.stageTransitioning) return;
         const tile = sprite.tileData;
-        if (!tile || tile.isTapped) return;
+        if (!tile || tile.isTapped || tile.isInactive || tile.isGap) return;
 
         // Resume audio context on first interaction
         if (SoundManager.ctx && SoundManager.ctx.state === 'suspended') SoundManager.ctx.resume();
@@ -226,7 +292,14 @@ class GameScene extends Phaser.Scene {
 
         this.score += points;
         this.timerMs = Math.min(this.timerMs + this.stageParams.refill, this.stageParams.timeBudget);
-        this.nextExpected++;
+
+        // Advance sequence
+        this.sequenceIndex++;
+        if (this.sequenceIndex < this.expectedSequence.length) {
+            this.nextExpected = this.expectedSequence[this.sequenceIndex];
+        } else {
+            this.nextExpected = -1;
+        }
 
         // Update HUD
         this.scoreText.setText('SCORE: ' + String(this.score).padStart(6, '0'));
@@ -234,7 +307,7 @@ class GameScene extends Phaser.Scene {
         this.updateStreakDisplay();
 
         // Hint update
-        if (this.stageNumber <= 4) {
+        if (this.stageNumber <= 4 && this.nextExpected > 0) {
             this.hintText.setText('NEXT: ' + this.nextExpected);
         }
 
@@ -265,8 +338,10 @@ class GameScene extends Phaser.Scene {
         // Hit-stop (use setTimeout, not delayedCall)
         // Not using physics, so just brief visual pause effect
 
-        // Check stage clear
-        const remaining = this.tileSprites.filter(t => t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile);
+        // Check stage clear — exclude inactive and gap tiles
+        const remaining = this.tileSprites.filter(t =>
+            t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile && !t.tileData.isInactive && !t.tileData.isGap
+        );
         if (remaining.length === 0) {
             this.onStageClear();
         }
@@ -312,8 +387,8 @@ class GameScene extends Phaser.Scene {
             case 'bomb':
                 SoundManager.playBomb();
                 this.cameras.main.shake(150, 0.006);
-                // Find 4 nearest untapped non-power tiles
-                const remaining = this.tileSprites.filter(t => t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile);
+                // Find 4 nearest untapped non-power active tiles
+                const remaining = this.tileSprites.filter(t => t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile && !t.tileData.isInactive && !t.tileData.isGap);
                 const sorted = remaining.sort((a, b) => {
                     const da = Math.abs(a.tileData.gridRow - tile.gridRow) + Math.abs(a.tileData.gridCol - tile.gridCol);
                     const db = Math.abs(b.tileData.gridRow - tile.gridRow) + Math.abs(b.tileData.gridCol - tile.gridCol);
@@ -334,7 +409,9 @@ class GameScene extends Phaser.Scene {
                 // Recalculate nextExpected after bomb clears
                 this.recalcNextExpected();
                 // Check clear
-                const afterBomb = this.tileSprites.filter(t => t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile);
+                const afterBomb = this.tileSprites.filter(t =>
+                    t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile && !t.tileData.isInactive && !t.tileData.isGap
+                );
                 if (afterBomb.length === 0) this.onStageClear();
                 break;
 
@@ -364,19 +441,28 @@ class GameScene extends Phaser.Scene {
     }
 
     recalcNextExpected() {
-        // Find the lowest untapped non-power tile number
         const untapped = this.tileSprites
-            .filter(t => t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile)
-            .map(t => t.tileData.number)
-            .sort((a, b) => a - b);
-        this.nextExpected = untapped.length > 0 ? untapped[0] : this.stageParams.tileCount + 1;
+            .filter(t => t.tileData && !t.tileData.isTapped && !t.tileData.isPowerTile && !t.tileData.isInactive && !t.tileData.isGap)
+            .map(t => t.tileData.number);
+
+        // Find next in expectedSequence that is still untapped
+        for (let i = this.sequenceIndex; i < this.expectedSequence.length; i++) {
+            if (untapped.includes(this.expectedSequence[i])) {
+                this.sequenceIndex = i;
+                this.nextExpected = this.expectedSequence[i];
+                return;
+            }
+        }
+        this.nextExpected = -1; // All cleared
     }
 
     removeTile(sprite, tile) {
         const entry = this.tileSprites.find(t => t.tileData === tile);
         if (entry) {
-            this.tweens.add({ targets: [entry.sprite, entry.text], alpha: 0, scaleX: 1.5, scaleY: 1.5, duration: 150, onComplete: () => {
-                entry.sprite.destroy(); entry.text.destroy();
+            const targets = [entry.sprite, entry.text];
+            if (entry.arrow) targets.push(entry.arrow);
+            this.tweens.add({ targets, alpha: 0, scaleX: 1.5, scaleY: 1.5, duration: 150, onComplete: () => {
+                entry.sprite.destroy(); entry.text.destroy(); if (entry.arrow) entry.arrow.destroy();
             }});
         }
     }

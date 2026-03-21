@@ -28,7 +28,8 @@ function getStageParams(stageNumber) {
             stageNumber, gridSize: 3, tileCount: 9,
             timeBudget: 12000, drainRate: 1000, refill: 600,
             wrongPenalty: 1500, colorCount: 1, powerCount: 0,
-            modifierCount: 0, modifiers: [], isRest: true, isChallenge: false
+            modifierCount: 0, modifiers: [], isRest: true, isChallenge: false,
+            rule: 'NORMAL', gapCount: 0
         };
     }
 
@@ -44,13 +45,85 @@ function getStageParams(stageNumber) {
     const tileCount = gridSize * gridSize;
     const modifiers = selectModifiers(stageNumber, dp.modifierCount);
 
+    const rule = getStageRule(stageNumber);
+    const gapCount = rule.includes('GAPS') ? Math.min(Math.floor(stageNumber / 8), Math.floor(tileCount * 0.3)) : 0;
+
     return {
         stageNumber, gridSize, tileCount, timeBudget,
         drainRate: dp.drainRate, refill: dp.refill,
         wrongPenalty: dp.wrongPenalty, colorCount: dp.colorCount,
         powerCount: dp.powerCount, modifierCount: dp.modifierCount,
-        modifiers, isRest, isChallenge
+        modifiers, isRest, isChallenge, rule, gapCount
     };
+}
+
+function getStageRule(stageNumber) {
+    // Rest stages are always NORMAL
+    if (stageNumber % 5 === 0 && stageNumber % 10 !== 0) return 'NORMAL';
+
+    // Challenge stages rotate through rules
+    if (stageNumber % 10 === 0) {
+        const challengeRules = ['NORMAL', 'REVERSE', 'ODD_ONLY', 'GAPS', 'REVERSE_GAPS'];
+        return challengeRules[(Math.floor(stageNumber / 10) - 1) % challengeRules.length];
+    }
+
+    // Fixed introduction stages
+    if (stageNumber < 8) return 'NORMAL';
+    if (stageNumber <= 9) return 'REVERSE';
+    if (stageNumber === 11) return 'NORMAL';
+    if (stageNumber <= 13) return 'GAPS';
+    if (stageNumber === 14) return 'NORMAL';
+    if (stageNumber <= 17) return stageNumber <= 16 ? 'ODD_ONLY' : 'NORMAL';
+    if (stageNumber <= 19) return 'EVEN_ONLY';
+
+    // After stage 20: weighted random based on unlocked rules
+    const rng = seededRandom(stageNumber * 5381 + Date.now() % 100000);
+    const available = STAGE_RULES.filter(r => stageNumber >= RULE_INTRO_STAGES[r]);
+    const weights = available.map(r => r === 'NORMAL' ? 0.5 : 1.0);
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let roll = rng() * totalWeight;
+    for (let i = 0; i < available.length; i++) {
+        roll -= weights[i];
+        if (roll <= 0) return available[i];
+    }
+    return available[available.length - 1];
+}
+
+function buildExpectedSequence(rule, tileCount, gapCount, rng) {
+    const allNumbers = [];
+    for (let i = 1; i <= tileCount; i++) allNumbers.push(i);
+
+    // Filter by odd/even
+    let activeNumbers = allNumbers;
+    if (rule === 'ODD_ONLY' || rule === 'ODD_REVERSE') {
+        activeNumbers = allNumbers.filter(n => n % 2 === 1);
+    } else if (rule === 'EVEN_ONLY' || rule === 'EVEN_GAPS') {
+        activeNumbers = allNumbers.filter(n => n % 2 === 0);
+    }
+
+    // Remove gaps
+    let displayNumbers = activeNumbers.slice();
+    if (rule.includes('GAPS') && gapCount > 0) {
+        const removable = displayNumbers.slice(1, -1);
+        const shuffledRemovable = shuffleSeeded(removable, Math.floor(rng() * 99999));
+        const toRemove = new Set(shuffledRemovable.slice(0, Math.min(gapCount, removable.length)));
+        displayNumbers = displayNumbers.filter(n => !toRemove.has(n));
+    }
+
+    // Build expected tap sequence
+    let expectedSequence;
+    if (rule.includes('REVERSE')) {
+        expectedSequence = displayNumbers.slice().reverse();
+    } else {
+        expectedSequence = displayNumbers.slice();
+    }
+
+    // Inactive numbers: all numbers in the grid that are NOT in display set
+    const inactiveNumbers = allNumbers.filter(n => !activeNumbers.includes(n));
+    // Gap numbers: active numbers that were removed by gaps
+    const gapNumbers = activeNumbers.filter(n => !displayNumbers.includes(n));
+
+    return { displayNumbers, expectedSequence, inactiveNumbers, gapNumbers };
 }
 
 function selectModifiers(stageNumber, count) {
@@ -95,7 +168,10 @@ function generateGrid(stageNumber) {
     const params = getStageParams(stageNumber);
     const seed = stageNumber * 7919;
     const rng = seededRandom(seed);
-    const { gridSize, tileCount, colorCount, powerCount, modifiers } = params;
+    const { gridSize, tileCount, colorCount, powerCount, modifiers, rule, gapCount } = params;
+
+    // Build expected sequence based on rule
+    const seqData = buildExpectedSequence(rule, tileCount, gapCount, rng);
 
     // Create number sequence and shuffle
     const numbers = [];
@@ -113,14 +189,17 @@ function generateGrid(stageNumber) {
     for (let i = 0; i < tileCount; i++) {
         const row = Math.floor(i / gridSize);
         const col = i % gridSize;
+        const num = shuffled[i];
         tiles.push({
             id: i,
-            number: shuffled[i],
+            number: num,
             colorCategory: colorAssignments[i],
             isPowerTile: false,
             powerType: null,
             isFaceDown: false,
             isDecoy: false,
+            isInactive: seqData.inactiveNumbers.includes(num),
+            isGap: seqData.gapNumbers.includes(num),
             gridRow: row,
             gridCol: col,
             x: layout.startX + col * (layout.tileSize + layout.gap),
@@ -130,9 +209,9 @@ function generateGrid(stageNumber) {
         });
     }
 
-    // Place power tiles (not on first 2 sequential positions)
+    // Place power tiles (not on first 2 sequential positions, not on inactive/gap tiles)
     if (powerCount > 0) {
-        const safePositions = tiles.filter(t => t.number > 2);
+        const safePositions = tiles.filter(t => t.number > 2 && !t.isInactive && !t.isGap);
         const powerPositions = shuffleSeeded(safePositions.map(t => t.id), seed + 1337).slice(0, powerCount);
         powerPositions.forEach(id => {
             const tile = tiles[id];
@@ -145,7 +224,7 @@ function generateGrid(stageNumber) {
     // Apply GHOST modifier
     if (modifiers.includes('GHOST')) {
         const ghostCount = Math.max(1, Math.floor(tileCount * 0.2));
-        const ghostCandidates = shuffleSeeded(tiles.filter(t => !t.isPowerTile).map(t => t.id), seed + 2222);
+        const ghostCandidates = shuffleSeeded(tiles.filter(t => !t.isPowerTile && !t.isInactive && !t.isGap).map(t => t.id), seed + 2222);
         for (let i = 0; i < Math.min(ghostCount, ghostCandidates.length); i++) {
             tiles[ghostCandidates[i]].isFaceDown = true;
         }
@@ -153,7 +232,7 @@ function generateGrid(stageNumber) {
 
     // Apply DECOY modifier
     if (modifiers.includes('DECOY')) {
-        const decoyCandidates = shuffleSeeded(tiles.filter(t => !t.isPowerTile && !t.isFaceDown).map(t => t.id), seed + 3333);
+        const decoyCandidates = shuffleSeeded(tiles.filter(t => !t.isPowerTile && !t.isFaceDown && !t.isInactive && !t.isGap).map(t => t.id), seed + 3333);
         const decoyCount = Math.min(2, decoyCandidates.length);
         for (let i = 0; i < decoyCount; i++) {
             const tile = tiles[decoyCandidates[i]];
@@ -165,7 +244,7 @@ function generateGrid(stageNumber) {
         }
     }
 
-    return { tiles, params, layout };
+    return { tiles, params, layout, expectedSequence: seqData.expectedSequence, inactiveNumbers: seqData.inactiveNumbers, gapNumbers: seqData.gapNumbers };
 }
 
 function getGridLayout(gridSize) {
