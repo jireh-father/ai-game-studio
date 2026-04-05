@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Birthday Bomb</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 60'><circle cx='22' cy='34' r='20' fill='%231C1C3A'/><path d='M28 8 Q36 2 40 10' stroke='%238B6914' stroke-width='3' fill='none'/><circle cx='40' cy='10' r='4' fill='%23FF9500'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-container"></div>
+  <div id="landscape-overlay">
+    <div class="rotate-msg">
+      <svg width="60" height="60" viewBox="0 0 60 60"><rect x="15" y="5" width="30" height="50" rx="4" fill="none" stroke="#1C1C3A" stroke-width="3"/><path d="M50 30 A20 20 0 0 1 30 50" fill="none" stroke="#1C1C3A" stroke-width="2" marker-end="url(#arrowhead)"/></svg>
+      <p>Please rotate your device to portrait mode</p>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/ads.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/help.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+  </script>
+</body>
+</html>
