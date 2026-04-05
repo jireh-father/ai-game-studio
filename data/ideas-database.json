@@ -79,8 +79,18 @@
     {"id":"idea-20260319-028","title":"Permission Denied","slug":"permission-denied","creator":"visionary","score":74.5,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["meta-UI","fourth-wall-humor","moving-targets","absurd-bureaucracy"]},
     {"id":"idea-20260319-005","title":"Torque Tower","slug":"torque-tower","creator":"spark","score":73.5,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["rotation-physics","stacking","timing","angular-momentum","precision"]},
     {"id":"idea-20260319-014","title":"Stack Quake","slug":"stack-quake","creator":"trendsetter","score":72.9,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["timing","precision","one-tap","physics","survival"]},
-    {"id":"idea-20260319-008","title":"Grocery Gamble","slug":"grocery-gamble","creator":"oddball","score":72.8,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["timing","drag-drop","humor","precision","escalation"]}
+    {"id":"idea-20260319-008","title":"Grocery Gamble","slug":"grocery-gamble","creator":"oddball","score":72.8,"status":"shipped","run_id":"run-2026-03-19-001","mechanic_tags":["timing","drag-drop","humor","precision","escalation"]},
+    {"id":"idea-20260405-005","title":"Zeno's Dash","slug":"zenos-dash","creator":"oddball","score":71.7,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["convergence","strategy","timing","absurd-math","infinite-series"]},
+    {"id":"idea-20260405-014","title":"Prime Butcher","slug":"prime-butcher","creator":"puzzler","score":71.1,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["factorization","spatial","split-decision","number-theory","triage"]},
+    {"id":"idea-20260405-006","title":"Birthday Bomb","slug":"birthday-bomb","creator":"oddball","score":69.3,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["probability","drag","betting","counterintuitive","birthday-paradox"]},
+    {"id":"idea-20260405-010","title":"Digit Drop","slug":"digit-drop","creator":"trendsetter","score":68.5,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["math","strategy","placement","optimization","one-tap"]},
+    {"id":"idea-20260405-004","title":"Monty's Goats","slug":"montys-goats","creator":"oddball","score":68.2,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["probability","deception","pattern-recognition","statistics","absurd"]},
+    {"id":"idea-20260405-001","title":"Paradox Panic","slug":"paradox-panic","creator":"spark","score":68.0,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["logic-paradox","three-way-choice","trap-recognition","pattern-learning","escalating-complexity"]},
+    {"id":"idea-20260405-022","title":"Wrong Map","slug":"wrong-map","creator":"visionary","score":67.2,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["deduction","false-map","contradiction-finding","memory","topology"]},
+    {"id":"idea-20260405-011","title":"Sum Sniper","slug":"sum-sniper","creator":"trendsetter","score":66.9,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["math","grid","pattern-recognition","combo","time-pressure"]},
+    {"id":"idea-20260405-012","title":"Odd One Math","slug":"odd-one-math","creator":"trendsetter","score":65.9,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["math","pattern-recognition","elimination","time-pressure","one-tap"]},
+    {"id":"idea-20260405-018","title":"Set Surgeon","slug":"set-surgeon","creator":"puzzler","score":65.5,"status":"shipped","run_id":"run-2026-04-05-001","mechanic_tags":["set-theory","deduction","venn-diagrams","logical-inference","constraint-satisfaction"]}
   ],
-  "version": 9,
-  "last_updated": "2026-03-19T00:00:00Z"
+  "version": 10,
+  "last_updated": "2026-04-06T00:00:00Z"
 }
