@@ -14,6 +14,7 @@ class GameScene extends Phaser.Scene {
     this.coinSprites = [];
     this.laneIndex = 0;
     this.scrollOffset = 0;
+    this.topLaneY = null;
 
     this.roadBg = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.road).setDepth(0);
     this.player = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT - HUD_HEIGHT - 96, 'player').setDepth(5);

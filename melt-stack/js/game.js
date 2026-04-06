@@ -22,12 +22,14 @@ class GameScene extends Phaser.Scene {
     this.currentMeltDuration = params.meltDurationMs;
     this.currentBlockWidth = params.startWidthPx;
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, PALETTE.bg);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, PALETTE.bg).setScrollFactor(0);
 
     if (this.textures.exists('melt-glow')) {
-      this.meltGlow = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT - 40, 'melt-glow').setDepth(5);
+      this.meltGlow = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT - 40, 'melt-glow').setDepth(5).setScrollFactor(0);
       this.tweens.add({ targets: this.meltGlow, alpha: { from: 0.6, to: 1 }, duration: 667, yoyo: true, repeat: -1 });
     }
+
+    this.cameras.main.scrollY = 0;
 
     this.createHUD();
     this.addTowerBlock(GAME_WIDTH / 2, INITIAL_WIDTH, true);
@@ -116,6 +118,7 @@ class GameScene extends Phaser.Scene {
     const w = isPerfect ? top.width : oW;
     const block = this.addTowerBlock(cx, w);
 
+    this.updateCamera();
     GameState.blocksDropped++;
     if (isPerfect) {
       GameState.perfectStreak++;
@@ -233,7 +236,22 @@ class GameScene extends Phaser.Scene {
   repositionTower() {
     const baseY = GAME_HEIGHT - 80;
     this.tower.forEach((block, i) => { block.y = baseY - i * BLOCK_HEIGHT; if (i > 0) this.drawBlock(block); });
-    if (this.meltGlow) this.meltGlow.setY(baseY);
+    this.updateCamera();
+  }
+
+  updateCamera() {
+    // Scroll the camera up when the tower gets tall so the sliding block stays visible
+    const slidingY = this.getSlidingY();
+    const MIN_SCREEN_Y = 140; // below HUD, leaves room for sliding block + label
+    const targetScrollY = Math.min(0, slidingY - MIN_SCREEN_Y);
+    if (Math.abs(targetScrollY - this.cameras.main.scrollY) > 1) {
+      this.tweens.add({
+        targets: this.cameras.main,
+        scrollY: targetScrollY,
+        duration: 250,
+        ease: 'Power2'
+      });
+    }
   }
 
   triggerDeath() {

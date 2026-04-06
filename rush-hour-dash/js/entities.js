@@ -1,8 +1,16 @@
 // Rush Hour Dash - Lane & Entity Management (mixin for GameScene)
 var LaneManager = {
   spawnLane: function() {
-    var laneData = generateLane(GameState.hops, this.laneIndex);
-    var screenY = GAME_HEIGHT + (this.laneIndex - this.lanes.length) * LANE_HEIGHT + LANE_HEIGHT;
+    // First lane (index 0): empty safe lane AT the player's position
+    var laneData;
+    if (this.laneIndex === 0) {
+      laneData = { vehicles: [], coinX: null, type: 'start' };
+      this.topLaneY = GAME_HEIGHT - HUD_HEIGHT - 96; // matches player.y
+    } else {
+      laneData = generateLane(GameState.hops, this.laneIndex);
+      this.topLaneY -= LANE_HEIGHT;
+    }
+    var screenY = this.topLaneY;
 
     for (var i = 0; i < laneData.vehicles.length; i++) {
       var vd = laneData.vehicles[i];
@@ -29,11 +37,7 @@ var LaneManager = {
 
   needsMoreLanes: function() {
     if (this.lanes.length === 0) return true;
-    var maxY = 0;
-    for (var i = 0; i < this.vehicleSprites.length; i++) {
-      if (this.vehicleSprites[i].screenY > maxY) maxY = this.vehicleSprites[i].screenY;
-    }
-    return maxY < GAME_HEIGHT + LANE_HEIGHT * 3;
+    return this.topLaneY > HUD_HEIGHT - LANE_HEIGHT * 2;
   },
 
   updateLanes: function(scrollDelta, dt) {
