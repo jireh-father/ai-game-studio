@@ -1,0 +1,9 @@
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+html,body{width:100%;height:100%;background:#0a0e1a;overflow:hidden;touch-action:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+#game-container{width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+#game-container canvas{display:block;max-width:100vw;max-height:100vh}
+#rotate-warning{position:fixed;inset:0;background:#0a0e1a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;text-align:center;padding:20px;visibility:hidden;height:0;overflow:hidden;z-index:9999}
+@media (orientation:landscape) and (max-height:500px){
+  #rotate-warning{visibility:visible;height:auto}
+  #game-container{visibility:hidden;height:0;overflow:hidden}
+}
