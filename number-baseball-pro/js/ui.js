@@ -175,6 +175,7 @@ class HelpScene extends Phaser.Scene {
 class PowerupSelectScene extends Phaser.Scene {
   constructor() { super('PowerupSelectScene'); }
   create() {
+    this.picked = false;
     this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, PALETTE.bg);
     this.add.text(GAME_WIDTH/2, 120, 'STAGE CLEAR!', {
       fontSize: '32px', fontFamily: 'Arial', fontStyle: 'bold', color: COLORS_HEX.success
