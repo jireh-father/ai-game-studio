@@ -15,6 +15,7 @@ class GameScene extends Phaser.Scene {
     this.ghostActive = false;
     this.strikeBoostActive = false;
     this.revealMode = false;
+    this.xrayActive = false;
 
     this.cfg = getStageConfig(GameState.stage);
     this.stageType = this.cfg.type;
@@ -121,16 +122,18 @@ class GameScene extends Phaser.Scene {
       });
       this.historyTexts.push(numText, guessText);
 
-      // Wordle-style colored squares
+      // Wordle-style colored squares — only shown for X-RAY guesses
       const sqSize = 10;
       const sqGap = 3;
       const totalSqW = h.perSlot.length * sqSize + (h.perSlot.length - 1) * sqGap;
       const sqStartX = GAME_WIDTH - 28 - totalSqW;
-      h.perSlot.forEach((k, idx) => {
-        const col = k === 'strike' ? PALETTE.strike : k === 'ball' ? PALETTE.ball : PALETTE.miss;
-        const sq = this.add.rectangle(sqStartX + idx * (sqSize + sqGap) + sqSize/2, y + 10, sqSize, sqSize, col);
-        this.historyTexts.push(sq);
-      });
+      if (h.usedXray) {
+        h.perSlot.forEach((k, idx) => {
+          const col = k === 'strike' ? PALETTE.strike : k === 'ball' ? PALETTE.ball : PALETTE.miss;
+          const sq = this.add.rectangle(sqStartX + idx * (sqSize + sqGap) + sqSize/2, y + 10, sqSize, sqSize, col);
+          this.historyTexts.push(sq);
+        });
+      }
 
       // S/B label
       let resultStr, resultColor;
@@ -297,7 +300,11 @@ class GameScene extends Phaser.Scene {
     if (idx === -1) return;
     this.lastInputTime = Date.now();
     Effects.powerup();
-    if (key === 'reveal') {
+    if (key === 'xray') {
+      this.xrayActive = true;
+      SceneEffects.floatText.call(this, GAME_WIDTH/2, 340, 'X-RAY ARMED', COLORS_HEX.accent, 20, -30);
+      SceneEffects.flash.call(this, PALETTE.accent, 200);
+    } else if (key === 'reveal') {
       this.revealMode = true;
       SceneEffects.floatText.call(this, GAME_WIDTH/2, 340, 'TAP A SLOT', COLORS_HEX.gold, 18, -20);
     } else if (key === 'time') {
@@ -414,6 +421,7 @@ class GameScene extends Phaser.Scene {
   playFlipReveal(guess, perSlot, onDone) {
     let done = 0;
     const total = this.cfg.digits;
+    const xray = this.xrayActive;
     for (let i = 0; i < total; i++) {
       const slot = this.inputSlots[i];
       this.time.delayedCall(i * 180, () => {
@@ -422,23 +430,37 @@ class GameScene extends Phaser.Scene {
           targets: slot.bg, scaleY: 0, duration: 140, ease: 'Sine.easeIn',
           onComplete: () => {
             const kind = perSlot[i];
-            const col = kind === 'strike' ? PALETTE.strike : kind === 'ball' ? PALETTE.ball : PALETTE.miss;
+            // Default: hide per-slot info — flip to neutral panel color
+            // X-RAY active: reveal per-slot color (strike/ball/miss)
+            let col, textCol;
+            if (xray) {
+              col = kind === 'strike' ? PALETTE.strike : kind === 'ball' ? PALETTE.ball : PALETTE.miss;
+              textCol = kind === 'miss' ? COLORS_HEX.dim : '#000000';
+            } else {
+              col = PALETTE.panelLight;
+              textCol = COLORS_HEX.text;
+            }
             slot.bg.setFillStyle(col);
-            slot.bg.setStrokeStyle(2, col);
-            slot.t.setColor(kind === 'miss' ? COLORS_HEX.dim : '#000000');
+            slot.bg.setStrokeStyle(2, xray ? col : PALETTE.border);
+            slot.t.setColor(textCol);
             this.tweens.add({
               targets: slot.bg, scaleY: 1, duration: 140, ease: 'Sine.easeOut',
               onComplete: () => {
-                if (kind === 'strike') {
-                  SceneEffects.starBurst.call(this, slot.x, slot.y, PALETTE.strike, 12);
-                  Effects.strike();
-                  const flash = this.add.rectangle(slot.x, slot.y, 44, 50, 0xffffff).setAlpha(0.8);
-                  this.tweens.add({ targets: flash, alpha: 0, duration: 120, onComplete: () => flash.destroy() });
-                } else if (kind === 'ball') {
-                  SceneEffects.orbitRing.call(this, slot.x, slot.y, PALETTE.ball, 20);
-                  Effects.ball();
+                if (xray) {
+                  if (kind === 'strike') {
+                    SceneEffects.starBurst.call(this, slot.x, slot.y, PALETTE.strike, 12);
+                    Effects.strike();
+                    const flash = this.add.rectangle(slot.x, slot.y, 44, 50, 0xffffff).setAlpha(0.8);
+                    this.tweens.add({ targets: flash, alpha: 0, duration: 120, onComplete: () => flash.destroy() });
+                  } else if (kind === 'ball') {
+                    SceneEffects.orbitRing.call(this, slot.x, slot.y, PALETTE.ball, 20);
+                    Effects.ball();
+                  } else {
+                    Effects.miss();
+                  }
                 } else {
-                  Effects.miss();
+                  // Hidden mode: subtle neutral feedback only
+                  Effects.flip();
                 }
                 done++;
                 if (done === total) this.time.delayedCall(180, onDone);
@@ -456,8 +478,10 @@ class GameScene extends Phaser.Scene {
       strikes: displayResult.strikes,
       balls: displayResult.balls,
       out: displayResult.strikes === 0 && displayResult.balls === 0,
-      perSlot: result.perSlot
+      perSlot: result.perSlot,
+      usedXray: this.xrayActive
     });
+    if (this.xrayActive) this.xrayActive = false;
     GameState.totalGuesses++;
 
     // Ghost: don't consume attempt

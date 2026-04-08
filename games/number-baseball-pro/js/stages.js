@@ -53,12 +53,13 @@ function getStageBannerColor(type) {
 }
 
 const POWERUPS = {
+  xray:         { icon: '\ud83d\udd2c', name: 'X-RAY',        desc: 'Next guess: reveal Strike/Ball position per slot' },
   reveal:       { icon: '\ud83d\udc41', name: 'REVEAL',       desc: 'Tap any slot to reveal the correct digit' },
   time:         { icon: '\u23f0',       name: 'TIME+',        desc: 'Adds 20 seconds immediately' },
   ghost:        { icon: '\ud83d\udc7b', name: 'GHOST',        desc: 'Next guess does not cost an attempt' },
   strike_boost: { icon: '\u26a1',       name: 'STRIKE BOOST', desc: 'Next guess: convert 1 Ball into 1 Strike' },
 };
-const POWERUP_KEYS = ['reveal','time','ghost','strike_boost'];
+const POWERUP_KEYS = ['xray','reveal','time','ghost','strike_boost'];
 
 function pickTwoPowerups() {
   const pool = POWERUP_KEYS.slice();
