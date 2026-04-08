@@ -112,7 +112,7 @@ class GameScene extends Phaser.Scene {
     this.stageText = this.add.text(180, 10, 'STAGE ' + this.stage, {
       fontSize: '14px', color: '#F5E6C8', fontFamily: 'monospace', fontStyle: 'bold'
     }).setOrigin(0.5, 0).setDepth(20);
-    this.scoreText = this.add.text(350, 10, 'SCORE: ' + this.score, {
+    this.scoreText = this.add.text(310, 10, 'SCORE: ' + this.score, {
       fontSize: '14px', color: '#FFD700', fontFamily: 'monospace', fontStyle: 'bold'
     }).setOrigin(1, 0).setDepth(20);
   }

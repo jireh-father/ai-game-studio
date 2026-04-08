@@ -6,10 +6,10 @@ const PLAY_TOP = HUD_H;
 const PLAY_BOTTOM = GAME_H - 20;
 const PLAY_H = PLAY_BOTTOM - PLAY_TOP;
 const DANGER_LINE = PLAY_TOP + PLAY_H * 0.8;
-const CEILING = PLAY_TOP + 10;
 
 const CARD_W = 82;
 const CARD_H = 56;
+const CEILING = PLAY_TOP - CARD_H - 5; // game over when stacked card top rises above spawn entry
 const CARD_POOL_SIZE = 20;
 
 const PARTICLE_CAP = 48; // HARD CAP per burst (including cascade combos)
