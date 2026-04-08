@@ -11,13 +11,31 @@ function getSpecialStageType(stage) {
 
 function getStageConfig(stage) {
   const type = getSpecialStageType(stage);
-  let digits = Math.min(3 + Math.floor((stage - 1) / 3), 6);
-  let attempts = Math.max(12 - Math.floor((stage - 1) / 1), 6);
-  let timeSec = Math.max(100 - (stage - 1) * 6, 30);
 
-  if (type === 'speed') { timeSec = 25; attempts = 999; }
-  if (type === 'boss') { digits = 6; timeSec = 180; attempts = 20; }
+  // Digit growth — slower curve, starts at 2
+  // 1-2: 2 digits, 3-5: 3 digits, 6-9: 4 digits, 10-13: 5 digits, 14+: 6 digits
+  let digits;
+  if (stage <= 2) digits = 2;
+  else if (stage <= 5) digits = 3;
+  else if (stage <= 9) digits = 4;
+  else if (stage <= 13) digits = 5;
+  else digits = 6;
+
+  // Time scales WITH digit count — more digits = more time to think
+  const timeBaseByDigits = { 2: 60, 3: 100, 4: 150, 5: 200, 6: 240 };
+  let timeSec = timeBaseByDigits[digits] - (stage - 1) * 2;
+  timeSec = Math.max(timeSec, 45);
+
+  // Attempts — also tied to digit count, slow decrease within tier
+  const attemptsBase = { 2: 10, 3: 14, 4: 16, 5: 18, 6: 20 };
+  let attempts = attemptsBase[digits] - Math.floor((stage - 1) / 5);
+  attempts = Math.max(attempts, 8);
+
+  // Special stage overrides
+  if (type === 'speed') { timeSec = 30; attempts = 999; }
+  if (type === 'boss') { digits = 6; timeSec = 240; attempts = 22; }
   // amnesia/liar/forbidden use normal scaling but with effect overlays
+
   return { digits, attempts, timeSec, type };
 }
 
