@@ -135,7 +135,27 @@ catalog.
 - Trap/penalty monsters (nothing punishes tapping)
 - Leaderboards, any server backend, iOS
 
-## 10. Success Criteria
+## 10. v1.1 Update (2026-07-02, user-requested after playtest)
+
+- **+10 species** (24 total, 20 mobs): ghosty (phases untappable), hoppy
+  (bunny hops), orbity (Saturn-ring orbit), lovey (chases your finger),
+  rocky (ricochet), bubbly (floats up, wraps), shysh (shrinks near finger),
+  cloney (blinks away on non-fatal hits), freezy (ice shell absorbs first
+  hit), chunky (6× HP bruiser). Quirk jellies gate at stage 12, heavies at 10.
+- **Harder**: mob HP growth 1.14→**1.15**; waves **8 + 1.1·stage, cap 32**
+  (was 6+0.8n cap 24); retuned equilibrium tap costGrowth **1.31** / damage
+  growth **1.28**; invariant band widened to **1–6 taps**, ≥45% of stages
+  need 2+ taps, average ≥1.8.
+- **Boss rotation**: every boss stage promotes the next regular mob (catalog
+  order) to a crowned giant; every 10th boss (stage 100, 200…) is King Jelly.
+  Boss HP mult ramps `25 × (1 + (bossIndex−1)·0.5)` (stage 100 ≈ ×137 mob
+  HP); boss gold scales with the same ramp.
+- **Refined UI**: hand-drawn tinted upgrade icons (fist/bolt/burst/flame/coins)
+  replace emoji; rounded NineSlice cards/buttons with drop shadows + gloss,
+  affordability glow, level pills, HUD stage pill + gold chip, gradient boss
+  bar with name label, combo pop animation, menu mascot parade.
+
+## 11. Success Criteria
 
 - A first-time player understands everything with zero instructions.
 - Balance invariant test green over 200 simulated stages.
