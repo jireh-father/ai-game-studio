@@ -1,0 +1,323 @@
+// =============================================================================
+// SMOOSH! - main.js  (ALWAYS the LAST script in index.html)
+// BootScene: registers ALL textures exactly once (28 jelly SVGs + procedural),
+// then starts MenuScene.
+// =============================================================================
+
+class BootScene extends Phaser.Scene {
+    constructor() { super({ key: 'BootScene' }); }
+
+    create() {
+        SaveManager.init();
+        if (typeof Sfx !== 'undefined' && Sfx.setMuted) Sfx.setMuted(SaveManager.state.muted);
+
+        if (typeof AdsManager !== 'undefined' && AdsManager.init) {
+            AdsManager.init().catch(() => {});
+        }
+
+        this._makeProceduralTextures();
+        this._loadSpeciesTextures(() => this.scene.start('MenuScene'));
+    }
+
+    // All SVG art -> base64 textures, registered ONCE here.
+    _loadSpeciesTextures(onReady) {
+        const jobs = [];
+        for (const sp of SPECIES) {
+            jobs.push({ key: 'sp-' + sp.id + '-idle', svg: sp.svgIdle, size: sp.radius * 2 });
+            jobs.push({ key: 'sp-' + sp.id + '-squash', svg: sp.svgSquash, size: sp.radius * 2 });
+        }
+        for (const p of PET_SPECIES) {
+            jobs.push({ key: 'pet-' + p.id, svg: p.svg, size: 48 });
+        }
+        jobs.push({ key: 'nest-tex', svg: NEST_SVG, size: 220, h: 150 });
+        const pending = new Set(jobs.map(j => j.key));
+        const onAdd = (key) => {
+            pending.delete(key);
+            if (pending.size === 0) {
+                this.textures.off('addtexture', onAdd);
+                onReady();
+            }
+        };
+        this.textures.on('addtexture', onAdd);
+        for (const j of jobs) {
+            if (this.textures.exists(j.key)) { onAdd(j.key); continue; }
+            // Explicit width/height: viewBox-only SVGs rasterize at 300x150
+            // in some browsers.
+            const svg = j.svg.replace('<svg ', `<svg width="${j.size}" height="${j.h || j.size}" `);
+            const b64 = btoa(unescape(encodeURIComponent(svg)));
+            this.textures.addBase64(j.key, 'data:image/svg+xml;base64,' + b64);
+        }
+    }
+
+    _makeProceduralTextures() {
+        let g;
+
+        // pop-tex: soft round particle
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1); g.fillCircle(12, 12, 8);
+        g.fillStyle(0xffffff, 0.4); g.fillCircle(12, 12, 12);
+        g.generateTexture('pop-tex', 24, 24);
+        g.destroy();
+
+        // goo-tex: splat blob (tinted at runtime)
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 0.5);
+        g.fillCircle(32, 30, 18);
+        g.fillCircle(16, 40, 9);
+        g.fillCircle(48, 42, 7);
+        g.fillCircle(40, 14, 6);
+        g.generateTexture('goo-tex', 64, 56);
+        g.destroy();
+
+        // coin-tex v2.1: embossed star coin with rim ticks + gloss
+        g = this.add.graphics();
+        g.fillStyle(0xb8811c, 1); g.fillCircle(24, 26, 21);          // under-shadow
+        g.fillStyle(0xffd54a, 1); g.fillCircle(24, 23, 21);          // face
+        g.lineStyle(3, 0xb8811c, 1); g.strokeCircle(24, 23, 17);     // inner rim
+        for (let i = 0; i < 12; i++) {                               // rim ticks
+            const a = i * Math.PI / 6;
+            g.lineBetween(24 + Math.cos(a) * 18, 23 + Math.sin(a) * 18,
+                24 + Math.cos(a) * 20.5, 23 + Math.sin(a) * 20.5);
+        }
+        g.fillStyle(0xe8b232, 1);                                    // embossed star
+        g.fillPoints([
+            { x: 24, y: 11 }, { x: 27, y: 19 }, { x: 35, y: 19 }, { x: 29, y: 24 },
+            { x: 31, y: 32 }, { x: 24, y: 27 }, { x: 17, y: 32 }, { x: 19, y: 24 },
+            { x: 13, y: 19 }, { x: 21, y: 19 }
+        ], true);
+        g.fillStyle(0xffffff, 0.55);                                 // gloss arc
+        g.fillEllipse(18, 13, 16, 7);
+        g.generateTexture('coin-tex', 48, 48);
+        g.destroy();
+
+        // spark-tex: 4-point star
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillPoints([
+            { x: 12, y: 0 }, { x: 15, y: 9 }, { x: 24, y: 12 }, { x: 15, y: 15 },
+            { x: 12, y: 24 }, { x: 9, y: 15 }, { x: 0, y: 12 }, { x: 9, y: 9 }
+        ], true);
+        g.generateTexture('spark-tex', 24, 24);
+        g.destroy();
+
+        // white-tex: generic quad
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1); g.fillRect(0, 0, 8, 8);
+        g.generateTexture('white-tex', 8, 8);
+        g.destroy();
+
+        // btn-tex: white rounded rect for NineSlice buttons/panels (tinted at use)
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillRoundedRect(0, 0, 96, 96, 24);
+        g.generateTexture('btn-tex', 96, 96);
+        g.destroy();
+
+        // pill-tex: slimmer rounded pill for chips/labels
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillRoundedRect(0, 0, 64, 36, 18);
+        g.generateTexture('pill-tex', 64, 36);
+        g.destroy();
+
+        // crown-tex: the boss crown
+        g = this.add.graphics();
+        g.fillStyle(0xffd54a, 1);
+        g.fillPoints([
+            { x: 6, y: 44 }, { x: 10, y: 12 }, { x: 26, y: 30 }, { x: 40, y: 6 },
+            { x: 54, y: 30 }, { x: 70, y: 12 }, { x: 74, y: 44 }
+        ], true);
+        g.fillStyle(0xe8b82e, 1); g.fillRect(6, 44, 68, 10);
+        g.fillStyle(0xff5ec4, 1); g.fillCircle(40, 22, 5);
+        g.generateTexture('crown-tex', 80, 56);
+        g.destroy();
+
+        this._makeUpgradeIcons();
+    }
+
+    // Hand-drawn white upgrade icons (tinted per upgrade color in the UI).
+    _makeUpgradeIcons() {
+        let g;
+
+        // up-tap: pressing finger + impact wedges
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillRoundedRect(19, 4, 12, 26, 6);         // finger
+        g.fillRoundedRect(14, 24, 22, 12, 6);        // knuckle
+        g.fillTriangle(6, 40, 12, 34, 14, 42);       // impact wedges
+        g.fillTriangle(44, 40, 38, 34, 36, 42);
+        g.fillRect(22, 40, 6, 6);
+        g.generateTexture('up-tap', 48, 48);
+        g.destroy();
+
+        // up-crit: lightning bolt
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillPoints([
+            { x: 30, y: 2 }, { x: 10, y: 26 }, { x: 21, y: 26 },
+            { x: 16, y: 46 }, { x: 38, y: 19 }, { x: 26, y: 19 }
+        ], true);
+        g.generateTexture('up-crit', 48, 48);
+        g.destroy();
+
+        // up-splash: center dot + 8 burst rays
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(24, 24, 7);
+        for (let i = 0; i < 8; i++) {
+            const a = i * Math.PI / 4;
+            const x1 = 24 + Math.cos(a) * 12, y1 = 24 + Math.sin(a) * 12;
+            const x2 = 24 + Math.cos(a) * 21, y2 = 24 + Math.sin(a) * 21;
+            const px = Math.cos(a + Math.PI / 2) * 2.6, py = Math.sin(a + Math.PI / 2) * 2.6;
+            g.fillTriangle(x1 + px, y1 + py, x1 - px, y1 - py, x2, y2);
+        }
+        g.generateTexture('up-splash', 48, 48);
+        g.destroy();
+
+        // up-fever: flame (outer teardrop + inner cutout feel via notch)
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillPoints([
+            { x: 24, y: 2 }, { x: 34, y: 14 }, { x: 40, y: 26 }, { x: 38, y: 36 },
+            { x: 30, y: 44 }, { x: 18, y: 44 }, { x: 10, y: 36 }, { x: 8, y: 26 },
+            { x: 14, y: 16 }, { x: 18, y: 22 }, { x: 22, y: 12 }
+        ], true);
+        g.generateTexture('up-fever', 48, 48);
+        g.destroy();
+
+        // up-gold: coin stack
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillEllipse(24, 36, 34, 14);
+        g.fillEllipse(24, 28, 34, 14);
+        g.fillEllipse(24, 20, 34, 14);
+        g.lineStyle(3, 0x000000, 0.25);
+        g.strokeEllipse(24, 28, 34, 14);
+        g.strokeEllipse(24, 36, 34, 14);
+        g.generateTexture('up-gold', 48, 48);
+        g.destroy();
+
+        // confetti-tex
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1); g.fillRect(0, 0, 10, 16);
+        g.generateTexture('confetti-tex', 10, 16);
+        g.destroy();
+
+        // ring-tex: expanding shockwave ring (tinted at use)
+        g = this.add.graphics();
+        g.lineStyle(6, 0xffffff, 1);
+        g.strokeCircle(32, 32, 27);
+        g.lineStyle(2, 0xffffff, 0.5);
+        g.strokeCircle(32, 32, 22);
+        g.generateTexture('ring-tex', 64, 64);
+        g.destroy();
+
+        // egg-tex: gacha egg with spots
+        g = this.add.graphics();
+        g.fillStyle(0xfff7e0, 1);
+        g.fillEllipse(40, 54, 72, 92);
+        g.lineStyle(5, 0x221a38, 1);
+        g.strokeEllipse(40, 54, 72, 92);
+        g.fillStyle(0xffd54a, 1); g.fillCircle(30, 38, 7);
+        g.fillStyle(0x7fd2ff, 1); g.fillCircle(52, 62, 6);
+        g.fillStyle(0xff9ad5, 1); g.fillCircle(34, 76, 5);
+        g.generateTexture('egg-tex', 80, 104);
+        g.destroy();
+
+        // gem-tex v2.1: brilliant-cut sapphire with crown facets + glints
+        g = this.add.graphics();
+        g.fillStyle(0x2a7fd0, 1);                                    // base body
+        g.fillPoints([
+            { x: 12, y: 10 }, { x: 36, y: 10 }, { x: 44, y: 20 },
+            { x: 24, y: 44 }, { x: 4, y: 20 }
+        ], true);
+        g.fillStyle(0x5ab0f0, 1);                                    // crown table
+        g.fillPoints([{ x: 16, y: 13 }, { x: 32, y: 13 }, { x: 36, y: 19 }, { x: 12, y: 19 }], true);
+        g.fillStyle(0x8fd0ff, 1);                                    // left facet
+        g.fillPoints([{ x: 12, y: 10 }, { x: 16, y: 13 }, { x: 12, y: 19 }, { x: 4, y: 20 }], true);
+        g.fillStyle(0x1c5ea8, 1);                                    // right shade
+        g.fillPoints([{ x: 36, y: 10 }, { x: 44, y: 20 }, { x: 36, y: 19 }, { x: 32, y: 13 }], true);
+        g.fillStyle(0xbfe8ff, 1);                                    // pavilion shine
+        g.fillPoints([{ x: 12, y: 19 }, { x: 24, y: 44 }, { x: 18, y: 20 }], true);
+        g.lineStyle(3, 0x221a38, 1);
+        g.strokePoints([
+            { x: 12, y: 10 }, { x: 36, y: 10 }, { x: 44, y: 20 },
+            { x: 24, y: 44 }, { x: 4, y: 20 }
+        ], true, true);
+        g.fillStyle(0xffffff, 0.95);                                 // star glint
+        g.fillPoints([
+            { x: 15, y: 6 }, { x: 16.5, y: 10 }, { x: 20, y: 11.5 }, { x: 16.5, y: 13 },
+            { x: 15, y: 17 }, { x: 13.5, y: 13 }, { x: 10, y: 11.5 }, { x: 13.5, y: 10 }
+        ], true);
+        g.generateTexture('gem-tex', 48, 48);
+        g.destroy();
+
+        // bomb-tex: item drop - round bomb with a spark fuse
+        g = this.add.graphics();
+        g.fillStyle(0x2a2a34, 1); g.fillCircle(24, 28, 16);
+        g.fillStyle(0x4a4a58, 1); g.fillCircle(19, 23, 6);
+        g.lineStyle(4, 0x8a6a4e, 1);
+        g.beginPath(); g.moveTo(28, 14); g.lineTo(34, 6); g.strokePath();
+        g.fillStyle(0xffd54a, 1);
+        g.fillPoints([
+            { x: 36, y: 2 }, { x: 38, y: 5 }, { x: 41, y: 6 }, { x: 38, y: 8 },
+            { x: 36, y: 11 }, { x: 34, y: 8 }, { x: 31, y: 6 }, { x: 34, y: 5 }
+        ], true);
+        g.generateTexture('bomb-tex', 48, 48);
+        g.destroy();
+
+        // heart-tex: nest heal drop
+        g = this.add.graphics();
+        g.fillStyle(0xff6b8a, 1);
+        g.fillCircle(16, 18, 10); g.fillCircle(32, 18, 10);
+        g.fillTriangle(7, 24, 41, 24, 24, 42);
+        g.fillStyle(0xffffff, 0.5); g.fillEllipse(14, 14, 8, 5);
+        g.generateTexture('heart-tex', 48, 48);
+        g.destroy();
+
+        // necklace-tex: pet accessory field drop
+        g = this.add.graphics();
+        g.lineStyle(4, 0xffffff, 1);
+        g.beginPath(); g.arc(24, 18, 14, Math.PI * 0.15, Math.PI * 0.85, false); g.strokePath();
+        g.fillStyle(0xffffff, 1);                                    // heart pendant
+        g.fillCircle(20, 32, 5); g.fillCircle(28, 32, 5);
+        g.fillTriangle(14.5, 34, 33.5, 34, 24, 44);
+        g.generateTexture('necklace-tex', 48, 48);
+        g.destroy();
+    }
+}
+
+// Global scene-switch helper.
+const SmooshGame = {
+    _game: null,
+    goto(sceneKey) {
+        const sm = this._game.scene;
+        sm.getScenes(true).forEach(s => sm.stop(s.scene.key));
+        sm.start(sceneKey);
+    }
+};
+
+window.addEventListener('load', () => {
+    SmooshGame._game = new Phaser.Game({
+        type: Phaser.AUTO,
+        parent: 'game-container',
+        width: CONFIG.WIDTH,
+        height: CONFIG.HEIGHT,
+        backgroundColor: CONFIG.COLORS.bg,
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH
+        },
+        render: { antialias: true },
+        scene: [BootScene, MenuScene, GameScene, ShopScene, PvpScene]
+    });
+
+    window.addEventListener('resize', () => {
+        if (SmooshGame._game) SmooshGame._game.scale.refresh();
+    });
+
+    // Browser autoplay policy: audio starts on the first user gesture.
+    document.addEventListener('pointerdown', () => {
+        if (typeof Sfx !== 'undefined' && Sfx.unlockAudio) Sfx.unlockAudio();
+    }, { passive: true });
+});
