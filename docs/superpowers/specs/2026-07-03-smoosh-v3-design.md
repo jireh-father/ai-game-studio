@@ -117,6 +117,15 @@ Today `spawnItemDrop` tweens the drop and auto-applies it. Change to:
   map/nest/social UI) authored bilingually; existing UI strings migrated to
   the table as they are touched.
 
+### A10. PvP team selection — up to 5 pets [user]
+- `CONFIG.PVP.teamSize` 3 → **5 (upper bound)**. Before a PvP match the player
+  **picks up to 5 owned pets** in a picker overlay (tap cards to toggle;
+  an AUTO button fills the top 5 by power; at least 1 required).
+- Last team persists in `save.pvpTeam` (species ids), validated against
+  currently-owned pets on load (missing ones drop out).
+- The bot team mirrors the player's picked count (fair fight); the existing
+  ±15% power jitter is unchanged.
+
 ---
 
 ## Phase B — Firebase social nest (v3.5.0)

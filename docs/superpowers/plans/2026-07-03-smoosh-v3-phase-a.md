@@ -898,7 +898,94 @@ test('remove-ads product grants the flag, not gems', () => {
 
 ---
 
-### Task 13: Ship v3.0.0
+### Task 13: PvP team picker (up to 5 pets)
+
+**Files:**
+- Modify: `www/js/config.js` (`PVP.teamSize: 3` → `5`)
+- Modify: `www/js/balance.js` (add `pvpValidTeam`, `pvpAutoTeam`)
+- Modify: `www/js/save.js` (`pvpTeam: []` in `_freshState()`)
+- Modify: `www/js/pvp.js` (team picker overlay before the match; bot team mirrors picked count)
+- Modify: `www/js/i18n.js` (add keys `pvp.pickTeam` en:'PICK YOUR TEAM (max 5)' ko:'팀 선택 (최대 5마리)', `pvp.auto` en:'AUTO' ko:'자동', `pvp.fight` en:'FIGHT!' ko:'싸우자!')
+- Create: `tests/pvpteam.test.js`
+
+**Interfaces:**
+- Consumes: `Balance.petDamage(level, tapLevel, rarity, necklace)`, `SaveManager.state.pets` (`{species, rarity, level, necklace}`), existing pvp.js match flow + `CONFIG.PVP.botPowerJitter`.
+- Produces: `Balance.pvpValidTeam(teamIds, ownedPets)` → owned-only, deduped, capped at `CONFIG.PVP.teamSize`; `Balance.pvpAutoTeam(ownedPets, tapLevel)` → top-N species ids by `petDamage`; `save.pvpTeam` (species ids) persisted after each picker confirm; bot team size = player team size.
+
+- [ ] **Step 1: Write the failing tests**
+
+```js
+// tests/pvpteam.test.js
+const test = require('node:test');
+const assert = require('node:assert');
+globalThis.CONFIG = require('../www/js/config.js').CONFIG;
+const { Balance } = require('../www/js/balance.js');
+
+test('PvP team size cap is 5', () => {
+    assert.strictEqual(CONFIG.PVP.teamSize, 5);
+});
+
+test('pvpValidTeam keeps owned only, dedupes, caps at 5', () => {
+    const owned = [
+        { species: 'cat' }, { species: 'dog' }, { species: 'fox' },
+        { species: 'bear' }, { species: 'panda' }, { species: 'rabbit' }
+    ];
+    const team = Balance.pvpValidTeam(
+        ['cat', 'cat', 'ghost-notowned', 'dog', 'fox', 'bear', 'panda', 'rabbit'], owned);
+    assert.deepStrictEqual(team, ['cat', 'dog', 'fox', 'bear', 'panda']);
+    assert.deepStrictEqual(Balance.pvpValidTeam(null, owned), []);
+});
+
+test('pvpAutoTeam picks top 5 by damage (rarity beats level here)', () => {
+    const owned = [
+        { species: 'a', rarity: 'common',    level: 1, necklace: null },
+        { species: 'b', rarity: 'legendary', level: 1, necklace: null },
+        { species: 'c', rarity: 'rare',      level: 1, necklace: null },
+        { species: 'd', rarity: 'epic',      level: 1, necklace: null },
+        { species: 'e', rarity: 'common',    level: 9, necklace: null },
+        { species: 'f', rarity: 'common',    level: 1, necklace: null }
+    ];
+    const team = Balance.pvpAutoTeam(owned, 5);
+    assert.strictEqual(team.length, 5);
+    assert.strictEqual(team[0], 'b');            // legendary first
+    assert.ok(!team.includes('f') || !team.includes('a')); // one weakest common left out
+});
+```
+
+- [ ] **Step 2: Run** — `npm test` → FAIL. **Step 3: Implement.** `config.js`: `teamSize: 5`. `balance.js`:
+
+```js
+    // v3.0 PvP: player picks up to teamSize pets; AUTO = top damage.
+    pvpValidTeam(teamIds, ownedPets) {
+        const owned = new Set((ownedPets || []).map(p => p.species));
+        const seen = new Set();
+        const out = [];
+        for (const id of (teamIds || [])) {
+            if (owned.has(id) && !seen.has(id)) { seen.add(id); out.push(id); }
+            if (out.length >= CONFIG.PVP.teamSize) break;
+        }
+        return out;
+    },
+    pvpAutoTeam(ownedPets, tapLevel) {
+        return (ownedPets || []).slice()
+            .sort((a, b) => this.petDamage(b.level, tapLevel, b.rarity, b.necklace)
+                          - this.petDamage(a.level, tapLevel, a.rarity, a.necklace))
+            .slice(0, CONFIG.PVP.teamSize)
+            .map(p => p.species);
+    },
+```
+
+`save.js` fresh state: `pvpTeam: []`.
+
+- [ ] **Step 4: Picker UI in pvp.js.** Where the match currently auto-builds the player team, insert a picker overlay first: title `I18n.t('pvp.pickTeam')`; grid of owned-pet cards (existing pet card rendering pattern in shop.js); tap toggles selection (max `CONFIG.PVP.teamSize`, golden ring on selected); AUTO button (`I18n.t('pvp.auto')`) → `Balance.pvpAutoTeam(...)`; FIGHT button (`I18n.t('pvp.fight')`) enabled when ≥1 selected → saves `state.pvpTeam`, persists, starts the match with exactly those pets. Initial selection = `Balance.pvpValidTeam(state.pvpTeam, state.pets)`, or AUTO if empty. Bot team generation: same count as the player's picked team.
+
+- [ ] **Step 5: Verify** — `npm test` green; `node --check` touched files; serve: PvP shows picker, AUTO fills, fight runs with picked pets, bot count matches.
+
+- [ ] **Step 6: Commit** — `git commit -am "feat(v3): PvP team picker - choose up to 5 pets"`
+
+---
+
+### Task 14: Ship v3.0.0
 
 **Files:**
 - Modify: `android/app/build.gradle` (versionCode +1, versionName "3.0.0"), any version literals in `www/js/ui.js`
@@ -917,6 +1004,6 @@ test('remove-ads product grants the flag, not gems', () => {
 
 ## Self-Review Notes
 
-- Spec coverage: A1→Task 5, A2→Task 6, A3→Task 4, A4→Tasks 7-9, A5→Tasks 2-3, A6→Task 10, A7→Task 11, A8→Task 12, A9→Task 1 (+sweep in 13). Phase B/C get their own plans after A ships.
+- Spec coverage: A1→Task 5, A2→Task 6, A3→Task 4, A4→Tasks 7-9, A5→Tasks 2-3, A6→Task 10, A7→Task 11, A8→Task 12, A9→Task 1 (+sweep in 14), A10→Task 13. Phase B/C get their own plans after A ships.
 - Type consistency: `Balance.elementMult` name kept (existing caller in pets.js); `applyEffect` consolidated into `Effects.applySkillEffect` (Task 9 Step 5 supersedes Task 8's local helper — Task 8 may implement it in monsters.js first, Task 9 extracts to effects.js and updates both call sites).
 - Content-scale items (50 pet skill assignments, ~74 lore entries, pet element remap) are enforced by completeness/distribution tests rather than inline tables where the exact catalog ids must win over this document.
