@@ -183,7 +183,31 @@ catalog.
 - All prices progress-indexed via `goldPerMob(bestStage)`. Save schema v2
   with automatic v1 migration. 59 unit tests.
 
-## 12. Success Criteria
+## 12. v2.1–v2.5 Updates (2026-07-03, rapid user-driven iterations)
+
+- **v2.1**: 50 parametric ANIMAL pets replace the 4 element-jellies (element
+  fixed per animal, one pet per animal, global shards, save migration);
+  monsters damage pets (KO 6s → respawn); HP growth ×3 (later reverted);
+  field necklace drops; PvP uses ALL owned pets; juicier damage text;
+  redesigned coin/gem icons.
+- **v2.2**: shop currency emoji → texture icons (🪙 rendered as a globe on
+  some fonts); HP growth halved to 1.25^n (economy resweep: gold 1.22^n,
+  tap costGrowth 1.352); **PvP reworked to a LIVE battle on the same stage
+  field** (armies roam & fight like field pets); gold egg price fixed.
+- **v2.2.1**: synthesized monster VOICES (size-scaled dark-cute grunts, 3
+  variants/event), boss roars on spawn/death, element-pitched pet yelps.
+- **v2.3**: in-game pause-overlay shop (buy/equip mid-stage, ▶ resumes);
+  7-type instant-use item drops (gold/bomb/heal/fever/gear/necklace/gem,
+  6%/kill).
+- **v2.4**: per-species monster ATTACKS — 6 styles (melee lunge, slam AoE,
+  charge ram, spit, 3-way spray, zap bolt); pets take explicit hits
+  (passive contact damage removed); ranged monsters shell the nest; bosses
+  ×2.5 dmg. Pacifists: scaredy/shysh/goldie.
+- **v2.5**: ALL owned pets deploy every stage (slot gating removed);
+  cuteness pass on both painters (bigger sparkly eyes, dual glints, blush,
+  sitting paws).
+
+## 13. Success Criteria
 
 - A first-time player understands everything with zero instructions.
 - Balance invariant test green over 200 simulated stages.
