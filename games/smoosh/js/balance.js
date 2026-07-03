@@ -8,16 +8,22 @@
 
 const Balance = {
 
+    // v3.0 Task 10 - stage-map REPLAY: gold pays 30%, drops still roll at
+    // 100% (stagemap.js / game.js route every kill/clear/drop gold credit
+    // through GameScene.stageGoldMult(), which reads this).
+    replayGoldMult: 0.3,
+
     // --- stage curves ---
     // v2.2 pass: HP +25%/stage (user: v2.1's +45% halved back). Economy
-    // retuned to match: gold 1.22^n, dmg 1.35^L, tap costGrowth 1.352
-    // (the invariant test still owns the truth).
+    // retuned to match: gold 1.22^n, dmg 1.35^L. v3.0: uncapped waves grew
+    // sim income, so tap costGrowth was raised 1.352 -> 1.372 to keep the game
+    // meaningfully hard within the 1-6 taps band (the invariant test owns truth).
     mobHP(stage) {
         return Math.round(3 * Math.pow(1.25, stage));
     },
 
     waveSize(stage) {
-        return Math.min(8 + Math.floor(stage * 1.1), 32);
+        return 8 + Math.floor(stage * 1.1);   // v3.0: no cap - every stage adds mobs
     },
 
     // Boss HP multiplier grows with every boss: stage 10 -> x25 mob HP,
@@ -64,14 +70,30 @@ const Balance = {
         return { common: 0.10, rare: 0.25, epic: 0.50, legendary: 1.0 }[rarity] || 0;
     },
 
-    // Element counters: fire > leaf > water > fire; electric ignores counters.
-    // (v2.1: takes ELEMENT names - every animal carries its element.)
+    // v3.0 - 8-element chart. 1.5 strong / 0.7 weak / 1.0 neutral, applied on
+    // EVERY hit in both directions (pets->monsters AND monster attacks->pets).
+    // 5-cycle fire>ice>wind>leaf>water>fire; electric>water+wind, leaf>electric;
+    // light<->dark mutual 1.5 (no 0.7 between them). Everything else 1.0.
+    ELEMENTS: ['fire','water','leaf','wind','electric','ice','light','dark'],
+    _STRONG: {
+        fire: ['ice'], ice: ['wind'], wind: ['leaf'], leaf: ['water','electric'],
+        water: ['fire'], electric: ['water','wind'], light: ['dark'], dark: ['light']
+    },
     elementMult(attacker, defender) {
-        const beats = { fire: 'leaf', leaf: 'water', water: 'fire' };
-        if (attacker === 'electric' || defender === 'electric') return 1;
-        if (beats[attacker] === defender) return 1.5;
-        if (beats[defender] === attacker) return 0.75;
+        const mutual = (attacker === 'light' && defender === 'dark') ||
+                       (attacker === 'dark' && defender === 'light');
+        if (mutual) return 1.5;
+        if ((this._STRONG[attacker] || []).includes(defender)) return 1.5;
+        if ((this._STRONG[defender] || []).includes(attacker)) return 0.7;
         return 1;
+    },
+
+    // Applies elementMult to a base hit; rounds and floors at 1 so a "resisted"
+    // hit never rounds down to 0. { dmg, mult } - both directions (pets.js and
+    // monsters.js) funnel every hit through this before it reaches HP.
+    applyElement(base, atkElem, defElem) {
+        const mult = this.elementMult(atkElem, defElem);
+        return { dmg: Math.max(1, Math.round(base * mult)), mult };
     },
 
     // =========================================================================
@@ -121,6 +143,48 @@ const Balance = {
 
     goldPerMob(stage) {
         return Math.max(1, Math.round(1.6 * Math.pow(1.22, stage)));
+    },
+
+    // =========================================================================
+    // v3.0 Task 13 - PvP team picker: player picks up to teamSize pets;
+    // AUTO = top damage.
+    // =========================================================================
+    pvpValidTeam(teamIds, ownedPets) {
+        const owned = new Set((ownedPets || []).map(p => p.species));
+        const seen = new Set();
+        const out = [];
+        for (const id of (teamIds || [])) {
+            if (owned.has(id) && !seen.has(id)) { seen.add(id); out.push(id); }
+            if (out.length >= CONFIG.PVP.teamSize) break;
+        }
+        return out;
+    },
+    pvpAutoTeam(ownedPets, tapLevel) {
+        return (ownedPets || []).slice()
+            .sort((a, b) => this.petDamage(b.level, tapLevel, b.rarity, b.necklace)
+                          - this.petDamage(a.level, tapLevel, a.rarity, a.necklace))
+            .slice(0, CONFIG.PVP.teamSize)
+            .map(p => p.species);
+    },
+
+    // =========================================================================
+    // v3.0 Task 9 - representative-pet ultimate gauge. +2/kill, caps at 100;
+    // the last tick before full is clamped so the gauge never overshoots.
+    // =========================================================================
+    ULT_MAX: 100, ULT_PER_KILL: 2,
+    ultGain(current) {
+        return Math.max(0, Math.min(this.ULT_PER_KILL, this.ULT_MAX - current));
+    },
+
+    // =========================================================================
+    // v3.0 - click-to-collect item drops. Pure lifetime phase: 'idle' while
+    // fresh, 'blink' as a "running out" cue, 'gone' once it should despawn
+    // (game.js applies this via a scene timer - see spawnItemDrop/tickDrops).
+    // =========================================================================
+    dropPhase(elapsedMs) {
+        if (elapsedMs >= CONFIG.DROPS.lifetimeMs) return 'gone';
+        if (elapsedMs >= CONFIG.DROPS.blinkFromMs) return 'blink';
+        return 'idle';
     },
 
     // --- upgrades ---

@@ -22,6 +22,12 @@ const AdsManager = {
     rewardedReady: false,
     lastInterstitialTime: 0,
 
+    // v3.0 Task 12: $0.99 remove-ads IAP. Gates banner + interstitial ONLY —
+    // rewarded ads (double_gold, fever_refill) are opt-in and stay available.
+    get adsRemoved() {
+        return !!(typeof SaveManager !== 'undefined' && SaveManager.state && SaveManager.state.adsRemoved);
+    },
+
     // Real "SMOOSH!" ad units (AdMob app ~5373653709, publisher
     // pub-7114194646987493, created 2026-07-02). While USE_TEST_ADS is true
     // the plugin requests Google TEST CREATIVES on these real units — safe to
@@ -145,6 +151,7 @@ const AdsManager = {
     // Banner Ad (menu/showroom ONLY)
     // =========================================================================
     async showBanner() {
+        if (this.adsRemoved) return;
         if (this.bannerVisible) return;
 
         if (!this._isNative || !this._admob) {
@@ -216,6 +223,7 @@ const AdsManager = {
 
     // Called by GameScene after EVERY stage clear. This file owns the count.
     onStageClear() {
+        if (this.adsRemoved) return;
         SaveManager.state.adStageCounter++;
         SaveManager.persist();
 
@@ -230,6 +238,7 @@ const AdsManager = {
     },
 
     async showInterstitial() {
+        if (this.adsRemoved) return;
         if (!this._isNative || !this._admob) {
             console.log('[AdsManager] [DEV] Interstitial shown (placeholder)');
             this.logAdEvent('interstitial_shown', { dev: true });

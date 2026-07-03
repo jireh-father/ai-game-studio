@@ -8,6 +8,7 @@ class BootScene extends Phaser.Scene {
     constructor() { super({ key: 'BootScene' }); }
 
     create() {
+        I18n.detect();
         SaveManager.init();
         if (typeof Sfx !== 'undefined' && Sfx.setMuted) Sfx.setMuted(SaveManager.state.muted);
 
@@ -309,7 +310,7 @@ window.addEventListener('load', () => {
             autoCenter: Phaser.Scale.CENTER_BOTH
         },
         render: { antialias: true },
-        scene: [BootScene, MenuScene, GameScene, ShopScene, PvpScene]
+        scene: [BootScene, MenuScene, StageMapScene, DexScene, GameScene, ShopScene, PvpScene]
     });
 
     window.addEventListener('resize', () => {
