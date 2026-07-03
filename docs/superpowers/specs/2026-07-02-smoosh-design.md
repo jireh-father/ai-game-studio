@@ -155,7 +155,35 @@ catalog.
   affordability glow, level pills, HUD stage pill + gold chip, gradient boss
   bar with name label, combo pop animation, menu mascot parade.
 
-## 11. Success Criteria
+## 11. v2.0 "Guardian" Update (2026-07-03, user-requested)
+
+- **The Nest** (the defend-target): bottom-center; from stage 3, 25% of plain
+  mobs raid it (2 HP/s bite each). One nest level drives max HP / regen /
+  thorns / pet slots (1→3). **Nest broken = stage failed → retry** (the
+  game's first true fail state; nest auto-repairs each stage).
+- **Pets**: gacha eggs hatch 4 element species (fire flare / electric zappy /
+  water aqua / leaf clover); they roam the field auto-attacking (heavy /
+  chain-2 / splash / 1.5×-gold kills). Level via gold feed or 8 shards;
+  one necklace slot (+dmg by rarity). Max one pet per species; better-rarity
+  dupes upgrade it, others convert to shards.
+- **Gacha**: gold egg C60/R25/E12/L3 vs gem egg C40/R30/E20/L10; pity ≤ 40
+  rolls to epic+; 10+1 pulls; hatch ceremony with rarity pillars.
+- **Equipment**: glove(+tap%)/ring(+crit)/charm(+gold%), rarity ×1/2/4/8,
+  enhance levels; chests (gold/gem) drop gear or pet necklaces, dupes refund.
+- **Gems**: earned free (boss +1, king +3, every 25 stages +5, PvP win +2);
+  spent on premium gacha. **IAP facade pre-implemented but dormant** — 3 gem
+  packages, dev-simulated purchases in browser, `IapManager._nativePurchase`
+  is the documented plugin swap-in point at release.
+- **PvP (bot phase)**: pure `Battle.sim` (element counters fire>leaf>water>
+  fire, zappy neutral; clover heals) + replay scene; bots scale to my team
+  ±15%; rating/W-L, rewards. Architecture is async-PvP-ready: replace
+  `Battle.botTeam` with a downloaded rival snapshot (Firebase RTDB, ZAP TAP
+  pattern) and nothing else changes.
+- **Player level**: XP per kill + per clear; +2% damage per level.
+- All prices progress-indexed via `goldPerMob(bestStage)`. Save schema v2
+  with automatic v1 migration. 59 unit tests.
+
+## 12. Success Criteria
 
 - A first-time player understands everything with zero instructions.
 - Balance invariant test green over 200 simulated stages.
