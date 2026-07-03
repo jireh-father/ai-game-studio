@@ -86,6 +86,11 @@ Today `spawnItemDrop` tweens the drop and auto-applies it. Change to:
 - Tap any cleared node → replay that stage. **Replay rewards: 30% gold, 100%
   item drops** [user]. The "highest stage" progression pointer never moves
   backwards; after a replay the Play button still resumes the frontier stage.
+- Replay anti-farm rulings (implementation): NO gems of any kind in replay
+  (milestone, boss/king kill, and the gem drop-type is excluded from the roll
+  table); salvage refunds ride the 30% gold multiplier. **XP stays at 100% in
+  replay by design** — it is a self-limiting catch-up loop (exponential
+  xpNeeded, no currency value), so grinding old stages for levels is intended.
 - Entry: from MenuScene and from the settlement panel.
 
 ### A7. Dex pages (DexScene) — monsters + pets [user]
