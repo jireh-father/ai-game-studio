@@ -1,11 +1,17 @@
 // =============================================================================
-// SMOOSH! - pvp.js  (v2.2 arena rework)
+// SMOOSH! - pvp.js  (v3.0 Task 13 - team picker)
 // PvP now happens ON THE SAME FIELD as the stage map: both armies roam the
 // arena live - seeking, dashing, splashing and healing exactly like field
 // pets do in a stage. My pets charge up from the bottom, the rival bot's
 // army storms down from the top. Last army standing wins.
 // (Battle.sim stays as the pure balance model + future async-PvP validator.)
+// Before any match: a team-picker overlay lets the player choose up to
+// CONFIG.PVP.teamSize pets (golden ring = selected, AUTO = top damage,
+// FIGHT starts the match). The bot team always mirrors the PICKED count,
+// not the player's full roster - see _startMatch().
 // =============================================================================
+
+const PICK_COLS = 4, PICK_CARD = 148, PICK_GAP = 16, PICK_ROW_H = PICK_CARD + PICK_GAP;
 
 class PvpScene extends Phaser.Scene {
     constructor() { super({ key: 'PvpScene' }); }
@@ -37,7 +43,171 @@ class PvpScene extends Phaser.Scene {
             return;
         }
 
-        // === the SAME battlefield as the stage map ===
+        this._pickerActive = false;
+        this._wirePickerInput();
+        this._showPicker();
+    }
+
+    // =========================================================================
+    // Team picker overlay - shown BEFORE any match. Scrollable 4-wide grid of
+    // every owned pet (follows DexScene's grid/scroll pattern); tap toggles
+    // selection up to CONFIG.PVP.teamSize; AUTO picks top damage; FIGHT
+    // persists state.pvpTeam and starts the match with exactly those pets.
+    // =========================================================================
+    _showPicker() {
+        const W = CONFIG.WIDTH, H = CONFIG.HEIGHT, st = SaveManager.state;
+
+        const valid = Balance.pvpValidTeam(st.pvpTeam, st.pets);
+        this.pickSelected = valid.length ? valid : Balance.pvpAutoTeam(st.pets, st.upgrades.tap);
+
+        this.pickerViewTop = 214;
+        this.pickerViewBottom = H - 168;
+        this.pickerScrollY = this.pickerViewTop;
+
+        const parts = [];
+        // depth -1: sits BEHIND the existing header (back/title/rating, all
+        // default depth 0) so they stay visible above the picker backdrop.
+        parts.push(this.add.rectangle(W / 2, H / 2, W, H, CONFIG.COLORS.bg).setDepth(-1));
+        parts.push(this.add.text(W / 2, 158, I18n.t('pvp.pickTeam'), {
+            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: '#ffd54a'
+        }).setOrigin(0.5).setDepth(2));
+        this.pickCountText = this.add.text(W / 2, 188, '', {
+            fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#8d86a8'
+        }).setOrigin(0.5).setDepth(2);
+        parts.push(this.pickCountText);
+
+        this.pickGridContainer = this.add.container(0, this.pickerScrollY).setDepth(2);
+        parts.push(this.pickGridContainer);
+        this._buildPickerGrid();
+
+        const autoBtn = makeUiButton(this, W / 2 - 190, H - 90, 280, 88, I18n.t('pvp.auto'), 0x2f89ff, () => {
+            this.pickSelected = Balance.pvpAutoTeam(st.pets, st.upgrades.tap);
+            Sfx.coin();
+            this._refreshPickerSelection();
+        });
+        const fightBtn = makeUiButton(this, W / 2 + 190, H - 90, 280, 88, I18n.t('pvp.fight'), 0xff5ec4, () => {
+            if (!this.pickSelected.length) return;
+            st.pvpTeam = this.pickSelected.slice();
+            SaveManager.persist();
+            this._pickerActive = false;
+            parts.forEach(p => p.destroy());
+            autoBtn.destroyAll();
+            fightBtn.destroyAll();
+            this._startMatch(this.pickSelected);
+        });
+        this.pickFightBtn = fightBtn;
+
+        this._pickerParts = parts.concat();
+        this._pickerAutoBtn = autoBtn;
+        this._pickerFightBtn = fightBtn;
+        this._pickerActive = true;
+        this._refreshPickerSelection();
+    }
+
+    _buildPickerGrid() {
+        this.pickGridContainer.removeAll(true);
+        this.pickCardViews = [];
+        const W = CONFIG.WIDTH, st = SaveManager.state;
+        const sorted = st.pets.slice().sort((a, b) => b.level - a.level);
+        const startX = (W - (PICK_COLS * PICK_CARD + (PICK_COLS - 1) * PICK_GAP)) / 2 + PICK_CARD / 2;
+
+        sorted.forEach((pet, i) => {
+            const col = i % PICK_COLS, row = Math.floor(i / PICK_COLS);
+            const x = startX + col * (PICK_CARD + PICK_GAP);
+            const y = PICK_CARD / 2 + row * PICK_ROW_H;
+            const def = PET_SPECIES.find(p => p.id === pet.species);
+
+            const ring = this.add.nineslice(x, y, 'btn-tex', 0, PICK_CARD + 14, PICK_CARD + 14, 22, 22, 22, 22)
+                .setTint(0xffd54a).setAlpha(0);
+            const card = this.add.nineslice(x, y, 'btn-tex', 0, PICK_CARD, PICK_CARD, 20, 20, 20, 20)
+                .setTint(0x201a33);
+            const spr = this.add.image(x, y - 20, 'pet-' + pet.species).setDisplaySize(76, 76);
+            const label = this.add.text(x, y + 38, def ? def.name : pet.species, {
+                fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold', color: '#e8e6f5'
+            }).setOrigin(0.5);
+            const lvl = this.add.text(x, y + 58, 'Lv.' + pet.level, {
+                fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#8d86a8'
+            }).setOrigin(0.5);
+            this.pickGridContainer.add([ring, card, spr, label, lvl]);
+
+            this.pickCardViews.push({ x, y, r: PICK_CARD / 2, pet, ring });
+        });
+
+        const rows = Math.max(1, Math.ceil(sorted.length / PICK_COLS));
+        this.pickContentHeight = rows * PICK_ROW_H;
+        this.pickScrollMax = this.pickerViewTop;
+        this.pickScrollMin = Math.min(this.pickerViewTop, this.pickerViewBottom - this.pickContentHeight);
+        this.pickerScrollY = this.pickScrollMax;
+        this.pickGridContainer.y = this.pickerScrollY;
+    }
+
+    _refreshPickerSelection() {
+        (this.pickCardViews || []).forEach(v => {
+            const on = this.pickSelected.includes(v.pet.species);
+            v.ring.setAlpha(on ? 1 : 0);
+        });
+        this.pickCountText.setText(this.pickSelected.length + ' / ' + CONFIG.PVP.teamSize);
+        if (this.pickSelected.length) this.pickFightBtn.enable();
+        else this.pickFightBtn.disable();
+    }
+
+    _wirePickerInput() {
+        this._pickDragging = false;
+        this._pickDragMoved = false;
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+            if (!this._pickerActive) return;
+            this._pickDownOverUi = !!(currentlyOver && currentlyOver.length > 0);
+            this._pickDragging = true;
+            this._pickDragMoved = false;
+            this._pickDragStartY = pointer.y;
+            this._pickScrollStartY = this.pickerScrollY;
+        });
+        this.input.on('pointermove', (pointer) => {
+            if (!this._pickerActive || !this._pickDragging) return;
+            const dy = pointer.y - this._pickDragStartY;
+            if (Math.abs(dy) > 6) this._pickDragMoved = true;
+            this.pickerScrollY = Phaser.Math.Clamp(this._pickScrollStartY + dy,
+                this.pickScrollMin, this.pickScrollMax);
+            this.pickGridContainer.y = this.pickerScrollY;
+        });
+        this.input.on('pointerup', (pointer) => {
+            if (!this._pickerActive) { this._pickDragging = false; return; }
+            const wasDragging = this._pickDragging;
+            this._pickDragging = false;
+            if (!wasDragging || this._pickDragMoved || this._pickDownOverUi) return;
+            const worldY = pointer.y - this.pickerScrollY;
+            for (const v of this.pickCardViews) {
+                if (Math.abs(pointer.x - v.x) <= v.r && Math.abs(worldY - v.y) <= v.r) {
+                    this._togglePick(v.pet.species);
+                    return;
+                }
+            }
+        });
+        this.input.on('wheel', (pointer, gameObjects, dx, dy) => {
+            if (!this._pickerActive) return;
+            this.pickerScrollY = Phaser.Math.Clamp(this.pickerScrollY - dy * 0.6,
+                this.pickScrollMin, this.pickScrollMax);
+            this.pickGridContainer.y = this.pickerScrollY;
+        });
+    }
+
+    _togglePick(species) {
+        const idx = this.pickSelected.indexOf(species);
+        if (idx >= 0) {
+            this.pickSelected.splice(idx, 1);
+        } else if (this.pickSelected.length < CONFIG.PVP.teamSize) {
+            this.pickSelected.push(species);
+        } else {
+            return; // already at cap - ignore
+        }
+        Sfx.pop(4);
+        this._refreshPickerSelection();
+    }
+
+    // Starts the actual battle with EXACTLY the picked pets. Bot team size
+    // mirrors the picked count (Battle.botTeam derives n from team.pets.length).
+    _startMatch(teamIds) {
+        const st = SaveManager.state;
         const F = CONFIG.FIELD;
         this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, 0x1a1530)
             .setStrokeStyle(2, 0x2a2244).setDepth(0);
@@ -48,9 +218,12 @@ class PvpScene extends Phaser.Scene {
             fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#7dffb2'
         }).setOrigin(0, 0.5).setDepth(1);
 
-        // armies
-        const myTeam = st.pets.slice().sort((a, b) => b.level - a.level);
-        const botTeam = Battle.botTeam(st, Math.random);
+        // armies - the player's team is EXACTLY the picked pets (not the full
+        // roster); the bot mirrors that same count via Battle.botTeam's
+        // team.pets.length derivation.
+        const myTeam = teamIds.map(id => st.pets.find(p => p.species === id)).filter(Boolean)
+            .sort((a, b) => b.level - a.level);
+        const botTeam = Battle.botTeam({ pets: myTeam }, Math.random);
         this.agents = [];
         this._spawnArmy(myTeam, 'A', st.upgrades.tap);
         this._spawnArmy(botTeam, 'B', st.upgrades.tap);

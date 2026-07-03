@@ -16,9 +16,10 @@
 const IapManager = {
 
     PRODUCTS: [
-        { id: 'smoosh_gems_small',  gems: 120,  label: '💎 120',  priceLabel: '₩3,300'  },
-        { id: 'smoosh_gems_medium', gems: 700,  label: '💎 700',  priceLabel: '₩14,000' },
-        { id: 'smoosh_gems_large',  gems: 2000, label: '💎 2000', priceLabel: '₩33,000' }
+        { id: 'smoosh_gems_small',  gems: 120,  label: '💎 120',  priceLabel: '$0.99' },
+        { id: 'smoosh_gems_medium', gems: 700,  label: '💎 700',  priceLabel: '$4.99' },
+        { id: 'smoosh_gems_large',  gems: 2000, label: '💎 2000', priceLabel: '$9.99' },
+        { id: 'smoosh_remove_ads',  type: 'noads', label: '🚫 Ads', priceLabel: '$0.99' }
     ],
 
     get storeConnected() { return false; }, // flips true once a billing plugin is wired
@@ -60,7 +61,11 @@ const IapManager = {
     },
 
     _grant(product) {
-        SaveManager.state.gems += product.gems;
+        if (product.type === 'noads') {
+            SaveManager.state.adsRemoved = true;
+        } else {
+            SaveManager.state.gems += product.gems;
+        }
         SaveManager.persist();
     }
 };

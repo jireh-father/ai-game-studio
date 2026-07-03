@@ -216,7 +216,69 @@ function buildFeverGauge(scene) {
 }
 
 // =============================================================================
-// Settlement panel (every 5th stage)
+// v3.0 Task 9 - the representative-pet ULTIMATE button. Floats bottom-right,
+// above the fever bar (it sits over the tail end of the play field, like most
+// mobile games' ability buttons do) - grayscale + gauge-dimmed while charging,
+// pulsing gold once full, with a one-shot "ULT READY!" toast at 100.
+// =============================================================================
+function buildUltButton(scene) {
+    const x = CONFIG.WIDTH - 76, y = 918, R = 52;
+
+    const glow = scene.add.image(x, y, 'ring-tex').setDepth(15)
+        .setTint(0xffd54a).setAlpha(0).setDisplaySize(R * 2.3, R * 2.3);
+    const body = scene.add.nineslice(x, y, 'btn-tex', 0, R * 2, R * 2, 28, 28, 28, 28)
+        .setTint(0x3a3350).setAlpha(0.85).setDepth(16).setInteractive({ useHandCursor: true });
+    const icon = scene.add.text(x, y - 8, '⚡', { fontSize: '38px' }).setOrigin(0.5).setDepth(17);
+    const label = scene.add.text(x, y + 30, 'ULT', {
+        fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold', color: '#8d86a8'
+    }).setOrigin(0.5).setDepth(17);
+
+    // wireInput() (game.js) shadows this button out of field-tap resolution -
+    // a tap here must never ALSO smoosh whatever monster happens to sit under it.
+    scene._ultButtonBody = body;
+
+    let pulsing = false;
+    const setPulse = (on) => {
+        if (on === pulsing) return;
+        pulsing = on;
+        scene.tweens.killTweensOf([body, icon, glow]);
+        if (on) {
+            scene.tweens.add({ targets: [body, icon], scale: 1.1, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+            scene.tweens.add({ targets: glow, alpha: 0.6, scale: 1.18, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        } else {
+            body.setScale(1); icon.setScale(1); glow.setScale(1).setAlpha(0);
+        }
+    };
+
+    const redraw = () => {
+        const gauge = scene.ultGauge || 0;
+        const ready = gauge >= Balance.ULT_MAX;
+        const frac = Phaser.Math.Clamp(gauge / Balance.ULT_MAX, 0, 1);
+        body.setTint(ready ? 0xffd54a : 0x3a3350);
+        icon.setAlpha(ready ? 1 : 0.3 + frac * 0.5);
+        label.setColor(ready ? '#141020' : '#8d86a8');
+        setPulse(ready);
+        if (ready && !scene._ultReadyToasted) {
+            scene._ultReadyToasted = true;
+            if (typeof Effects !== 'undefined') {
+                Effects.damageText(scene, x, y - R - 16, I18n.t('ult.ready'), '#ffd54a', { big: true });
+            }
+        }
+    };
+
+    body.on('pointerdown', () => {
+        if ((scene.ultGauge || 0) < Balance.ULT_MAX) return;
+        scene.tweens.add({ targets: [body, icon, label], scale: 0.88, duration: 70, yoyo: true });
+        scene.castUltimate();
+    });
+
+    scene.events.on('ultChanged', redraw);
+    scene.events.once('shutdown', () => scene.events.off('ultChanged', redraw));
+    redraw();
+}
+
+// =============================================================================
+// Settlement panel (every 5th stage - or a single REPLAY clear, Task 10)
 // =============================================================================
 function showSettlement(scene, opts) {
     const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
@@ -227,10 +289,21 @@ function showSettlement(scene, opts) {
     items.push(scene.add.nineslice(W / 2, H * 0.44, 'btn-tex', 0, 560, 460, 24, 24, 24, 24)
         .setTint(0x201a33).setDepth(20));
 
-    items.push(scene.add.text(W / 2, H * 0.3, `STAGES ${opts.from}–${opts.to} CLEAR!`, {
+    // v3.0 Task 10: a replay settles a SINGLE stage - "STAGES N-N CLEAR!"
+    // would read oddly, so it gets its own singular title + a REPLAY badge.
+    const title = opts.replay ? `STAGE ${opts.to} CLEAR!` : `STAGES ${opts.from}–${opts.to} CLEAR!`;
+    items.push(scene.add.text(W / 2, H * 0.3, title, {
         fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold',
         color: '#7dffb2'
     }).setOrigin(0.5).setDepth(21));
+
+    if (opts.replay) {
+        items.push(scene.add.nineslice(W / 2, H * 0.35, 'pill-tex', 0, 150, 40, 16, 16, 14, 14)
+            .setTint(0xff5ec4).setDepth(21));
+        items.push(scene.add.text(W / 2, H * 0.35, I18n.t('map.replay'), {
+            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#141020'
+        }).setOrigin(0.5).setDepth(22));
+    }
 
     items.push(scene.add.image(W / 2 - 80, H * 0.42, 'coin-tex').setDepth(21).setScale(1.4));
     const goldTxt = scene.add.text(W / 2 - 40, H * 0.42, '+' + Balance.fmt(opts.gold), {
@@ -323,10 +396,19 @@ class MenuScene extends Phaser.Scene {
             'SMOOSH!  (STAGE ' + st.stage + ')', 0xff5ec4,
             () => SmooshGame.goto('GameScene'));
 
-        makeUiButton(this, W / 2 - 135, H * 0.58 + 140, 250, 96, '🛒 SHOP', 0x2fa86b,
+        makeUiButton(this, W / 2 - 235, H * 0.58 + 140, 220, 96, '🛒 SHOP', 0x2fa86b,
             () => SmooshGame.goto('ShopScene'));
-        makeUiButton(this, W / 2 + 135, H * 0.58 + 140, 250, 96, '⚔ BATTLE', 0x5aa9ff,
+        // v3.0 Task 10: MAP nav button, alongside SHOP/BATTLE (map-pin emoji -
+        // no dedicated procedural texture exists, matching this row's existing
+        // emoji-prefixed-label convention rather than adding a new icon asset).
+        makeUiButton(this, W / 2, H * 0.58 + 140, 220, 96, '📍 ' + I18n.t('map.navButton'), 0xffa94a,
+            () => SmooshGame.goto('StageMapScene'));
+        makeUiButton(this, W / 2 + 235, H * 0.58 + 140, 220, 96, '⚔ BATTLE', 0x5aa9ff,
             () => SmooshGame.goto('PvpScene'));
+        // v3.0 Task 11: DEX nav button, own row below SHOP/MAP/BATTLE (no
+        // room left in that row - all 720px of width is already spoken for).
+        makeUiButton(this, W / 2, H * 0.58 + 252, 300, 84, '📖 ' + I18n.t('dex.title'), 0xb06fff,
+            () => SmooshGame.goto('DexScene'));
 
         // wallet
         this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26);

@@ -30,7 +30,14 @@ const SaveManager = {
             shards: 0,         // GLOBAL pet shards (v2.1: was per-species petShards)
             items: { glove: null, ring: null, charm: null }, // { rarity, level } | null
             gachaPity: 0,      // rolls since the last epic+ (pity at CONFIG.GACHA.pityAt)
-            pvp: { rating: 1000, wins: 0, losses: 0 }
+            pvp: { rating: 1000, wins: 0, losses: 0 },
+            pvpTeam: [],       // v3.0 Task 13: species ids picked for the PvP team picker
+            // --- v3.0 ---
+            starterGranted: false,
+            repPet: null,      // species id of the representative (ultimate) pet; null = first owned
+            kills: {},         // v3.0 Task 11: per-species kill counters (Dex.monsterUnlocked)
+            petsSeen: [],      // v3.0 Task 11: every pet species ever owned (Dex.petUnlocked)
+            adsRemoved: false  // v3.0 Task 12: $0.99 remove-ads IAP (banner + interstitial gate)
         };
     },
 
@@ -65,6 +72,29 @@ const SaveManager = {
         } catch (e) {
             this.state = this._freshState();
         }
+        // v3.0: starter pet — everyone owns the first common animal.
+        if (!this.state.starterGranted) {
+            const starterId = (typeof PET_SPECIES !== 'undefined' && PET_SPECIES[0])
+                ? PET_SPECIES[0].id : 'cat';
+            if (!this.state.pets.some(p => p.species === starterId)) {
+                this.state.pets.push({ species: starterId, rarity: 'common', level: 1, necklace: null });
+            }
+            this.state.starterGranted = true;
+            this.persist();
+        }
+        // v3.0 Task 11: seed petsSeen from every currently-owned pet, so
+        // existing owners (upgrading from a save with no petsSeen field, or
+        // pets granted outside Gacha.roll like the starter above) immediately
+        // see them unlocked in the Dex.
+        if (!Array.isArray(this.state.petsSeen)) this.state.petsSeen = [];
+        let petsSeenChanged = false;
+        for (const p of this.state.pets) {
+            if (!this.state.petsSeen.includes(p.species)) {
+                this.state.petsSeen.push(p.species);
+                petsSeenChanged = true;
+            }
+        }
+        if (petsSeenChanged) this.persist();
         return this.state;
     },
 

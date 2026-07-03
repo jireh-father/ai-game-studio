@@ -52,6 +52,10 @@ const Gacha = {
         const owned = state.pets.find(p => p.species === species);
         if (!owned) {
             state.pets.push({ species, rarity, level: 1, necklace: null });
+            // v3.0 Task 11: track every species ever granted for the Dex
+            // (Dex.petUnlocked), independent of whether it's still owned.
+            if (!Array.isArray(state.petsSeen)) state.petsSeen = [];
+            if (!state.petsSeen.includes(species)) state.petsSeen.push(species);
             return { kind: 'new', species, rarity };
         }
         if (this.rarityRank(rarity) > this.rarityRank(owned.rarity)) {

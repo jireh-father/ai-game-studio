@@ -28,10 +28,13 @@ const CONFIG = {
 
     // UI order matters: this is the upgrade bar layout order.
     UPGRADES: [
-        // tap costGrowth 1.352 + dmg growth 1.35 (HP 1.25^n, gold 1.22^n) =
-        // the v2.2 equilibrium: greedy sim stays in the 1-6 taps band,
-        // ~46% of stages need 2+ taps (see tests/balance.test.js).
-        { id: 'tap',    name: 'Tap Power',    baseCost: 10, costGrowth: 1.352, icon: 'up-tap',    color: 0x5aa9ff },
+        // v3.0: waves are uncapped (Balance.waveSize), so the greedy sim's
+        // income grows unboundedly and the optimal player 1-taps too much.
+        // tap costGrowth raised 1.352 -> 1.372 (the highest +0.002 step that
+        // keeps the 1-6 taps band intact) to restore meaningful difficulty:
+        // greedy sim stays in the 1-6 band, ~42% of stages need 2+ taps
+        // (see tests/balance.test.js). Any higher pushes tail stages past 6.
+        { id: 'tap',    name: 'Tap Power',    baseCost: 10, costGrowth: 1.372, icon: 'up-tap',    color: 0x5aa9ff },
         { id: 'crit',   name: 'Critical',     baseCost: 25, costGrowth: 1.22, icon: 'up-crit',   color: 0xffe066, maxLevel: 22 },
         { id: 'splash', name: 'Splash',       baseCost: 40, costGrowth: 1.30, icon: 'up-splash', color: 0xff9a5a, maxLevel: 10 },
         { id: 'fever',  name: 'Fever Charge', baseCost: 30, costGrowth: 1.25, icon: 'up-fever',  color: 0xff5ec4 },
@@ -97,11 +100,18 @@ const CONFIG = {
         bombMult: 8,        // bomb damage = tapDmg x this, hits EVERYTHING
         healPct: 0.3,       // nest heal = 30% of max
         feverCharge: 10,    // fever gauge points
-        goldMult: 3         // gold pouch = goldPerMob x this
+        goldMult: 3,        // gold pouch = goldPerMob x this
+        // v3.0: click-to-collect - drops sit on the field and must be tapped.
+        lifetimeMs: 8000,   // despawns (uncollected) at this age
+        blinkFromMs: 6000   // starts blinking as a "running out of time" cue
     },
 
+    // v3.0: waves grow forever, so mobs stream in in batches instead of all at
+    // once - keep at most concurrentMax on the field, trickle reinforcements in.
+    SPAWN: { concurrentMax: 28, trickleDelayMs: 350 },
+
     PVP: {
-        teamSize: 3,
+        teamSize: 5,
         tickMs: 800,          // one attack round per tick in presentation
         ratingWin: 20, ratingLose: -10,
         botPowerJitter: 0.15  // bot team = my power +-15%

@@ -3,8 +3,9 @@
 // Pure PvP auto-battle simulation (pets vs pets). Deterministic with an
 // injected rng; PvpScene only REPLAYS the returned log with visuals.
 //
-// Element counters (Balance.elementMult): fire>leaf>water>fire, electric
-// ignores counters. Species roles:
+// Element counters (Balance.elementMult): v3.0 8-element chart - fire/water/
+// leaf/wind/electric/ice/light/dark, 1.5 strong / 0.7 weak / 1.0 neutral
+// (see balance.js _STRONG for the exact pairs). Species roles:
 //   flare  - heavy single hit (x2.0)
 //   zappy  - chain: hits 2 enemies (x1.0 / x0.6), neutral element
 //   aqua   - splash: hits ALL enemies (x0.65 each)

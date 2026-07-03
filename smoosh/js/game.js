@@ -24,15 +24,41 @@ const Feel = {
 class GameScene extends Phaser.Scene {
     constructor() { super({ key: 'GameScene' }); }
 
+    // v3.0 Task 10: stage-map REPLAY. { replayStage: N } from StageMapScene
+    // plays stage N without touching SaveManager.state.stage/bestStage; gold
+    // pays Balance.replayGoldMult (see stageGoldMult() below), drops stay 100%.
+    init(data) {
+        this.replayStage = (data && data.replayStage) || null;
+    }
+
     create() {
         this.pool = [];
         this.active = [];
+        this.pendingWave = [];     // v3.0: not-yet-spawned wave entries (batch stream)
+        this.trickleEvent = null;  // v3.0: reinforcement loop timer
+        this.liveDrops = [];       // v3.0: on-field, uncollected item-drop sprites
+        this.dropTickEvent = null; // v3.0: shared lifetime/blink timer for liveDrops
         this.combo = 0;
         this.comboLeft = 0;
         this.feverLeft = 0;
         this.stageGoldSinceSettle = 0;
         this.transitioning = false;
         this._lastPointer = null;
+
+        // v3.0 Task 9: team-wide auras a PET casts (buffaura/critaura/
+        // goldaura) live here - {stat: {add, until}} - see teamBuffAdd().
+        // The representative-pet ultimate gauge: +Balance.ultGain per kill.
+        this.teamBuffs = {};
+        this.ultGauge = 0;
+        this._ultReadyToasted = false;
+
+        // v3.0: kill the trickle loop (and any uncollected drops) if the scene
+        // is torn down mid-stage (back to menu / restart) so nothing leaks or
+        // fires late.
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            this.stopTrickle();
+            this.clearDrops();
+        });
 
         // subtle field boundary
         const F = CONFIG.FIELD;
@@ -42,13 +68,22 @@ class GameScene extends Phaser.Scene {
         this.buildHud();
         buildUpgradeBar(this);
         buildFeverGauge(this);
+        buildUltButton(this);
         this.wireInput();
 
         // v2.0: the nest we defend + our pet squad
         this.nest = new Nest(this);
         this.fieldPets = new FieldPets(this);
 
-        this.startStage(SaveManager.state.stage);
+        this.startStage(this.replayStage || SaveManager.state.stage);
+    }
+
+    // v3.0 Task 10: the SINGLE funnel every gold credit routes through so a
+    // future credit site can't forget the replay nerf. 1 outside replay;
+    // Balance.replayGoldMult (0.3) while replaying an already-cleared stage.
+    // Item DROP RATES are untouched by design - only gold amounts shrink.
+    stageGoldMult() {
+        return this.replayStage ? Balance.replayGoldMult : 1;
     }
 
     // -------------------------------------------------------------------------
@@ -140,6 +175,14 @@ class GameScene extends Phaser.Scene {
         for (const el of this._statEls) el.val.setText(el.get(u));
     }
 
+    // v3.0 Task 9: current +add from a live pet-cast team aura (buffaura/
+    // critaura/goldaura), or 0 if none is active. See Effects._skillBuff
+    // (effects.js) for how a pet's cast populates this.teamBuffs.
+    teamBuffAdd(stat) {
+        const b = this.teamBuffs && this.teamBuffs[stat];
+        return (b && this.time.now < b.until) ? b.add : 0;
+    }
+
     setCombo(n) {
         if (n < 2) { this.comboText.setText('').clearTint(); return; }
         this.comboText.setText('COMBO ×' + n);
@@ -163,23 +206,85 @@ class GameScene extends Phaser.Scene {
         this.stageText.setText('S.' + n + ' · Lv.' + SaveManager.state.level);
         this.transitioning = false;
         if (this.nest) this.nest.repair(); // fresh nest every stage
+        // v3.0 review fix: single funnel for BOTH normal stage-clear
+        // progression and the nest-break retry path - resets the revive
+        // passive's once-per-stage flag and purges any clone/summon spirits
+        // left over from the previous stage (see FieldPets.onStageStart).
+        if (this.fieldPets) this.fieldPets.onStageStart();
 
+        // v3.0: waves grow forever, so we queue the FULL composed wave and only
+        // ever keep CONFIG.SPAWN.concurrentMax alive at once. The boss is always
+        // entry 0 (spawner.js), so it lands in the very first batch.
         const wave = Spawner.composeWave(n, Math.random);
+        this.pendingWave = wave.slice();
+        this.fillFromQueue();  // first batch (<= concurrentMax, boss included)
+        this.startTrickle();   // stream reinforcements as slots open
+        this.onWaveSpawned();  // hook (boss HP bar etc.)
+    }
+
+    // Spawn a single queued wave entry into the field.
+    spawnEntry(entry) {
         const F = CONFIG.FIELD;
-        for (const entry of wave) {
-            const def = SPECIES.find(s => s.id === entry.speciesId);
-            const m = this.acquireMonster();
-            const isBoss = !!entry.boss || def.kind === 'boss';
-            const x = isBoss
-                ? F.x + F.w / 2
-                : F.x + def.radius + Math.random() * (F.w - def.radius * 2);
-            const y = isBoss
-                ? F.y + F.h / 2
-                : F.y + def.radius + Math.random() * (F.h - def.radius * 2);
-            m.spawn(def, n, x, y, { boss: entry.boss });
-            this.active.push(m);
+        let def = SPECIES.find(s => s.id === entry.speciesId);
+        // v3.0.2: a skill-spawned clone/summon (Effects._skillSpawn, effects.js)
+        // that got cap-queued (field already full) carries a downscale hint so it
+        // spawns at the SAME radius x0.6 / hp x0.3 it would have gotten immediately.
+        if (entry.scale) {
+            def = Object.assign({}, def, {
+                radius: Math.max(14, Math.round(def.radius * entry.scale.r)),
+                hpMult: def.hpMult * entry.scale.hp
+            });
         }
-        this.onWaveSpawned(); // hook (boss HP bar etc. in Task 7)
+        const m = this.acquireMonster();
+        const isBoss = !!entry.boss || def.kind === 'boss';
+        const x = isBoss
+            ? F.x + F.w / 2
+            : F.x + def.radius + Math.random() * (F.w - def.radius * 2);
+        const y = isBoss
+            ? F.y + F.h / 2
+            : F.y + def.radius + Math.random() * (F.h - def.radius * 2);
+        m.spawn(def, this.stageNum, x, y, { boss: entry.boss, noSkill: entry.noSkill });
+        if (entry.noSplit) m.noSplit = true; // v3.0.1: cap-queued splitter children stay noSplit
+        this.active.push(m);
+        return m;
+    }
+
+    // v3.0.1: single point of truth for "m is no longer on the field". Dead
+    // monsters MUST be spliced out of this.active the instant they die/despawn -
+    // otherwise acquireMonster() can recycle the pooled instance while its OLD
+    // slot is still sitting in this.active, producing a duplicate reference
+    // (alive-count double-counts it, update() ticks it twice/frame). Safe to
+    // call from onKill() (fresh call stack from input) and onMonsterDespawned()
+    // (called from inside Monster.update(), which itself is only ever invoked
+    // over a SNAPSHOT copy of this.active - see update() below - so splicing
+    // the real array here never corrupts an in-flight forward iteration).
+    removeActive(m) {
+        const idx = this.active.indexOf(m);
+        if (idx !== -1) this.active.splice(idx, 1);
+    }
+
+    // v3.0: top the field back up to concurrentMax from the pending queue.
+    // Called at stage start, on every kill/despawn, and on the trickle timer.
+    fillFromQueue() {
+        if (this.transitioning || !this.pendingWave) return;
+        let alive = this.active.filter(m => m.alive).length;
+        while (this.pendingWave.length > 0 && alive < CONFIG.SPAWN.concurrentMax) {
+            this.spawnEntry(this.pendingWave.shift());
+            alive++;
+        }
+    }
+
+    startTrickle() {
+        this.stopTrickle(); // never stack trickle timers across stages
+        this.trickleEvent = this.time.addEvent({
+            delay: CONFIG.SPAWN.trickleDelayMs,
+            loop: true,
+            callback: () => this.fillFromQueue()
+        });
+    }
+
+    stopTrickle() {
+        if (this.trickleEvent) { this.trickleEvent.remove(false); this.trickleEvent = null; }
     }
 
     onWaveSpawned() {
@@ -235,20 +340,31 @@ class GameScene extends Phaser.Scene {
 
     checkStageClear() {
         if (this.transitioning) return;
+        // v3.0: not clear until the whole wave has streamed in AND the field is empty
+        if (this.pendingWave && this.pendingWave.length > 0) return;
         if (this.aliveBlocking().length > 0) return;
         this.onStageClear();
     }
 
     onStageClear() {
         this.transitioning = true;
+        this.stopTrickle(); // no reinforcements during the clear animation
+        this.clearDrops();  // v3.0: uncollected drops don't carry into next stage
         Feel.stageClear();
 
-        SaveManager.state.stage = this.stageNum + 1;
-        SaveManager.state.bestStage = Math.max(SaveManager.state.bestStage, SaveManager.state.stage);
+        // v3.0 Task 10: a REPLAY clear never advances the map pointer - the
+        // player is re-running an already-cleared stage, not progressing.
+        if (!this.replayStage) {
+            SaveManager.state.stage = this.stageNum + 1;
+            SaveManager.state.bestStage = Math.max(SaveManager.state.bestStage, SaveManager.state.stage);
+        }
 
         // clear XP + milestone gems
         this.gainXp(this.stageNum);
-        if (this.stageNum % CONFIG.GEMS.stageMilestoneEvery === 0) {
+        // Milestone gems are a one-time "first time reaching this stage"
+        // reward (premium currency) - gated off replay so re-clearing a
+        // stage%25==0 stage can't be farmed for infinite free gems.
+        if (!this.replayStage && this.stageNum % CONFIG.GEMS.stageMilestoneEvery === 0) {
             SaveManager.state.gems += CONFIG.GEMS.stageMilestoneGems;
             if (typeof Effects !== 'undefined') {
                 Effects.damageText(this, CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.5,
@@ -276,8 +392,27 @@ class GameScene extends Phaser.Scene {
 
     afterStageClear() {
         // Interstitial pacing is ads.js's decision - report every clear.
+        // v3.0 Task 10 note: left UNCONDITIONAL for replay clears too - the
+        // adStageCounter is interstitial-cadence pacing, not stage progress,
+        // and there's no reason a replayed clear should be ad-exempt.
         if (typeof AdsManager !== 'undefined' && AdsManager.onStageClear) {
             AdsManager.onStageClear();
+        }
+
+        // v3.0 Task 10: replay clears ALWAYS settle (single stage, tagged
+        // REPLAY) and return to the map - they never fall through to the
+        // normal "every 5th stage" cadence or auto-continue to a next stage.
+        if (this.replayStage) {
+            const gold = this.stageGoldSinceSettle;
+            this.stageGoldSinceSettle = 0;
+            showSettlement(this, {
+                from: this.stageNum,
+                to: this.stageNum,
+                gold,
+                replay: true,
+                onContinue: () => this.scene.start('StageMapScene')
+            });
+            return;
         }
 
         // Settlement every 5th stage (before the next wave)
@@ -299,9 +434,27 @@ class GameScene extends Phaser.Scene {
     // Input & damage
     // -------------------------------------------------------------------------
     wireInput() {
-        this.input.on('pointerdown', (pointer) => {
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+            // v3.0 Task 9: the ULT button floats over the field's bottom-right
+            // corner (ui.js buildUltButton) - a tap on it must never ALSO
+            // smoosh whatever monster happens to sit underneath. Phaser hands
+            // every hit-tested interactive object under the pointer here.
+            if (currentlyOver && this._ultButtonBody && currentlyOver.indexOf(this._ultButtonBody) !== -1) return;
+
             this._lastPointer = { x: pointer.x, y: pointer.y };
             if (this.transitioning) return;
+
+            // v3.0: drops render above monsters and get first claim on a tap -
+            // collecting a drop must never ALSO smoosh a monster sitting under
+            // it. Checked (and consumed, via `return`) before the monster loop
+            // below runs at all, so the two can never both fire off one tap.
+            for (let i = this.liveDrops.length - 1; i >= 0; i--) {
+                const spr = this.liveDrops[i];
+                if (spr.active && this.dropContains(spr, pointer.x, pointer.y)) {
+                    this.collectDrop(spr, i);
+                    return;
+                }
+            }
 
             // topmost = latest spawned first; phased-out ghosts are untappable
             for (let i = this.active.length - 1; i >= 0; i--) {
@@ -320,7 +473,10 @@ class GameScene extends Phaser.Scene {
     applyTap(m, x, y) {
         const up = SaveManager.state.upgrades;
         const eff = Balance.effective(SaveManager.state);
-        const isCrit = Math.random() < eff.crit;
+        // v3.0 Task 9: a pet-cast critaura (unicorn/toucan) adds straight onto
+        // the player's own crit chance while it's active.
+        const critChance = Math.min(0.6, eff.crit + this.teamBuffAdd('crit'));
+        const isCrit = Math.random() < critChance;
         let dmg = eff.tapDmg * (isCrit ? 5 : 1);
         if (this.feverLeft > 0) dmg *= CONFIG.FEVER.damageMult;
 
@@ -411,6 +567,11 @@ class GameScene extends Phaser.Scene {
     }
 
     onKill(m, source) {
+        // v3.0.1: take m off the roster THE INSTANT it's confirmed dead, before
+        // any of the below (onSpecialDeath / fillFromQueue) can trigger a pool
+        // reuse that would otherwise push this same reference back in as a dupe.
+        this.removeActive(m);
+
         // gold - boss reward scales with its HP ramp so hard bosses pay big
         const eff = Balance.effective(SaveManager.state);
         const goldBase = Balance.goldPerMob(this.stageNum);
@@ -418,14 +579,25 @@ class GameScene extends Phaser.Scene {
             ? CONFIG.BOSS.goldMult * (Balance.bossHpMult(this.stageNum) / CONFIG.BOSS.hpMult)
             : m.def.goldMult;
         if (source === 'pet:leaf') mult *= 1.5; // leaf pets' golden touch
-        const gold = Math.max(1, Math.round(goldBase * mult * eff.goldMult));
+        // v3.0 Task 9: a pet-cast goldaura (duck/sheep) adds straight onto
+        // the player's own gold multiplier while it's active.
+        const goldBuff = 1 + this.teamBuffAdd('gold');
+        const gold = Math.max(1, Math.round(goldBase * mult * eff.goldMult * goldBuff * this.stageGoldMult()));
         SaveManager.state.totalKills++;
+        // v3.0 Task 11: per-species kill counter for the Dex (Dex.monsterUnlocked).
+        // No dedicated persist - piggybacks the existing settlement persist.
+        const kills = SaveManager.state.kills || (SaveManager.state.kills = {});
+        kills[m.def.id] = (kills[m.def.id] || 0) + 1;
         SaveManager.addGold(gold);
         this.stageGoldSinceSettle += gold;
         this.refreshGold();
 
         // XP: every kill feeds the player level
         this.gainXp(1);
+
+        // v3.0 Task 9: representative-pet ultimate gauge, +2/kill (clamped)
+        this.ultGauge += Balance.ultGain(this.ultGauge);
+        this.events.emit('ultChanged');
 
         // combo is FINGER skill - only player taps chain it
         if (!source) {
@@ -456,24 +628,46 @@ class GameScene extends Phaser.Scene {
             Effects.damageText(this, m.x, m.y, '+' + Balance.fmt(gold), '#ffd54a');
         }
 
+        // v3 review fix: a drop that spawns then despawns in the very same
+        // call stack (because this kill also clears the stage - onStageClear
+        // below calls clearDrops()) is an invisible loss for the player, so
+        // skip the ROLL entirely on the stage-clearing kill. This mirrors
+        // checkStageClear()'s own predicate (m is already off this.active -
+        // removeActive() ran at the top of onKill), except for a splitter
+        // kill, which never actually clears since onSpecialDeath() below
+        // always queues its 2 children first.
+        const willSplit = m.def.kind === 'splitter' && !m.noSplit;
+        const stageWouldClear = !this.transitioning && !willSplit &&
+            (!this.pendingWave || this.pendingWave.length === 0) &&
+            this.aliveBlocking().length === 0;
+
         // v2.3: random item drops - pick up = instant use
-        if (!m.isBoss && Math.random() < CONFIG.DROPS.chance) this.spawnItemDrop(m.x, m.y);
+        if (!m.isBoss && !stageWouldClear && Math.random() < CONFIG.DROPS.chance) this.spawnItemDrop(m.x, m.y);
 
         this.onSpecialDeath(m); // splitter/jackpot/boss consequences
         m.burst();
+        this.fillFromQueue();   // v3.0: a slot opened - stream in reinforcements
         this.checkStageClear();
     }
 
     _rollDropType() {
-        const total = CONFIG.DROPS.weights.reduce((a, w) => a + w[1], 0);
+        // v3 Task 10: during replay, exclude 'gem' drops (no dead pickups).
+        // Non-replay probability mass redistributes proportionally across remaining types.
+        const weights = this.replayStage
+            ? CONFIG.DROPS.weights.filter(w => w[0] !== 'gem')
+            : CONFIG.DROPS.weights;
+        const total = weights.reduce((a, w) => a + w[1], 0);
         let roll = Math.random() * total;
-        for (const [type, w] of CONFIG.DROPS.weights) {
+        for (const [type, w] of weights) {
             roll -= w;
             if (roll <= 0) return type;
         }
         return 'gold';
     }
 
+    // v3.0: click-to-collect - the drop lands and STAYS on the field until the
+    // player taps it (applies) or it times out (Balance.dropPhase - despawns
+    // uncollected). Replaces the old v2.3 auto-apply-on-tween-complete flow.
     spawnItemDrop(x, y) {
         const type = this._rollDropType();
         const rarity = (type === 'gear' || type === 'necklace')
@@ -485,20 +679,113 @@ class GameScene extends Phaser.Scene {
         const tint = rarity ? RARITY_COLORS[rarity]
             : { fever: 0xff5ec4, gear: 0x5aa9ff }[type] || 0xffffff;
 
-        const spr = this.add.image(x, y, tex)
+        // depth 9 keeps drops rendered above every monster part (sprite=3,
+        // shadow=7, face=8) so a drop is always visibly - and tap-priority -
+        // on top of whatever it landed on.
+        const spr = this.add.image(x, y - 26, tex)
             .setDepth(9).setDisplaySize(44, 44);
         if (tint !== 0xffffff) spr.setTint(tint);
-        this.tweens.add({ targets: spr, y: y - 14, duration: 320, yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });
         if (typeof Effects !== 'undefined') Effects.ring(this, x, y, tint, 60);
 
-        this.time.delayedCall(1000, () => {
-            if (!spr.active) return;
-            this.tweens.add({
-                targets: spr, x: CONFIG.WIDTH / 2, y: 110, scale: 0.3, duration: 380,
-                ease: 'Quad.easeIn',
-                onComplete: () => { spr.destroy(); this.applyDrop(type, rarity, x, y); }
-            });
+        spr.dropType = type;
+        spr.dropRarity = rarity;
+        spr.dropX = x;
+        spr.dropY = y;
+        spr.spawnTime = this.time.now;
+
+        // small bounce landing, then a gentle sparkle pulse loop (scale only -
+        // alpha is reserved for the blink-to-despawn lifetime cue below, so
+        // the two visual effects can never fight over the same property).
+        this.tweens.add({ targets: spr, y, duration: 340, ease: 'Bounce.easeOut' });
+        this.tweens.add({
+            targets: spr, scale: spr.scale * 1.16, duration: 460,
+            yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
+
+        // Interactive purely for the hand-cursor affordance / hit-area intent
+        // (>=48x48px, matching the native 48x48 drop textures) - actual tap
+        // collection is resolved centrally in wireInput() (see dropContains/
+        // collectDrop) so a drop-tap can deterministically take priority over
+        // a monster underneath it without depending on Phaser's game-object-
+        // vs-scene pointerdown event ordering.
+        spr.setInteractive({ useHandCursor: true });
+        const hitSize = Math.max(48, spr.width);
+        spr.input.hitArea.setSize(hitSize, hitSize);
+
+        this.liveDrops.push(spr);
+        this.startDropTick();
+    }
+
+    // Circular hit-test, same style as Monster.contains(), sized to at least
+    // a 48px-diameter tap target regardless of the sprite's display size.
+    dropContains(spr, x, y) {
+        const r = Math.max(24, spr.displayWidth / 2, spr.displayHeight / 2);
+        const dx = x - spr.x, dy = y - spr.y;
+        return dx * dx + dy * dy <= r * r;
+    }
+
+    // Player tapped a live drop: apply its effect, destroy the sprite, tick.
+    collectDrop(spr, idx) {
+        this.liveDrops.splice(idx, 1);
+        this.tweens.killTweensOf(spr);
+        const { dropType, dropRarity, dropX, dropY } = spr;
+        spr.destroy();
+        Haptic.tick(0.3);
+        this.applyDrop(dropType, dropRarity, dropX, dropY);
+    }
+
+    // Shared 150ms lifetime timer for every live drop - lazily started on the
+    // first drop, stopped once none remain (mirrors startTrickle/stopTrickle).
+    startDropTick() {
+        if (this.dropTickEvent) return;
+        this.dropTickEvent = this.time.addEvent({
+            delay: 150, loop: true, callback: () => this.tickDrops()
+        });
+    }
+
+    stopDropTick() {
+        if (this.dropTickEvent) { this.dropTickEvent.remove(false); this.dropTickEvent = null; }
+    }
+
+    tickDrops() {
+        const now = this.time.now;
+        for (let i = this.liveDrops.length - 1; i >= 0; i--) {
+            const spr = this.liveDrops[i];
+            if (!spr.active) { this.liveDrops.splice(i, 1); continue; }
+            const phase = Balance.dropPhase(now - spr.spawnTime);
+            if (phase === 'gone') {
+                this.liveDrops.splice(i, 1);
+                this.despawnDrop(spr);
+            } else if (phase === 'blink') {
+                spr.alpha = (spr.alpha > 0.6) ? 0.25 : 1;
+            }
+        }
+        if (this.liveDrops.length === 0) this.stopDropTick();
+    }
+
+    // Lifetime ran out uncollected: fade out and destroy WITHOUT applying.
+    despawnDrop(spr) {
+        this.tweens.killTweensOf(spr);
+        const x = spr.x, y = spr.y;
+        this.tweens.add({
+            targets: spr, alpha: 0, duration: 220, ease: 'Quad.easeIn',
+            onComplete: () => spr.destroy()
+        });
+        if (typeof Effects !== 'undefined') {
+            Effects.damageText(this, x, y - 10, I18n.t('drop.despawned'), '#5a5570');
+        }
+    }
+
+    // Wipe every uncollected drop with no effect applied - stage clear, nest
+    // broken (stage retry), and scene SHUTDOWN all mean "this stage is over,
+    // whatever's still sitting on the field doesn't carry over."
+    clearDrops() {
+        for (const spr of this.liveDrops) {
+            this.tweens.killTweensOf(spr);
+            if (spr.active) spr.destroy();
+        }
+        this.liveDrops.length = 0;
+        this.stopDropTick();
     }
 
     applyDrop(type, rarity, x, y) {
@@ -508,8 +795,11 @@ class GameScene extends Phaser.Scene {
 
         switch (type) {
             case 'gold': {
+                // v3.0 Task 10: the gold pouch drop is also gold FROM this
+                // stage, so it pays the same replay nerf as kills - only the
+                // AMOUNT shrinks, the 6% drop CHANCE itself is untouched.
                 const gold = Math.round(Balance.goldPerMob(this.stageNum) *
-                    CONFIG.DROPS.goldMult * eff.goldMult);
+                    CONFIG.DROPS.goldMult * eff.goldMult * this.stageGoldMult());
                 SaveManager.addGold(gold);
                 this.refreshGold();
                 msg = '+' + Balance.fmt(gold) + ' GOLD!'; color = '#ffd54a';
@@ -547,11 +837,19 @@ class GameScene extends Phaser.Scene {
                 Sfx.coin();
                 break;
             case 'gem':
-                st.gems += 1;
-                SaveManager.persist();
-                this.events.emit('goldChanged');
-                msg = '+1 GEM!'; color = '#7fd2ff';
-                Sfx.jackpot();
+                // v3.0 Task 10 review fix: field gem drops are also gem
+                // currency FROM this stage, so they need the same replay
+                // gate as milestone/boss gems - otherwise replaying any
+                // node farms free gems via the 2% drop-table weight.
+                // NOTE: unreachable in replay (_rollDropType excludes 'gem'),
+                // guard kept defensively.
+                if (!this.replayStage) {
+                    st.gems += 1;
+                    SaveManager.persist();
+                    this.events.emit('goldChanged');
+                    msg = '+1 GEM!'; color = '#7fd2ff';
+                    Sfx.jackpot();
+                }
                 break;
             case 'gear': {
                 const slot = ['glove', 'ring', 'charm'][Math.floor(Math.random() * 3)];
@@ -560,7 +858,11 @@ class GameScene extends Phaser.Scene {
                     st.items[slot] = { rarity, level: cur ? cur.level : 0 };
                     msg = '⚔ ' + rarity.toUpperCase() + ' ' + slot.toUpperCase() + '!';
                 } else {
-                    const refund = Math.round(Balance.chestCost(st.bestStage) * 0.3);
+                    // v3.0 Task 10 review fix: this refund is stage gold too,
+                    // priced off bestStage (frontier pricing is correct for
+                    // normal runs) - it still needs the replay nerf so an
+                    // easy replay node can't cash out late-game-priced gold.
+                    const refund = Math.round(Balance.chestCost(st.bestStage) * 0.3 * this.stageGoldMult());
                     st.gold += refund;
                     msg = '⚔ dupe → +' + Balance.fmt(refund) + ' gold';
                 }
@@ -599,13 +901,19 @@ class GameScene extends Phaser.Scene {
         const kind = m.def.kind;
 
         if (m.isBoss) {
-            // gems for boss kills (king pays triple)
-            const gems = m.def.id === 'king' ? CONFIG.GEMS.kingKill : CONFIG.GEMS.bossKill;
-            SaveManager.state.gems += gems;
-            SaveManager.persist();
-            this.events.emit('goldChanged'); // refresh gem readout
-            if (typeof Effects !== 'undefined') {
-                Effects.damageText(this, m.x, m.y - 120, '+' + gems + ' 💎', '#7fd2ff');
+            // gems for boss kills (king pays triple) - v3.0 Task 10 review fix:
+            // gated off replay so re-clearing an already-cleared boss node
+            // can't be farmed for infinite free gems (mirrors the milestone-
+            // gem gate above). Kill FX/gold below stay unconditional - only
+            // the gem credit itself is skipped.
+            if (!this.replayStage) {
+                const gems = m.def.id === 'king' ? CONFIG.GEMS.kingKill : CONFIG.GEMS.bossKill;
+                SaveManager.state.gems += gems;
+                SaveManager.persist();
+                this.events.emit('goldChanged'); // refresh gem readout
+                if (typeof Effects !== 'undefined') {
+                    Effects.damageText(this, m.x, m.y - 120, '+' + gems + ' 💎', '#7fd2ff');
+                }
             }
 
             // === THE mega boss death: multi-stage explosion ===
@@ -663,11 +971,21 @@ class GameScene extends Phaser.Scene {
         if (kind === 'splitter' && !m.noSplit) {
             Feel.splitPop();
             const childDef = SPECIES.find(s => s.id === m.def.childId);
+            // v3.0.1: m is already off this.active (removeActive() ran at the
+            // top of onKill), so this.active's alive count is the TRUE field
+            // count. Children only skip the cap if there's real room; otherwise
+            // they queue at the FRONT of pendingWave as reinforcements instead
+            // of bypassing concurrentMax - stage clear still requires them.
             for (const dx of [-34, 34]) {
-                const c = this.acquireMonster();
-                c.spawn(childDef, this.stageNum, m.x + dx, m.y + Phaser.Math.Between(-16, 16));
-                c.noSplit = true;
-                this.active.push(c);
+                const trueAlive = this.active.filter(x => x.alive).length;
+                if (trueAlive < CONFIG.SPAWN.concurrentMax) {
+                    const c = this.acquireMonster();
+                    c.spawn(childDef, this.stageNum, m.x + dx, m.y + Phaser.Math.Between(-16, 16));
+                    c.noSplit = true;
+                    this.active.push(c);
+                } else {
+                    this.pendingWave.unshift({ speciesId: m.def.childId, noSplit: true });
+                }
             }
         }
 
@@ -715,6 +1033,9 @@ class GameScene extends Phaser.Scene {
     onNestBroken() {
         if (this.transitioning) return;
         this.transitioning = true;
+        this.stopTrickle();      // v3.0: stop reinforcements - the stage is lost
+        this.pendingWave = [];   // discard the rest of the broken stage's queue
+        this.clearDrops();       // v3.0: uncollected drops don't survive a retry
         Feel.bossBoom();
 
         // remaining monsters scatter (no gold)
@@ -775,11 +1096,93 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    // =========================================================================
+    // v3.0 Task 9 - the representative-pet ULTIMATE. Manual, one press per
+    // full gauge: the rep pet (SaveManager.state.repPet, or the first owned
+    // pet until Phase B's nest UI lets the player pick one) casts its own
+    // personality skill at x4 magnitude, then the gauge resets to 0.
+    //
+    // v3.0 review fix: the fallback target search only ever lands on a
+    // CASTABLE pet (FieldPets.isUltCastable - any non-passive archetype,
+    // clone/summon included now that both spawn real spirit agents). A
+    // passive-only rep pet (rage/revive) is treated the same as "KO'd" and
+    // skipped. If literally no standing pet is castable, the press is a
+    // total no-op: gauge is NOT spent, only a small button shake + haptic
+    // fire. This replaces the old behavior where a passive/no-op rep pet
+    // would still eat the full flash/SFX/gauge-reset for zero effect.
+    // =========================================================================
+    castUltimate() {
+        if (this.ultGauge < Balance.ULT_MAX || this.transitioning) return;
+        if (!this.fieldPets || !this.fieldPets.agents.length) return;
+
+        const st = SaveManager.state;
+        const repId = st.repPet || (st.pets[0] && st.pets[0].species);
+        const castable = a => !a.ko && this.fieldPets.isUltCastable(a);
+
+        // v3.0 review fix: the explicitly-chosen rep pet might be standing
+        // but carry a passive skill (rage/revive - can't be "cast" by a
+        // button press) - that's a guaranteed whiff, not a valid target, so
+        // fall through to the standing-pet search below exactly as if the
+        // rep pet were KO'd/undeployed.
+        let rep = this.fieldPets.agents.find(a => !a.ko && a.pet.species === repId);
+        if (rep && !castable(rep)) rep = null;
+        if (!rep) rep = this.fieldPets.agents.find(castable); // first standing, castable pet steps up
+        if (!rep) {
+            // v3.0 review fix: nobody on the field can actually DO anything
+            // with a press right now (whole squad KO'd, or every standing
+            // pet's skill is passive) - never consume a full gauge on a
+            // guaranteed whiff. Small button shake says "not yet"; gauge
+            // stays exactly as charged as it was.
+            if (this._ultButtonBody) {
+                this.tweens.add({
+                    targets: this._ultButtonBody, angle: 8, duration: 45, yoyo: true, repeat: 3,
+                    onComplete: () => { if (this._ultButtonBody.active) this._ultButtonBody.setAngle(0); }
+                });
+            }
+            Haptic.tick(0.3);
+            return;
+        }
+
+        const now = this.time.now;
+        const A = Skills.ARCHETYPES[rep.def.skill];
+        const ally = Monsters.ALLY_SKILLS.has(rep.def.skill) || Monsters.SPAWN_SKILLS.has(rep.def.skill);
+        const ctx = Object.assign(
+            ally ? this.fieldPets._allySkillCtx(rep, now) : this.fieldPets._enemySkillCtx(rep, now), { mult: 4 });
+        const eff = Skills.cast(rep.def.skill, ctx);
+
+        // Task 7 ruling (binding): x4 ultimate caps STATUS durationMs at 2x
+        // the archetype's base duration - damage/heal/shield scale fully.
+        if (eff && eff.kind === 'status' && eff.durationMs) {
+            eff.durationMs = Math.min(eff.durationMs, A.durationMs * 2);
+        }
+
+        // The gauge always resets on press - a manual activation is "spent"
+        // even if this particular cast whiffed (e.g. execute finds no prey).
+        this.ultGauge = 0;
+        this._ultReadyToasted = false;
+        this.events.emit('ultChanged');
+
+        Effects.screenFlash(this, 0xffffff, 0.7, 120);
+        Sfx.jackpot();
+        Haptic.heavy();
+        if (eff) {
+            Effects.applySkillEffect(this, 'pet', rep, eff);
+            Effects.ring(this, rep.sprite.x, rep.sprite.y, rep.def.color, rep.size * 2.4);
+        }
+    }
+
     // -------------------------------------------------------------------------
     update(time, delta) {
         const dt = delta / 1000;
 
-        for (const m of this.active) {
+        // v3.0.1: iterate a SNAPSHOT, not the live array. Monster.update() can
+        // synchronously despawn itself (goldie lifetime -> onMonsterDespawned
+        // -> removeActive splices the REAL this.active). Splicing the array a
+        // forward for-of is actively iterating over would skip the next
+        // element; iterating a copy sidesteps that while still letting
+        // removeActive() mutate the real array immediately (dedup takes effect
+        // right away, not just at end of frame).
+        for (const m of this.active.slice()) {
             if (m.alive) m.update(dt, this._lastPointer);
         }
 
@@ -828,6 +1231,12 @@ class GameScene extends Phaser.Scene {
     }
 
     onMonsterDespawned(m) {
+        // v3.0.1: same reasoning as onKill() - remove m before anything can
+        // reuse it via the pool. This runs from inside Monster.update(), which
+        // update() below only ever calls over a SNAPSHOT of this.active, so
+        // splicing the real array here is safe mid-frame.
+        this.removeActive(m);
+        this.fillFromQueue();   // v3.0: freed a slot - top up reinforcements
         this.checkStageClear();
     }
 
@@ -835,13 +1244,25 @@ class GameScene extends Phaser.Scene {
     // v2.4 - monster offense helpers (pets take hits, nest can be shelled)
     // =========================================================================
 
+    // v3.0: elemental type effectiveness for a monster attack landing on a
+    // pet (species.elem vs pet's element). Shows Super!/Resisted feedback.
+    // NEST damage (damageNest) is untouched - it stays neutral by design.
+    _petElemHit(m, a, dmg) {
+        const { dmg: edmg, mult } = Balance.applyElement(dmg, m.def.elem, a.def.element);
+        if (mult !== 1 && typeof Effects !== 'undefined') {
+            Effects.damageText(this, a.sprite.x, a.sprite.y - 68,
+                mult > 1 ? 'Super!' : 'Resisted', mult > 1 ? '#fff06a' : '#8d86a8');
+        }
+        return edmg;
+    }
+
     // Area strike: damages every pet in the circle; optionally chips the nest.
     monsterStrikeArea(m, x, y, radius, dmg, canHitNest) {
         if (this.fieldPets) {
             for (const a of this.fieldPets.agents) {
                 if (a.ko) continue;
                 if ((a.sprite.x - x) ** 2 + (a.sprite.y - y) ** 2 <= radius * radius) {
-                    this.fieldPets.damageAgent(a, dmg, m.def.color);
+                    this.fieldPets.damageAgent(a, this._petElemHit(m, a, dmg), m.def.color);
                 }
             }
         }
@@ -916,7 +1337,7 @@ class GameScene extends Phaser.Scene {
             const reach = m.r + 40;
             if ((a.sprite.x - m.x) ** 2 + (a.sprite.y - m.y) ** 2 <= reach * reach) {
                 m.chargeHit.add(a);
-                this.fieldPets.damageAgent(a, m._chargeDmg || 0, m.def.color);
+                this.fieldPets.damageAgent(a, this._petElemHit(m, a, m._chargeDmg || 0), m.def.color);
             }
         }
     }

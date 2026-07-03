@@ -54,7 +54,7 @@ class ShopScene extends Phaser.Scene {
         this.refreshWallet();
 
         // tab bar
-        this.tabs = ['EGGS', 'PETS', 'GEAR', 'NEST', 'GEMS'];
+        this.tabs = ['EGGS', 'PETS', 'GEAR', 'NEST', 'GEMS', 'DEX'];
         this.tabButtons = [];
         const tw = (W - 40) / this.tabs.length;
         this.tabs.forEach((name, i) => {
@@ -448,15 +448,37 @@ class ShopScene extends Phaser.Scene {
     // GEMS - premium currency + (dormant) IAP
     // =========================================================================
     tabGEMS() {
-        const W = CONFIG.WIDTH;
+        const W = CONFIG.WIDTH, st = SaveManager.state;
         this._text(W / 2, 210, '💎 GET GEMS', 36, '#7fd2ff');
         this._text(W / 2, 260,
             'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 20, '#8d86a8');
 
         IapManager.PRODUCTS.forEach((p, i) => {
-            const y = 380 + i * 180;
+            const y = 370 + i * 165;
             this._card(W / 2, y, 660, 160);
-            this._text(150, y, p.label, 40, '#7fd2ff');
+            this._text(150, y, p.type === 'noads' ? I18n.t('shop.removeAdsLabel') : p.label, 40, '#7fd2ff');
+
+            // v3.0 Task 12: remove-ads is a flag grant, not gems - own row logic.
+            if (p.type === 'noads') {
+                if (st.adsRemoved) {
+                    this._text(W / 2 + 130, y, I18n.t('shop.adsRemoved'), 26, '#7dffb2');
+                } else {
+                    this._btn(W / 2 + 130, y, 300, 84, I18n.t('shop.removeAds') + ' $0.99', 0x2fa86b,
+                        async () => {
+                            const r = await IapManager.purchase(p.id);
+                            if (r.ok) {
+                                Sfx.jackpot();
+                                if (typeof Effects !== 'undefined') Effects.confetti(this, W / 2, y);
+                                this.toast(I18n.t('shop.adsRemoved'));
+                                this.showTab('GEMS');
+                            } else if (r.reason === 'store_not_connected') {
+                                this.toast(I18n.t('shop.storeSoon'));
+                            }
+                        });
+                }
+                return;
+            }
+
             this._btn(W / 2 + 130, y, 300, 84, p.priceLabel, 0x2fa86b, async () => {
                 const r = await IapManager.purchase(p.id);
                 if (r.ok) {
@@ -469,8 +491,25 @@ class ShopScene extends Phaser.Scene {
                 }
             });
         });
-        this._text(W / 2, 1000, IapManager.storeConnected
+        this._text(W / 2, 1055, IapManager.storeConnected
             ? '' : '(billing goes live with the store release)', 18, '#5a5570');
+    }
+
+    // =========================================================================
+    // DEX - v3.0 Task 11: a full scene, not an inline panel, so this tab just
+    // navigates there instead of rendering into this.items like the others.
+    // =========================================================================
+    tabDEX() {
+        if (this.fromGame) {
+            // Same dance as the back button: close this overlay and launch the
+            // Dex on top of the still-paused GameScene (SmooshGame.goto would
+            // stop the paused GameScene too, since paused scenes aren't
+            // "active" and so are invisible to its stop-everything sweep).
+            this.scene.stop();
+            this.scene.launch('DexScene', { from: 'game' });
+        } else {
+            SmooshGame.goto('DexScene');
+        }
     }
 
     toast(msg) {

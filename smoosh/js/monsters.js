@@ -15,6 +15,7 @@ class Monster {
         this.hpFill = scene.add.image(-999, -999, 'white-tex')
             .setVisible(false).setDepth(8);
         this.alive = false;
+        this._gen = 0; // v3.0 review fix: bumped every spawn() - see _updateStatus
     }
 
     _hpColor(frac) {
@@ -45,6 +46,15 @@ class Monster {
         this.def = def;
         this.stage = stage;
         this.isBoss = !!(opts && opts.boss) || def.kind === 'boss';
+        // v3.0 review fix: acquireMonster() can hand back THIS SAME pooled
+        // instance synchronously from inside a DoT tick that just killed it
+        // (onKill -> onSpecialDeath/fillFromQueue -> acquireMonster ->
+        // spawn(), all before the DoT while-loop in _updateStatus below
+        // finishes unwinding). Bumping a generation counter here lets that
+        // loop notice "this object stopped being MY monster mid-tick" and
+        // bail before it either double-damages the freshly-spawned replacement
+        // or crashes reading a status key that spawn() just reset away.
+        this._gen++;
 
         const baseHP = Balance.mobHP(stage);
         this.maxHp = this.isBoss
@@ -83,6 +93,14 @@ class Monster {
         this.attackCd = 1 + Math.random() * 2; // desync first strikes
         this.charging = 0;                     // seconds left in a charge dash
         this.chargeHit = null;                 // agents already hit this charge
+
+        // v3.0: every species also has a PERSONALITY SKILL (Skills.ARCHETYPES).
+        // noSkill = true for skill-spawned clones/summons (they don't cast further).
+        this.noSkill = !!(opts && opts.noSkill);
+        this.skillCdUntil = this.scene.time.now + 1000 + Math.random() * 3000; // desync first casts
+        this.status = {};       // statusId -> {until, dotPerSec?, amount?, add?, forceTarget?}
+        this._wasStealthy = false;
+        this._wasFrozen = false;
 
         // quirks
         this.quirk = def.quirk || null;
@@ -152,7 +170,23 @@ class Monster {
 
         if (!this.awake) return; // sleeping blinky
 
+        // v3.0: expire/mirror statuses landed by a pet's skill or by this
+        // monster's own self-cast (stealth/shield/buffs). stun & freeze
+        // shut down BOTH the attack and the skill tick below - CC means CC.
+        const now = this.scene.time.now;
+        this._updateStatus(now, dt);
+        // v3.0 Task 9: a poison/burn DoT tick inside _updateStatus can kill
+        // this very monster (onKill runs synchronously). Bail out immediately
+        // so the rest of this frame's update() never acts on a corpse.
+        if (!this.alive) return;
+        if (this.status.stun || this.status.freeze) {
+            this._squashT += dt * 6;
+            this.updateHpBar();
+            return;
+        }
+
         this._updateAttack(dt);
+        this._updateSkill(now);
 
         // mid-charge: ram forward, trampling pets in the way
         if (this.charging > 0) {
@@ -190,6 +224,11 @@ class Monster {
             this.updateHpBar();
             return;
         }
+
+        // v3.0: 'slow' status - every moveType below reads this.speedBase, so
+        // scaling it here (and restoring after) is a single-point-of-truth fix.
+        const speedBaseSave = this.speedBase;
+        if (this.status.slow) this.speedBase *= Skills.STATUS.slow.speedMult;
 
         let speed = this.speedBase;
         let handled = false;
@@ -293,6 +332,8 @@ class Monster {
             this.sprite.setPosition(nx, ny);
         }
 
+        this.speedBase = speedBaseSave; // restore - slow only applies for this frame's move
+
         // idle wobble (jelly!) + shy shrink
         this._squashT += dt * 6;
         if (!this._squashing && this.moveType !== 'hop') {
@@ -335,12 +376,20 @@ class Monster {
         this.attackCd -= dt;
         if (this.attackCd > 0) return;
 
-        // nearest living pet
+        // nearest living, targetable pet - a pet's taunt cast overrides this
+        // entirely (mirrors pets.js's own forced-target pattern, including
+        // the untargetable/stealth guard).
         let target = null, best = Infinity;
-        for (const a of scene.fieldPets.agents) {
-            if (a.ko) continue;
-            const d2 = (a.sprite.x - this.x) ** 2 + (a.sprite.y - this.y) ** 2;
-            if (d2 < best) { best = d2; target = a; }
+        const taunt = this.status.taunt;
+        if (taunt && taunt.forceTarget && !taunt.forceTarget.ko && !taunt.forceTarget.status.stealth) {
+            target = taunt.forceTarget;
+            best = (target.sprite.x - this.x) ** 2 + (target.sprite.y - this.y) ** 2;
+        } else {
+            for (const a of scene.fieldPets.agents) {
+                if (a.ko || a.status.stealth) continue;
+                const d2 = (a.sprite.x - this.x) ** 2 + (a.sprite.y - this.y) ** 2;
+                if (d2 < best) { best = d2; target = a; }
+            }
         }
         const ranged = ['spit', 'spray', 'zap'].includes(this.attackType);
         let tx, ty, isNest = false;
@@ -355,8 +404,10 @@ class Monster {
         }
 
         const bossMult = this.isBoss ? 2.5 : 1;
+        // v3.0: orbity's buffaura skill temporarily juices nearby monsters' attacks
+        const buffMult = this.status.buff_dmg ? 1 + this.status.buff_dmg.add : 1;
         this.attackCd = A.cd * (this.isBoss ? 0.8 : 1) * (0.85 + Math.random() * 0.3);
-        const dmg = Balance.mobHP(this.stage) * A.dmg * bossMult;
+        const dmg = Balance.mobHP(this.stage) * A.dmg * bossMult * buffMult;
         Sfx.monsterAttack(this.r);
 
         switch (this.attackType) {
@@ -417,6 +468,87 @@ class Monster {
         }
     }
 
+    // =========================================================================
+    // v3.0 - personality skills (Skills.ARCHETYPES). Every species casts one;
+    // Effects.applySkillEffect() (effects.js) is the pure-descriptor -> Phaser
+    // translator, shared with pets.js's own auto-cast engine (Task 9).
+    // =========================================================================
+
+    // Expire timed statuses, tick poison/burn DoT (v3.0 Task 9 - a NEW
+    // consumer: pet skills can now land poison/burn on monsters, which never
+    // happened in Task 8), and mirror the ones with a visible side effect
+    // (stealth/freeze) onto the sprite. Runs every frame, even mid-charge.
+    _updateStatus(now, dt) {
+        // v3.0 review fix: snapshot the generation BEFORE any damageMonster()
+        // call below can recycle this pooled instance into a brand-new
+        // monster (see the _gen++ comment in spawn()). If it changes mid-loop,
+        // `this` is no longer the monster we started this function for - bail
+        // out completely rather than keep iterating a status-key list that no
+        // longer matches `this.status` (spawn() just reset it to {}), which
+        // would otherwise either apply leftover DoT to the wrong monster or
+        // throw reading `.until`/`.dotPerSec` off an undefined entry.
+        const gen = this._gen;
+        for (const key of Object.keys(this.status)) {
+            const s = this.status[key];
+            if (s.until !== undefined && now >= s.until) { delete this.status[key]; continue; }
+            if (s.dotPerSec && this.alive) {
+                s._acc = (s._acc || 0) + dt;
+                while (s._acc >= 1 && this.alive) {
+                    s._acc -= 1;
+                    this.scene.damageMonster(this, s.dotPerSec, false, this.x, this.y,
+                        key === 'poison' ? 'poison' : 'burn');
+                    if (this._gen !== gen) return; // recycled mid-tick - stop touching it
+                }
+            }
+        }
+
+        const stealthy = !!this.status.stealth;
+        if (stealthy) {
+            this.tappable = false;
+            this.sprite.setAlpha(0.35);
+        } else if (this._wasStealthy) {
+            this.tappable = true;
+            this.sprite.setAlpha(1);
+        }
+        this._wasStealthy = stealthy;
+
+        const frozen = !!this.status.freeze;
+        if (frozen) {
+            this.sprite.setTint(Skills.STATUS.freeze.tint);
+        } else if (this._wasFrozen && !this.iceOn) {
+            this.sprite.clearTint();
+        }
+        this._wasFrozen = frozen;
+    }
+
+    // Cast this species' personality skill when its cooldown is up. Reuses
+    // the same per-frame cadence spot as _updateAttack (called right after it).
+    _updateSkill(now) {
+        if (this.noSkill || this.charging > 0 || !this.def.skill) return;
+        const scene = this.scene;
+        if (scene.transitioning) return;
+        if (!Skills.ready(this, now)) return;
+
+        const A = Skills.ARCHETYPES[this.def.skill];
+        if (!A || A.passive) return; // rage/revive are passive - engines never cast() them
+
+        const ally = Monsters.ALLY_SKILLS.has(this.def.skill) || Monsters.SPAWN_SKILLS.has(this.def.skill);
+        if (!ally && !scene.fieldPets) return;
+        const ctx = ally ? Monsters.allyCtx(scene, this, now) : Monsters.enemyCtx(scene, this, now);
+
+        const eff = Skills.cast(this.def.skill, ctx);
+        if (!eff) return; // condition unmet (e.g. execute below threshold) - no cooldown paid
+
+        // Task 7 ruling: descriptors with empty targets are safe no-ops but still
+        // start the cooldown - a whiffed taunt/knockback/slam isn't a free recast.
+        this.skillCdUntil = now + A.cd;
+        // v3.0 Task 9: the descriptor -> Phaser translator now lives in
+        // effects.js (Effects.applySkillEffect) so pets.js can reuse it too.
+        Effects.applySkillEffect(scene, 'monster', this, eff);
+        if (typeof Effects !== 'undefined') Effects.ring(scene, this.x, this.y, this.def.color, this.r * 1.5);
+        Sfx.monsterAttack(this.r);
+    }
+
     contains(x, y, forgiveness) {
         const dx = x - this.x, dy = y - this.y;
         const r = this.r * this.hitScale + (forgiveness || 0);
@@ -440,6 +572,24 @@ class Monster {
     hit(dmg) {
         if (!this.alive) return false;
         this.awake = true;
+
+        // v3.0: tank/shieldy's shield skill absorbs damage before HP.
+        const shield = this.status.shield;
+        if (shield && shield.amount > 0) {
+            const absorbed = Math.min(shield.amount, dmg);
+            shield.amount -= absorbed;
+            dmg -= absorbed;
+            if (shield.amount <= 0) delete this.status.shield;
+            if (dmg <= 0) {
+                // mirrors game.js Feel.shieldBlock() without forward-referencing
+                // Feel (defined in game.js, which loads after monsters.js)
+                Sfx.clank();
+                Haptic.tick(0.8);
+                this.updateHpBar();
+                return false;
+            }
+        }
+
         this.hp -= dmg;
 
         const s = this.sprite;
@@ -475,4 +625,64 @@ class Monster {
     }
 }
 
-if (typeof module !== 'undefined') module.exports = { Monster };
+// =============================================================================
+// v3.0 - Monsters ctx builders: turn the live field into the plain {self,
+// targets, now} shape Skills.cast() (pure) expects. The actual descriptor ->
+// Phaser translation is Effects.applySkillEffect (effects.js, Task 9) - kept
+// there so pets.js can reuse the exact same plumbing for its own casts.
+// =============================================================================
+const Monsters = {
+
+    // heal/shield/buffaura/goldaura/critaura/stealth target the CASTER'S OWN
+    // side (other monsters, or self) rather than the enemy pet squad. Reused
+    // as-is by pets.js (the skill-id -> ally/offense split doesn't depend on
+    // which side is casting).
+    ALLY_SKILLS: new Set(['heal', 'shield', 'buffaura', 'goldaura', 'critaura', 'stealth']),
+    SPAWN_SKILLS: new Set(['clone', 'summon']),
+    // Baseline "skill power" as a fraction of stage mob HP - independent of the
+    // caster's ATTACK_DEFS style (some skill-casters, e.g. shysh/goldie, attack
+    // 'none' but still need a damage number for their skill's Skills.cast ctx).
+    SKILL_DMG_FRAC: 0.15,
+    CLONE_SCALE: { r: 0.6, hp: 0.3 },
+
+    skillDmg(self) {
+        return Balance.mobHP(self.stage) * Monsters.SKILL_DMG_FRAC * (self.isBoss ? 2.5 : 1);
+    },
+
+    // ctx for heal/shield/buffaura/goldaura/critaura/stealth/clone/summon:
+    // targets = every OTHER living monster (not consumed by any of today's
+    // ally archetypes, but built for spec fidelity / future archetypes).
+    allyCtx(scene, self, now) {
+        const targets = [];
+        for (const m of scene.active) {
+            if (!m.alive || m === self) continue;
+            targets.push({ id: m, hp: m.hp, maxHp: m.maxHp, x: m.x, y: m.y,
+                dist: Math.hypot(m.x - self.x, m.y - self.y) });
+        }
+        return {
+            self: { hp: self.hp, maxHp: self.maxHp, dmg: Monsters.skillDmg(self), elem: self.def.elem, x: self.x, y: self.y },
+            targets, now
+        };
+    },
+
+    // ctx for every offensive skill (stun/slow/knockback/taunt/poison/burn/
+    // freeze/chain/execute/lifesteal/dash/slam): targets = live, targetable
+    // pet agents. v3.0 Task 9: a pet's own stealth cast (fox/raccoon/bat) now
+    // makes it untargetable here too, same convention as m.tappable on monsters.
+    enemyCtx(scene, self, now) {
+        const targets = [];
+        if (scene.fieldPets) {
+            for (const a of scene.fieldPets.agents) {
+                if (a.ko || a.status.stealth) continue;
+                targets.push({ id: a, hp: a.hp, maxHp: a.maxHp, x: a.sprite.x, y: a.sprite.y,
+                    dist: Math.hypot(a.sprite.x - self.x, a.sprite.y - self.y) });
+            }
+        }
+        return {
+            self: { hp: self.hp, maxHp: self.maxHp, dmg: Monsters.skillDmg(self), elem: self.def.elem, x: self.x, y: self.y },
+            targets, now
+        };
+    }
+};
+
+if (typeof module !== 'undefined') module.exports = { Monster, Monsters };
