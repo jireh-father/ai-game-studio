@@ -1,3 +1,14 @@
+/* v5.0 RETRO ARCADE Task 2: vendored OFL pixel font (Press Start 2P, weight
+   400, latin subset) - www/fonts/, license at www/fonts/OFL.txt. No CDN. */
+@font-face {
+    font-family: 'Press Start 2P';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/press-start-2p.woff2') format('woff2'),
+         url('../fonts/press-start-2p.woff') format('woff');
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -12,7 +23,7 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #f6f1fb; /* v4.0 pastel token: CONFIG.PASTEL.bg */
+    background: #0d0221; /* v5.0 neon token: CONFIG.PASTEL.bg */
     position: fixed;
     touch-action: none;
 }
@@ -29,16 +40,23 @@ html, body {
 
 #game-container canvas {
     display: block;
+    /* v5.0 Task 2: nearest-neighbor upscaling stays crisp/blocky (retro-CRT
+       look); paired with the Phaser game config's render.pixelArt:true. */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 #landscape-warning {
     display: none;
     position: fixed;
     inset: 0;
-    /* v4.0 Phase C final-review: pastel boot chrome - CONFIG.PASTEL.bg /
+    /* v5.0 RETRO ARCADE: neon boot chrome - CONFIG.PASTEL.bg /
        CONFIG.PASTEL.ink (www/js/config.js), matches html/body above. */
-    background: #f6f1fb;
-    color: #453a56;
+    background: #0d0221;
+    color: #eafcff;
     z-index: 1000;
     flex-direction: column;
     align-items: center;
@@ -63,4 +81,40 @@ html, body {
 
 @media (orientation: landscape) and (max-height: 500px) {
     #landscape-warning { display: flex; }
+}
+
+/* =============================================================================
+   v5.0 RETRO ARCADE Task 2: CRT scanline overlay.
+   Sits above the game canvas (full-screen fixed, pointer-events:none so it
+   never eats taps), high z-index above #landscape-warning (1000). Two layers
+   via background-image (scanlines + vignette) plus a slow, subtle flicker.
+   Tasteful/readable: low alpha, no strobing (6s cycle, opacity 0.97-1.0).
+   ============================================================================= */
+#crt {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+    background-image:
+        repeating-linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.18) 0px,
+            rgba(0, 0, 0, 0.18) 1px,
+            rgba(0, 0, 0, 0) 2px,
+            rgba(0, 0, 0, 0) 3px
+        ),
+        radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0) 60%,
+            rgba(0, 0, 0, 0.35) 100%
+        );
+    box-shadow: inset 0 0 14vmin rgba(0, 0, 0, 0.55);
+    animation: crtflicker 6s ease-in-out infinite;
+}
+
+@keyframes crtflicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.97; }
+    52% { opacity: 1; }
+    76% { opacity: 0.985; }
 }

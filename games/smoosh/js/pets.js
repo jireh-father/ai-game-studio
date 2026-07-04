@@ -49,9 +49,8 @@ class FieldPets {
             const sprite = this.scene.add.image(x, y, 'pet-' + pet.species)
                 .setDepth(4).setDisplaySize(size, size);
             const badge = this.scene.add.text(x, y - size * 0.72, 'Lv.' + pet.level, {
-                fontFamily: 'Arial, sans-serif',
-                fontSize: (size >= 50 ? 14 : 12) + 'px', fontStyle: 'bold',
-                // v4.0 Phase C final-review: labels sit over the light
+                fontFamily: CONFIG.FONT,
+                fontSize: (size >= 50 ? 14 : 12) + 'px', // v4.0 Phase C final-review: labels sit over the light
                 // bgField (nest/battle field bg), not a dark surface - dark
                 // ink text + a light stroke reads correctly there.
                 color: Balance.hex(CONFIG.PASTEL.ink), stroke: Balance.hex(CONFIG.PASTEL.white), strokeThickness: 3
@@ -451,7 +450,7 @@ class FieldPets {
             const sprite = scene.add.image(x, y, 'pet-' + caster.pet.species)
                 .setDepth(4).setDisplaySize(size, size).setAlpha(0.6);
             const badge = scene.add.text(x, y - size * 0.72, '👻', {
-                fontFamily: 'Arial, sans-serif', fontSize: (size >= 50 ? 14 : 12) + 'px'
+                fontFamily: CONFIG.FONT, fontSize: (size >= 50 ? 14 : 12) + 'px'
             }).setOrigin(0.5).setDepth(4).setAlpha(0.6);
             const barW = size - 6;
             const hpBg = scene.add.image(x, y - size * 0.56, 'white-tex')

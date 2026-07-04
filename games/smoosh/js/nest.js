@@ -19,8 +19,7 @@ class Nest {
         // backdrop, not a dark surface - dark ink text + a light stroke
         // reads correctly there (same convention as pets.js's Lv. badge).
         this.label = scene.add.text(CONFIG.NEST.x, CONFIG.NEST.y + 84, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '18px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.ink), stroke: Balance.hex(CONFIG.PASTEL.white), strokeThickness: 4
+            fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.ink), stroke: Balance.hex(CONFIG.PASTEL.white), strokeThickness: 4
         }).setOrigin(0.5).setDepth(8);
 
         this.repair();

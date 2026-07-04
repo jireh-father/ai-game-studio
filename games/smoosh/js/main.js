@@ -30,22 +30,40 @@ class BootScene extends Phaser.Scene {
     // All SVG art -> base64 textures, registered ONCE here.
     _loadSpeciesTextures(onReady) {
         const jobs = [];
+        // v5.0 RETRO ARCADE Task 3: character/decor art bakes to a SMALL
+        // fixed raster (CONFIG.PIXEL) instead of its natural display size -
+        // see config.js CONFIG.PIXEL doc comment for why/sizing rationale.
+        // `pixel: true` marks jobs that must additionally get the NEAREST
+        // filter once loaded (below); the viewBox-based SVG still scales
+        // its content correctly to whatever width/height the <svg> tag is
+        // given, so this is a pure resolution cut - no painter changes.
+        const BAKE = CONFIG.PIXEL.bake;
+        const BAKE_DECOR = CONFIG.PIXEL.bakeDecor || BAKE;
         for (const sp of SPECIES) {
-            jobs.push({ key: 'sp-' + sp.id + '-idle', svg: sp.svgIdle, size: sp.radius * 2 });
-            jobs.push({ key: 'sp-' + sp.id + '-squash', svg: sp.svgSquash, size: sp.radius * 2 });
+            jobs.push({ key: 'sp-' + sp.id + '-idle', svg: sp.svgIdle, size: BAKE, pixel: true });
+            jobs.push({ key: 'sp-' + sp.id + '-squash', svg: sp.svgSquash, size: BAKE, pixel: true });
         }
         for (const p of PET_SPECIES) {
-            jobs.push({ key: 'pet-' + p.id, svg: p.svg, size: 48 });
+            jobs.push({ key: 'pet-' + p.id, svg: p.svg, size: BAKE, pixel: true });
         }
         // v3.5 Task 3: nest decor - one texture per catalog item (shop grid +
         // future placement), keyed 'decor-{id}'.
         for (const d of DECOR_ITEMS) {
-            jobs.push({ key: 'decor-' + d.id, svg: d.svg, size: 64 });
+            jobs.push({ key: 'decor-' + d.id, svg: d.svg, size: BAKE_DECOR, pixel: true });
         }
         jobs.push({ key: 'nest-tex', svg: NEST_SVG, size: 220, h: 150 });
         const pending = new Set(jobs.map(j => j.key));
+        const pixelKeys = new Set(jobs.filter(j => j.pixel).map(j => j.key));
         const onAdd = (key) => {
             pending.delete(key);
+            // Explicit per-texture NEAREST: render.pixelArt (main.js Task 2)
+            // already forces this game-wide, but character/decor textures
+            // set it directly too so the blocky bake survives even if the
+            // global render flag is ever loosened for some other reason.
+            if (pixelKeys.has(key)) {
+                const tex = this.textures.get(key);
+                if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+            }
             if (pending.size === 0) {
                 this.textures.off('addtexture', onAdd);
                 onReady();
@@ -55,7 +73,10 @@ class BootScene extends Phaser.Scene {
         for (const j of jobs) {
             if (this.textures.exists(j.key)) { onAdd(j.key); continue; }
             // Explicit width/height: viewBox-only SVGs rasterize at 300x150
-            // in some browsers.
+            // in some browsers. For pixel jobs this is also *the* bake step -
+            // the browser rasterizes the (much larger) viewBox content down
+            // to this small width/height when decoding the data URI image,
+            // which is what gives the low-res/blocky source texture.
             const svg = j.svg.replace('<svg ', `<svg width="${j.size}" height="${j.h || j.size}" `);
             const b64 = btoa(unescape(encodeURIComponent(svg)));
             this.textures.addBase64(j.key, 'data:image/svg+xml;base64,' + b64);
@@ -324,26 +345,60 @@ const SmooshGame = {
 };
 
 window.addEventListener('load', () => {
-    SmooshGame._game = new Phaser.Game({
-        type: Phaser.AUTO,
-        parent: 'game-container',
-        width: CONFIG.WIDTH,
-        height: CONFIG.HEIGHT,
-        backgroundColor: CONFIG.COLORS.bg,
-        scale: {
-            mode: Phaser.Scale.FIT,
-            autoCenter: Phaser.Scale.CENTER_BOTH
-        },
-        render: { antialias: true },
-        scene: [BootScene, MenuScene, StageMapScene, DexScene, NestScene, GameScene, ShopScene, PvpScene, FriendsScene]
-    });
+    // v5.0 Task 2 review fix: Press Start 2P is a TRUE 1.0em/char monospace
+    // font. If Phaser boots before the webfont finishes loading, EVERY Text
+    // object bakes its FIRST render against the fallback ('monospace') at
+    // whatever metrics that font happens to have - and Phaser never
+    // re-measures/re-bakes existing Text objects when the real font swaps in
+    // later, so cold boots would permanently mis-size text (including every
+    // makeUiButton auto-shrink measurement in ui.js, which reads .width at
+    // creation time). Gate the boot on the font being ready, but never hang
+    // it past 3s (worst case: first frame renders in the fallback font,
+    // exactly like before this fix, instead of the game never starting).
+    function boot() {
+        SmooshGame._game = new Phaser.Game({
+            type: Phaser.AUTO,
+            parent: 'game-container',
+            width: CONFIG.WIDTH,
+            height: CONFIG.HEIGHT,
+            backgroundColor: CONFIG.COLORS.bg,
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            // v5.0 RETRO ARCADE Task 2: pixelArt forces NEAREST-neighbor texture
+            // filtering + rounds pixel positions (crisp blocky look, also keeps
+            // the vendored pixel font's edges sharp instead of anti-aliased
+            // mush). Phaser's pixelArt flag always wins over antialias, so
+            // antialias is explicitly false here too rather than left stale.
+            render: { pixelArt: true, antialias: false },
+            scene: [BootScene, MenuScene, StageMapScene, DexScene, NestScene, GameScene, ShopScene, PvpScene, FriendsScene]
+        });
 
-    window.addEventListener('resize', () => {
-        if (SmooshGame._game) SmooshGame._game.scale.refresh();
-    });
+        window.addEventListener('resize', () => {
+            if (SmooshGame._game) SmooshGame._game.scale.refresh();
+        });
 
-    // Browser autoplay policy: audio starts on the first user gesture.
-    document.addEventListener('pointerdown', () => {
-        if (typeof Sfx !== 'undefined' && Sfx.unlockAudio) Sfx.unlockAudio();
-    }, { passive: true });
+        // Browser autoplay policy: audio starts on the first user gesture.
+        document.addEventListener('pointerdown', () => {
+            if (typeof Sfx !== 'undefined' && Sfx.unlockAudio) Sfx.unlockAudio();
+        }, { passive: true });
+    }
+
+    if (document.fonts && document.fonts.load) {
+        // v5 final-review fix: document.fonts.load() can REJECT (corrupt/
+        // undecodable font file) instead of just being slow - a rejection
+        // here used to propagate through the race and skip boot() entirely
+        // (permanent black screen, no 3s-timeout fallback ever fires because
+        // Promise.race already settled to the rejected branch). Two
+        // independent guards: .catch(()=>{}) so a rejected font-load still
+        // resolves the race, AND .then(boot, boot) so even if something else
+        // makes the race itself reject, boot() still runs either way.
+        Promise.race([
+            document.fonts.load("16px 'Press Start 2P'").then(() => document.fonts.ready).catch(() => {}),
+            new Promise(r => setTimeout(r, 3000))   // never hang boot > 3s
+        ]).then(boot, boot);
+    } else {
+        boot();
+    }
 });

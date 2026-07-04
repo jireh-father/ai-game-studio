@@ -81,12 +81,13 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             this.add.rectangle(W / 2, 88, W, 176, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
+            // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
             this.add.text(W / 2, 56, I18n.t('social.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+                fontFamily: CONFIG.FONT, fontSize: '34px', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
         }
 
@@ -104,7 +105,7 @@ if (typeof Phaser !== 'undefined') {
                 const bg = this.add.nineslice(x, 132, 'pill-tex', 0, tw - 8, 52, 16, 16, 14, 14)
                     .setTint(CONFIG.PASTEL.panel).setDepth(6).setInteractive({ useHandCursor: true });
                 const label = this.add.text(x, 132, t.label, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '19px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(7);
                 bg.on('pointerdown', () => { if (this.tab !== t.key) this.showTab(t.key); });
                 this.tabButtons.push({ key: t.key, bg, label });
@@ -167,7 +168,7 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
             this._card(W / 2, H / 2, 600, 280);
             this.items.push(this.add.text(W / 2, H / 2 - 30, I18n.t('social.offline'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+                fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                 align: 'center', wordWrap: { width: 520 }
             }).setOrigin(0.5));
             this._btn(W / 2, H / 2 + 80, 240, 72, I18n.t('social.retry'), CONFIG.PASTEL.accent, async () => {
@@ -183,7 +184,7 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             if (!list.length) {
                 this.items.push(this.add.text(W / 2, 460, I18n.t('social.noPlayers'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+                    fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: 560 }
                 }).setOrigin(0.5));
                 return;
@@ -194,7 +195,10 @@ if (typeof Phaser !== 'undefined') {
         renderPlayerRow(p, y) {
             const W = CONFIG.WIDTH;
             this._card(W / 2, y, 660, 170);
-            this._text(70, y - 34, p.nickname || '???', 24, Balance.hex(CONFIG.PASTEL.ink), 0);
+            // v5.0 Task 2 review fix: generated nicknames run up to ~23 chars
+            // ("Sparkly Bumblebee #9999"); clamp to the space before the VISIT
+            // button so they can't collide with it at 1.0em/char.
+            fitToWidth(this._text(70, y - 34, p.nickname || '???', 24, Balance.hex(CONFIG.PASTEL.ink), 0), 350);
             const stage = (p.stats && p.stats.stage) || 1;
             this._text(70, y + 12, I18n.t('map.stageN', { n: stage }), 18, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
             this._btn(500, y, 140, 64, I18n.t('social.visit'), CONFIG.PASTEL.accent, () => this.doVisit(p.uid));
@@ -216,7 +220,7 @@ if (typeof Phaser !== 'undefined') {
                 const shown = requests.slice(0, REQ_CAP);
                 shown.forEach(r => {
                     this._card(W / 2, y, 660, 110);
-                    this._text(70, y, r.nickname || '???', 21, Balance.hex(CONFIG.PASTEL.ink), 0);
+                    fitToWidth(this._text(70, y, r.nickname || '???', 21, Balance.hex(CONFIG.PASTEL.ink), 0), 350);
                     this._btn(500, y, 130, 56, I18n.t('social.accept'), CONFIG.PASTEL.accent, () => this.doRespond(r.id, true));
                     // v4.0 Phase C Task 3: decline stays visually distinct
                     // (dangerText, not the generic accent) so accept/decline
@@ -232,7 +236,7 @@ if (typeof Phaser !== 'undefined') {
             }
             if (!friendsList.length) {
                 this.items.push(this.add.text(W / 2, y + 60, I18n.t('social.noFriends'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+                    fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: 560 }
                 }).setOrigin(0.5));
                 return;
@@ -243,7 +247,7 @@ if (typeof Phaser !== 'undefined') {
         renderFriendRow(f, y) {
             const W = CONFIG.WIDTH;
             this._card(W / 2, y, 660, 170);
-            this._text(70, y, f.nickname || '???', 24, Balance.hex(CONFIG.PASTEL.ink), 0);
+            fitToWidth(this._text(70, y, f.nickname || '???', 24, Balance.hex(CONFIG.PASTEL.ink), 0), 350);
             this._btn(500, y, 140, 64, I18n.t('social.visit'), CONFIG.PASTEL.accent, () => this.doVisit(f.uid));
             this._btn(635, y, 100, 64, I18n.t('social.gift'), CONFIG.PASTEL.accent, () => this.openGiftModal(f));
         }
@@ -255,7 +259,7 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             if (!list.length) {
                 this.items.push(this.add.text(W / 2, 460, I18n.t('social.noInbox'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+                    fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: 560 }
                 }).setOrigin(0.5));
                 return;
@@ -266,7 +270,7 @@ if (typeof Phaser !== 'undefined') {
         renderInboxRow(g, y) {
             const W = CONFIG.WIDTH;
             this._card(W / 2, y, 660, 170);
-            this._text(70, y - 30, g.fromNickname || '???', 22, Balance.hex(CONFIG.PASTEL.ink), 0);
+            fitToWidth(this._text(70, y - 30, g.fromNickname || '???', 22, Balance.hex(CONFIG.PASTEL.ink), 0), 440);
             this._text(70, y + 16, this.giftDesc(g), 19, Balance.hex(CONFIG.PASTEL.goldText), 0);
             this._btn(600, y, 150, 64, I18n.t('social.claim'), CONFIG.PASTEL.accent, () => this.doClaim(g));
         }
@@ -389,7 +393,7 @@ if (typeof Phaser !== 'undefined') {
             parts.push(this.add.nineslice(W / 2, H / 2, 'btn-tex', 0, W - 70, panelH, 28, 28, 28, 28)
                 .setTint(CONFIG.PASTEL.panel).setDepth(16));
             parts.push(this.add.text(W / 2, top + 55, I18n.t('social.giftTitle', { name: target.nickname || '???' }), {
-                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText),
+                fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.goodText),
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5).setDepth(17));
 
@@ -431,7 +435,7 @@ if (typeof Phaser !== 'undefined') {
                 const bg = this.add.nineslice(x, y, 'pill-tex', 0, tw, 52, 16, 16, 14, 14)
                     .setTint(CONFIG.PASTEL.panel).setDepth(17).setInteractive({ useHandCursor: true });
                 const label = this.add.text(x, y, k.label, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '19px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(18);
                 bg.on('pointerdown', () => this.setGiftKind(k.key));
                 gm.kindTabs.push({ key: k.key, bg, label });
@@ -476,12 +480,12 @@ if (typeof Phaser !== 'undefined') {
 
             parts.push(this.add.text(W / 2, gm.top + 170, I18n.t('social.giftDaily',
                 { sent, max: CONFIG.GIFT.dailySendLimit }), {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(17));
 
             if (sent >= CONFIG.GIFT.dailySendLimit) {
                 parts.push(this.add.text(W / 2, gm.top + 320, I18n.t('social.giftCapReached'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.dangerText),
+                    fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.dangerText),
                     align: 'center', wordWrap: { width: W - 160 }
                 }).setOrigin(0.5).setDepth(17));
                 return; // daily gate closed - no stepper/picker/send button
@@ -501,7 +505,7 @@ if (typeof Phaser !== 'undefined') {
             const icon = gm.kind === 'gold' ? 'coin-tex' : 'gem-tex';
             parts.push(this.add.image(W / 2 - 90, y, icon).setDisplaySize(30, 30).setDepth(17));
             parts.push(this.add.text(W / 2, y, gm.max > 0 ? Balance.fmt(gm.amount) : '—', {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+                fontFamily: CONFIG.FONT, fontSize: '40px', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5).setDepth(17));
 
             const step = gm.kind === 'gold' ? Math.max(1, Math.round(gm.max * 0.1)) : 1;
@@ -518,7 +522,7 @@ if (typeof Phaser !== 'undefined') {
 
             if (gm.max <= 0) {
                 parts.push(this.add.text(W / 2, y + 70, I18n.t('social.giftInsufficient'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.dangerText)
+                    fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.dangerText)
                 }).setOrigin(0.5).setDepth(17));
             }
         }
@@ -529,7 +533,7 @@ if (typeof Phaser !== 'undefined') {
             const owned = DECOR_ITEMS.filter(d => (st.decorOwned[d.id] || 0) > 0);
             if (!owned.length) {
                 parts.push(this.add.text(W / 2, y + 40, I18n.t('social.giftNoDecor'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+                    fontFamily: CONFIG.FONT, fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: W - 160 }
                 }).setOrigin(0.5).setDepth(17));
                 return;
@@ -548,8 +552,10 @@ if (typeof Phaser !== 'undefined') {
                     .setInteractive({ useHandCursor: true });
                 const icon = this.add.image(x, yy - 14, 'decor-' + def.id).setDisplaySize(56, 56).setDepth(18);
                 const label = this.add.text(x, yy + 42, def.name[I18n.locale] || def.name.en, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '13px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+                    fontFamily: CONFIG.FONT, fontSize: '13px', color: Balance.hex(CONFIG.PASTEL.ink)
                 }).setOrigin(0.5).setDepth(18);
+                // v5.0 Task 2 review fix: decor name in a 130px gift cell.
+                fitToWidth(label, cellW - 16);
                 bg.on('pointerdown', () => {
                     gm.decorId = gm.decorId === def.id ? null : def.id;
                     this.renderGiftBody();
@@ -564,7 +570,7 @@ if (typeof Phaser !== 'undefined') {
                     this.renderGiftBody();
                 }));
                 parts.push(this.add.text(W / 2, py, (gm.decorPage + 1) + ' / ' + pages, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(17));
                 parts.push(makeUiButton(this, W / 2 + 140, py, 90, 48, '▶', CONFIG.PASTEL.accent, () => {
                     gm.decorPage = (gm.decorPage + 1) % pages;
@@ -629,8 +635,7 @@ if (typeof Phaser !== 'undefined') {
         // -------------------------------------------------------------------
         _text(x, y, str, size, color, origin) {
             const t = this.add.text(x, y, str, {
-                fontFamily: 'Arial, sans-serif', fontSize: size + 'px', fontStyle: 'bold',
-                color: color || Balance.hex(CONFIG.PASTEL.ink)
+                fontFamily: CONFIG.FONT, fontSize: size + 'px', color: color || Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(origin !== undefined ? origin : 0.5);
             this.items.push(t);
             return t;
@@ -658,12 +663,14 @@ if (typeof Phaser !== 'undefined') {
         // -------------------------------------------------------------------
         toast(msg) {
             if (this._toast) this._toast.destroy();
-            // v4.0 Phase C Task 3: toast chip stays a dark ink pill with white
-            // text regardless of theme - same "always-dark floating chip"
-            // exception as makeUiButton's drop shadow / modal scrims.
+            // v4.0 Phase C Task 3 / v5.0 carry-over fix: toast chip stays a
+            // dark pill with white text regardless of theme - same "always-
+            // dark floating chip" exception as makeUiButton's drop shadow /
+            // modal scrims. v5.0 flipped `ink` to bright near-white, so the
+            // pill fill moved to `panel` (still a dark surface) to keep the
+            // white text readable - see tests/pastel.test.js.
             this._toast = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 140, msg, {
-                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-                color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.ink), padding: { x: 18, y: 10 }
+                fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.panel), padding: { x: 18, y: 10 }
             }).setOrigin(0.5).setDepth(60);
             this.tweens.add({
                 targets: this._toast, alpha: 0, delay: 1400, duration: 300,

@@ -396,8 +396,8 @@ if (typeof Phaser !== 'undefined') {
             // bg (0xf6f1fb) is lighter than panel - goodText reads even
             // better here than it does on panel, so it's safe for this hue.
             const back = this.add.text(44, 56, this.fromGame ? '▶' : '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: this.fromGame ? '36px' : '48px',
-                fontStyle: 'bold', color: this.fromGame ? Balance.hex(CONFIG.PASTEL.goodText) : Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: this.fromGame ? '36px' : '48px',
+                color: this.fromGame ? Balance.hex(CONFIG.PASTEL.goodText) : Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => {
                 if (this.detailParts) { this.hideDetail(); return; }
@@ -405,8 +405,9 @@ if (typeof Phaser !== 'undefined') {
                 else SmooshGame.goto('MenuScene');
             });
 
+            // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
             this.add.text(W / 2, 56, I18n.t('dex.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+                fontFamily: CONFIG.FONT, fontSize: '34px', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
 
             this.tabButtons = [];
@@ -417,8 +418,7 @@ if (typeof Phaser !== 'undefined') {
                     .setTint(t.key === this.tab ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel).setDepth(10)
                     .setInteractive({ useHandCursor: true });
                 const label = this.add.text(x, 132, t.label, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold',
-                    color: Balance.hex(t.key === this.tab ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '21px', color: Balance.hex(t.key === this.tab ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(11);
                 bg.on('pointerdown', () => {
                     if (this.detailParts || this.tab === t.key) return;
@@ -437,6 +437,15 @@ if (typeof Phaser !== 'undefined') {
         }
 
         currentTabDef() { return this.tabDefs.find(t => t.key === this.tab); }
+
+        // v5.0 RETRO ARCADE Task 5: the currently-owned pet instance for a
+        // species (or undefined) - the source of truth for which frame
+        // rarity a pet card/detail should render, since rarity lives on the
+        // owned pet, not the species definition (see gacha.js).
+        ownedPet(id) {
+            const st = SaveManager.state;
+            return (st && Array.isArray(st.pets)) ? st.pets.find(p => p.species === id) : undefined;
+        }
 
         buildGrid() {
             this.gridContainer.removeAll(true);
@@ -463,10 +472,22 @@ if (typeof Phaser !== 'undefined') {
                 // "shadow" of the creature on the light card underneath.
                 if (!unlocked) spr.setTint(CONFIG.PASTEL.ink);
                 const label = this.add.text(x, y + 50, unlocked ? sp.name : I18n.t('dex.locked'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '17px', fontStyle: 'bold',
-                    color: Balance.hex(unlocked ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '17px', color: Balance.hex(unlocked ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5);
-                this.gridContainer.add([card, spr, label]);
+                // v5.0 Task 2 review fix: longest species name (e.g. "King
+                // Jelly") at 1.0em/char overruns the 148px card - clamp it.
+                fitToWidth(label, DEX_CARD - 12);
+                // v5.0 RETRO ARCADE Task 5: pet cards get a frame in the
+                // OWNED pet's rolled rarity (gacha rarity is per-owned-pet-
+                // instance, not per species - see gacha.js); monsters have
+                // no rarity concept at all, so they get a flat neutral
+                // 'common' frame instead of an elem-tinted one (keeps every
+                // monster card visually uniform - only pets carry a rarity
+                // signal). Locked/never-seen cards also get the flat
+                // 'common' frame (no rarity to reveal yet).
+                const frame = Frames.draw(this, x, y, DEX_CARD, DEX_CARD,
+                    def.key === 'PETS' ? Frames.rarityOf(this.ownedPet(sp.id)) : 'common');
+                this.gridContainer.add([card, spr, label, frame]);
 
                 this.cardViews.push({ x, y, r: DEX_CARD / 2, sp, def, unlocked });
             });
@@ -546,17 +567,32 @@ if (typeof Phaser !== 'undefined') {
 
             const top = H / 2 - panelH / 2 + 74;
 
+            // v5.0 RETRO ARCADE Task 5: same rarity-frame rule as the grid
+            // cards (owned-pet rarity for PETS, flat 'common' for monsters),
+            // sized a little larger than the 150px sprite so the border
+            // doesn't hug it.
+            const frame = Frames.draw(this, W / 2, top, 190, 190,
+                def.key === 'PETS' ? Frames.rarityOf(this.ownedPet(sp.id)) : 'common').setDepth(22);
+            parts.push(frame);
+
             const spr = this.add.image(W / 2, top, def.tex(sp.id)).setDisplaySize(150, 150).setDepth(22);
             parts.push(spr);
 
             const nameY = top + 104;
             parts.push(this.add.text(W / 2, nameY, sp.name, {
-                fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+                fontFamily: CONFIG.FONT, fontSize: '32px', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5).setDepth(22));
 
             const elem = sp.elem || sp.element;
+            // v5 final-review fix: this chip's fill is the element's bright
+            // neon `base` (dexElementColor) - the v5 palette flip made `ink`
+            // (near-white) too light a label on that same bright fill
+            // (contrast ~1.0-3.7 across all 8 elements, all fail WCAG). `bg`
+            // (near-black) reads dark-on-bright instead, like the button-label
+            // fix - verified >=4.5:1 against every element base in
+            // tests/pastel.test.js.
             const chip = makeChip(this, W / 2, nameY + 42, 150, 40,
-                dexElementColor(elem, CONFIG.PASTEL.inkSoft), null, (elem || '').toUpperCase(), Balance.hex(CONFIG.PASTEL.ink));
+                dexElementColor(elem, CONFIG.PASTEL.inkSoft), null, (elem || '').toUpperCase(), Balance.hex(CONFIG.PASTEL.bg));
             chip.parts.forEach(p => p.setDepth(22));
             parts.push(...chip.parts);
 
@@ -567,11 +603,11 @@ if (typeof Phaser !== 'undefined') {
                 .setDisplaySize(26, 26).setTint(dexElementColor(elem, CONFIG.PASTEL.white)).setDepth(22));
             parts.push(this.add.text(W / 2 - 100, skillY, I18n.t('dex.skill') + ': ' +
                 (skillId ? skillId.toUpperCase() : '-'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
+                fontFamily: CONFIG.FONT, fontSize: '21px', color: Balance.hex(CONFIG.PASTEL.goldText)
             }).setOrigin(0, 0.5).setDepth(22));
             parts.push(this.add.text(W / 2, skillY + 32,
                 arche ? (arche.desc[I18n.locale] || arche.desc.en) : '', {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+                fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5, 0).setDepth(22));
 
@@ -579,7 +615,7 @@ if (typeof Phaser !== 'undefined') {
             const lore = loreEntry ? (loreEntry[I18n.locale] || loreEntry.en) : '';
             const loreY = skillY + 88;
             parts.push(this.add.text(W / 2, loreY, lore, {
-                fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'italic', color: Balance.hex(CONFIG.PASTEL.ink),
+                fontFamily: CONFIG.FONT, fontSize: '19px', fontStyle: 'italic', color: Balance.hex(CONFIG.PASTEL.ink),
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5, 0).setDepth(22));
 
@@ -594,7 +630,7 @@ if (typeof Phaser !== 'undefined') {
                         : [(elem || '').toUpperCase(), (skillId || '').toUpperCase()];
                 })();
             parts.push(this.add.text(W / 2, H / 2 + panelH / 2 - 128, statLines.join('   ·   '), {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText),
+                fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.goodText),
                 align: 'center', wordWrap: { width: W - 100 }
             }).setOrigin(0.5).setDepth(22));
 

@@ -93,18 +93,28 @@ class GameScene extends Phaser.Scene {
         // stage pill (center)
         this.add.nineslice(CONFIG.WIDTH / 2, 60, 'pill-tex', 0, 240, 62, 18, 18, 16, 16)
             .setTint(CONFIG.PASTEL.panel).setDepth(10);
+        // v5.0 Task 2: 30->22 - "S.999 · Lv.99" at 30px pixel-font crowds the
+        // 240px stage pill.
         this.stageText = this.add.text(CONFIG.WIDTH / 2, 60,
             'S.' + SaveManager.state.stage + ' · Lv.' + SaveManager.state.level, {
-            fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+            fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(11);
+        // v5.0 Task 2 review fix: Press Start 2P is 1.0em/char, not ~0.6em -
+        // infinite stages + levels mean this can outgrow the 240px pill.
+        fitToWidth(this.stageText, 224);
 
         // gold chip (right) - initialized FROM STATE, never a literal
         this.add.nineslice(CONFIG.WIDTH - 120, 60, 'pill-tex', 0, 190, 56, 18, 18, 16, 16)
             .setTint(CONFIG.PASTEL.panel).setDepth(10);
         this.add.image(CONFIG.WIDTH - 186, 60, 'coin-tex').setDepth(11).setDisplaySize(30, 30);
+        // v5.0 Task 2: 28->22 - same pixel-font headroom reasoning as the
+        // stage pill above (large late-game gold amounts in a 190px pill).
         this.goldText = this.add.text(CONFIG.WIDTH - 162, 60, Balance.fmt(SaveManager.state.gold), {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
+            fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0, 0.5).setDepth(11);
+        // v5.0 Task 2 review fix: defensive fitToWidth - the 190px gold pill
+        // wasn't flagged as overflowing, but late-game gold amounts only grow.
+        fitToWidth(this.goldText, 174);
 
         // --- live stats readout: attack, crit, splash, fever rate, gold gain ---
         this.add.nineslice(CONFIG.WIDTH / 2, 110, 'pill-tex', 0, CONFIG.WIDTH - 48, 44, 16, 16, 14, 14)
@@ -123,13 +133,20 @@ class GameScene extends Phaser.Scene {
             { icon: 'gem-tex',   color: CONFIG.PASTEL.white, get: () => Balance.fmt(SaveManager.state.gems) }
         ];
         const slotW = (CONFIG.WIDTH - 64) / statDefs.length;
+        // v5.0 Task 2 review fix: width a value may occupy before it reaches
+        // the next slot's icon. fever/gold upgrades have no maxLevel, so their
+        // '×N.N' readout keeps growing - clamp each value in refreshStats().
+        this._statFitW = slotW - 30;
         statDefs.forEach((sd, i) => {
             const x = 32 + i * slotW + 14;
             this.add.image(x, 110, sd.icon).setDepth(11)
                 .setTint(sd.color).setDisplaySize(24, 24);
+            // v5.0 Task 2: 21->17 - 6 stat slots share the 720px HUD strip
+            // (~131px/slot minus the icon); the wider pixel font needed the
+            // extra headroom so late-game values (e.g. "1.2M") don't crowd
+            // into the next icon.
             const val = this.add.text(x + 18, 110, '', {
-                fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold',
-                color: Balance.hex(CONFIG.PASTEL.ink)
+                fontFamily: CONFIG.FONT, fontSize: '17px', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0, 0.5).setDepth(11);
             this._statEls.push({ val, get: sd.get });
         });
@@ -137,15 +154,14 @@ class GameScene extends Phaser.Scene {
         this.events.on('goldChanged', () => this.refreshStats());
 
         this.comboText = this.add.text(CONFIG.WIDTH / 2, 148, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.accent), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 5
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.accent), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 5
         }).setOrigin(0.5).setDepth(10);
 
         // round back button (left)
         this.add.nineslice(56, 60, 'pill-tex', 0, 64, 56, 18, 18, 16, 16)
             .setTint(CONFIG.PASTEL.panel).setDepth(10);
         const back = this.add.text(56, 58, '‹', {
-            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '44px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
         back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
@@ -153,7 +169,7 @@ class GameScene extends Phaser.Scene {
         this.add.nineslice(136, 60, 'pill-tex', 0, 80, 56, 18, 18, 16, 16)
             .setTint(CONFIG.PASTEL.accent).setDepth(10);
         const shopBtn = this.add.text(136, 60, '🛒', {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px'
+            fontFamily: CONFIG.FONT, fontSize: '28px'
         }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
         shopBtn.on('pointerdown', () => {
             Feel.coin();
@@ -171,12 +187,16 @@ class GameScene extends Phaser.Scene {
 
     refreshGold() {
         this.goldText.setText(Balance.fmt(SaveManager.state.gold));
+        fitToWidth(this.goldText, 174);
         this.events.emit('goldChanged');
     }
 
     refreshStats() {
         const u = SaveManager.state.upgrades;
-        for (const el of this._statEls) el.val.setText(el.get(u));
+        for (const el of this._statEls) {
+            el.val.setText(el.get(u));
+            fitToWidth(el.val, this._statFitW);
+        }
     }
 
     // v3.0 Task 9: current +add from a live pet-cast team aura (buffaura/
@@ -208,6 +228,7 @@ class GameScene extends Phaser.Scene {
         this.stageNum = n;
         this.isBossStage = n % CONFIG.BOSS.every === 0;
         this.stageText.setText('S.' + n + ' · Lv.' + SaveManager.state.level);
+        fitToWidth(this.stageText, 224);
         this.transitioning = false;
         if (this.nest) this.nest.repair(); // fresh nest every stage
         // v3.0 review fix: single funnel for BOTH normal stage-clear
@@ -301,8 +322,7 @@ class GameScene extends Phaser.Scene {
             this.bossBar = this.add.graphics().setDepth(11);
             this.bossName = this.add.text(CONFIG.WIDTH / 2, 181,
                 'GIANT ' + this.boss.def.name.toUpperCase(), {
-                fontFamily: 'Arial, sans-serif', fontSize: '17px', fontStyle: 'bold',
-                color: Balance.hex(CONFIG.PASTEL.white), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 4
+                fontFamily: CONFIG.FONT, fontSize: '17px', color: Balance.hex(CONFIG.PASTEL.white), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 4
             }).setOrigin(0.5).setDepth(12);
             // every boss wears the crown - it IS the promoted king of its kind
             this.bossCrown = this.add.image(this.boss.x, this.boss.y, 'crown-tex')
@@ -380,9 +400,10 @@ class GameScene extends Phaser.Scene {
         }
         SaveManager.persist();
 
+        // v5.0 Task 2: 72->56 - the single most-seen banner in the game;
+        // pixel-font headroom + a slightly more restrained arcade-marquee size.
         const banner = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.42, 'STAGE CLEAR!', {
-            fontFamily: 'Arial, sans-serif', fontSize: '72px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 10
+            fontFamily: CONFIG.FONT, fontSize: '56px', color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 10
         }).setOrigin(0.5).setDepth(20).setScale(0.3);
         this.tweens.add({ targets: banner, scale: 1, duration: 240, ease: 'Back.easeOut' });
         this.tweens.add({
@@ -679,8 +700,12 @@ class GameScene extends Phaser.Scene {
     // uncollected). Replaces the old v2.3 auto-apply-on-tween-complete flow.
     spawnItemDrop(x, y) {
         const type = this._rollDropType();
+        // v5 final-review fix: gear/necklace field drops roll on the
+        // item-economy DROP_RATES table, not the pet-gacha GACHA.rates table
+        // (which is gold-egg-legendary-zeroed per Task 4 - that zero must not
+        // leak into gear/necklace rarity). See config.js CONFIG.DROP_RATES.
         const rarity = (type === 'gear' || type === 'necklace')
-            ? Gacha._rollRarity(CONFIG.GACHA.rates, Math.random) : null;
+            ? Gacha._rollRarity(CONFIG.DROP_RATES, Math.random) : null;
         const tex = {
             gold: 'coin-tex', bomb: 'bomb-tex', heal: 'heart-tex', fever: 'up-fever',
             gear: 'up-tap', necklace: 'necklace-tex', gem: 'gem-tex', decor: 'decor-tex'
@@ -1039,6 +1064,7 @@ class GameScene extends Phaser.Scene {
         if (leveled) {
             SaveManager.persist();
             this.stageText.setText('S.' + this.stageNum + ' · Lv.' + st.level);
+            fitToWidth(this.stageText, 224);
             this.events.emit('goldChanged'); // stats readout refresh
             Sfx.jackpot();
             if (typeof Effects !== 'undefined') {
@@ -1046,9 +1072,10 @@ class GameScene extends Phaser.Scene {
                 Effects.confetti(this, CONFIG.WIDTH / 2, 200);
             }
             const t = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.35,
+                // v5.0 Task 2: 56->44 - "LEVEL UP!  Lv.999" headroom in the
+                // wider pixel font (no wordWrap/panel to catch overflow here).
                 'LEVEL UP!  Lv.' + st.level, {
-                fontFamily: 'Arial, sans-serif', fontSize: '56px', fontStyle: 'bold',
-                color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 9
+                fontFamily: CONFIG.FONT, fontSize: '44px', color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 9
             }).setOrigin(0.5).setDepth(20).setScale(0.3);
             this.tweens.add({ targets: t, scale: 1, duration: 260, ease: 'Back.easeOut' });
             this.tweens.add({
@@ -1079,16 +1106,20 @@ class GameScene extends Phaser.Scene {
         const items = [];
         // modal dim-scrim - same near-black exception as showSettlement (ui.js).
         items.push(this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.8).setDepth(20).setInteractive());
+        // v5.0 Task 2: 56->44 - pixel-font headroom for this un-wrapped title.
         items.push(this.add.text(W / 2, H * 0.34, '💔 THE NEST BROKE!', {
-            fontFamily: 'Arial, sans-serif', fontSize: '56px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.danger)
+            fontFamily: CONFIG.FONT, fontSize: '44px', color: Balance.hex(CONFIG.PASTEL.danger)
         }).setOrigin(0.5).setDepth(21));
         items.push(this.add.text(W / 2, H * 0.42, 'The babies are safe... but the stage is lost.', {
-            // v4.0 Phase C final-review: this text sits directly on the
-            // near-black dim scrim (no panel under it) - inkSoft is a
-            // panel-surface secondary token and reads too dim there;
-            // panelLight is the documented light-text-on-dark-scrim choice.
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.panelLight)
+            // v5 final-review fix: this text sits directly on the near-black
+            // dim scrim (no panel under it). The v4 note below chose
+            // panelLight as the "light-text-on-dark-scrim" pick, but v5's
+            // palette flip made panelLight itself a DARK panel token (deep
+            // purple) - dark-on-near-black is ~1.4:1, unreadable. `ink`
+            // (bright near-white) is the correct bright-on-dark choice now,
+            // same convention as every other scrim text (nest-broken title,
+            // pvp result screen) - verified >=4.5:1 in tests/pastel.test.js.
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(21));
         const btn = makeUiButton(this, W / 2, H * 0.56, 480, 100, 'RETRY STAGE', CONFIG.PASTEL.accent, () => {
             items.forEach(o => o.destroy());
@@ -1119,8 +1150,7 @@ class GameScene extends Phaser.Scene {
         }
 
         const banner = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.3, 'FEVER!!', {
-            fontFamily: 'Arial, sans-serif', fontSize: '96px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.fever), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
+            fontFamily: CONFIG.FONT, fontSize: '96px', color: Balance.hex(CONFIG.PASTEL.fever), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
         }).setOrigin(0.5).setDepth(20).setScale(0.2);
         this.tweens.add({ targets: banner, scale: 1, duration: 260, ease: 'Back.easeOut' });
         this.tweens.add({
