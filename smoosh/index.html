@@ -21,11 +21,23 @@
     <!-- Phaser 3.60 (vendored — offline-capable) -->
     <script src="lib/phaser.min.js"></script>
 
+    <!-- Firebase 10 compat SDK (vendored) + project config. fbconfig.js now
+         holds the live "smoosh" project config (Phase B Task 7); fb.js
+         (loaded after i18n.js below) degrades to offline mode only if the
+         config/SDK is ever unavailable (e.g. this script fails to load). -->
+    <script src="lib/firebase-app-compat.js"></script>
+    <script src="lib/firebase-auth-compat.js"></script>
+    <script src="lib/firebase-firestore-compat.js"></script>
+    <script src="js/fbconfig.js"></script>
+
     <!-- Game scripts (load order matters! main.js ALWAYS LAST) -->
     <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
+    <script src="js/fb.js"></script>
     <script src="js/balance.js"></script>
+    <script src="js/nicknames.js"></script>
     <script src="js/catalog.js"></script>
+    <script src="js/decor.js"></script>
     <script src="js/skills.js"></script>
     <script src="js/spawner.js"></script>
     <script src="js/save.js"></script>
@@ -42,6 +54,8 @@
     <script src="js/game.js"></script>
     <script src="js/stagemap.js"></script>
     <script src="js/dex.js"></script>
+    <script src="js/nestscene.js"></script>
+    <script src="js/friends.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/shop.js"></script>
     <script src="js/pvp.js"></script>

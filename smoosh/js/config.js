@@ -95,7 +95,7 @@ const CONFIG = {
         chance: 0.06,   // per non-boss kill
         weights: [      // [type, weight]
             ['gold', 35], ['bomb', 20], ['heal', 15], ['fever', 15],
-            ['gear', 8], ['necklace', 5], ['gem', 2]
+            ['gear', 8], ['decor', 4], ['necklace', 5], ['gem', 2]
         ],
         bombMult: 8,        // bomb damage = tapDmg x this, hits EVERYTHING
         healPct: 0.3,       // nest heal = 30% of max
@@ -115,6 +115,14 @@ const CONFIG = {
         tickMs: 800,          // one attack round per tick in presentation
         ratingWin: 20, ratingLose: -10,
         botPowerJitter: 0.15  // bot team = my power +-15%
+    },
+
+    // v3.5: Social gifting caps and daily limits
+    GIFT: {
+        maxGoldPerGift: 50000,
+        maxGemsPerGift: 30,
+        maxDecorPerGift: 1,
+        dailySendLimit: 5
     },
 
     // Deterministic tiny hash (shared utility, same as Peel It!)

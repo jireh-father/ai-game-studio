@@ -16,6 +16,13 @@ class BootScene extends Phaser.Scene {
             AdsManager.init().catch(() => {});
         }
 
+        // Fire-and-forget: the live "smoosh" Firebase project is wired via
+        // FB_CONFIG (Phase B Task 7). Social still degrades to offline mode
+        // with zero UI impact if init ever fails (no network, etc.).
+        if (typeof Social !== 'undefined' && Social.init) {
+            Social.init().catch(() => {});
+        }
+
         this._makeProceduralTextures();
         this._loadSpeciesTextures(() => this.scene.start('MenuScene'));
     }
@@ -29,6 +36,11 @@ class BootScene extends Phaser.Scene {
         }
         for (const p of PET_SPECIES) {
             jobs.push({ key: 'pet-' + p.id, svg: p.svg, size: 48 });
+        }
+        // v3.5 Task 3: nest decor - one texture per catalog item (shop grid +
+        // future placement), keyed 'decor-{id}'.
+        for (const d of DECOR_ITEMS) {
+            jobs.push({ key: 'decor-' + d.id, svg: d.svg, size: 64 });
         }
         jobs.push({ key: 'nest-tex', svg: NEST_SVG, size: 220, h: 150 });
         const pending = new Set(jobs.map(j => j.key));
@@ -285,6 +297,19 @@ class BootScene extends Phaser.Scene {
         g.fillTriangle(14.5, 34, 33.5, 34, 24, 44);
         g.generateTexture('necklace-tex', 48, 48);
         g.destroy();
+
+        // decor-tex: field item drop icon - a small gift box with a bow
+        // (the specific decor item itself is revealed via the toast/msg;
+        // this generic icon just marks "a decor drop", like necklace-tex).
+        g = this.add.graphics();
+        g.fillStyle(0xffffff, 1);
+        g.fillRoundedRect(8, 20, 32, 24, 4);
+        g.fillRect(8, 16, 32, 8);
+        g.fillRect(21, 16, 6, 28);
+        g.fillStyle(0xffffff, 0.65);
+        g.fillCircle(16, 12, 6); g.fillCircle(32, 12, 6);
+        g.generateTexture('decor-tex', 48, 48);
+        g.destroy();
     }
 }
 
@@ -310,7 +335,7 @@ window.addEventListener('load', () => {
             autoCenter: Phaser.Scale.CENTER_BOTH
         },
         render: { antialias: true },
-        scene: [BootScene, MenuScene, StageMapScene, DexScene, GameScene, ShopScene, PvpScene]
+        scene: [BootScene, MenuScene, StageMapScene, DexScene, NestScene, GameScene, ShopScene, PvpScene, FriendsScene]
     });
 
     window.addEventListener('resize', () => {

@@ -673,11 +673,11 @@ class GameScene extends Phaser.Scene {
         const rarity = (type === 'gear' || type === 'necklace')
             ? Gacha._rollRarity(CONFIG.GACHA.rates, Math.random) : null;
         const tex = {
-            gold: 'coin-tex', bomb: 'bomb-tex', heal: 'heart-tex',
-            fever: 'up-fever', gear: 'up-tap', necklace: 'necklace-tex', gem: 'gem-tex'
+            gold: 'coin-tex', bomb: 'bomb-tex', heal: 'heart-tex', fever: 'up-fever',
+            gear: 'up-tap', necklace: 'necklace-tex', gem: 'gem-tex', decor: 'decor-tex'
         }[type];
         const tint = rarity ? RARITY_COLORS[rarity]
-            : { fever: 0xff5ec4, gear: 0x5aa9ff }[type] || 0xffffff;
+            : { fever: 0xff5ec4, gear: 0x5aa9ff, decor: 0xff9ad5 }[type] || 0xffffff;
 
         // depth 9 keeps drops rendered above every monster part (sprite=3,
         // shadow=7, face=8) so a drop is always visibly - and tap-priority -
@@ -870,6 +870,20 @@ class GameScene extends Phaser.Scene {
                 SaveManager.persist();
                 this.refreshGold();
                 Sfx.jackpot();
+                break;
+            }
+            case 'decor': {
+                // v3.5 Task 3: grantRandom mutates st.decorOwned and picks
+                // unowned-weighted (3x) - REMAINS available in replay (see
+                // _rollDropType: only 'gem' is excluded there), because decor
+                // drops are the whole point of replay-farming per spec.
+                const id = Decor.grantRandom(st, Math.random);
+                const def = Decor.byId(id);
+                const name = def ? (def.name[I18n.locale] || def.name.en) : id;
+                msg = '🎀 ' + I18n.t('decor.dropped', { name });
+                color = '#ff9ad5';
+                SaveManager.persist();
+                Sfx.coin();
                 break;
             }
             case 'necklace': {
