@@ -22,7 +22,10 @@ class PvpScene extends Phaser.Scene {
 
         const back = this.add.text(44, 56, '‹', {
             fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setDepth(10);
+        // v6 Task 4: isolated corner glyph - the picker grid below starts at
+        // y=214, far clear of any padding here.
+        padTapArea(back);
         back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
         // v4.0 Phase C Task 3: unified with the other scenes' header-title
@@ -464,9 +467,12 @@ class PvpScene extends Phaser.Scene {
             Effects.confetti(this, W / 2, H * 0.3);
             Sfx.jackpot();
         }
+        // v6 Task 4 review fix: 124px center-to-center gap at h=96 (half=48
+        // each) -> 28px raw edge gap, exactly canceled by the default
+        // +14/+14 pad (0px margin, touching). pad:10 leaves 8px.
         makeUiButton(this, W / 2, H * 0.6, 420, 96, 'REMATCH', CONFIG.PASTEL.accent,
-            () => this.scene.restart());
+            () => this.scene.restart(), undefined, { pad: 10 });
         makeUiButton(this, W / 2, H * 0.6 + 124, 420, 96, 'MENU', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('MenuScene'));
+            () => SmooshGame.goto('MenuScene'), undefined, { pad: 10 });
     }
 }

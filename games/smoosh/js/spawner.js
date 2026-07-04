@@ -20,11 +20,15 @@ const Spawner = {
     SHIELD_FROM: 8,
     SHIELD_RATE: 0.06,
     JACKPOT_RATE: 0.02,
-    HEAVY_FROM: 10,     // bruisers: tank, grumpy, chunky
-    TRICKY_FROM: 12,    // quirk jellies: ghosty, shysh, cloney, freezy
+    HEAVY_FROM: 10,     // bruisers: tank, grumpy, chunky + v6 Task 8's big/
+                        // slow elemental bruisers (magmaw, tidalump, brambull,
+                        // glacior, voidmaw)
+    TRICKY_FROM: 12,    // quirk jellies: ghosty, shysh, cloney, freezy + v6
+                        // Task 8's quirk newcomers (ashghast, bogwisp,
+                        // hushwind, staticmoth, shiverling, haloghost)
 
-    HEAVY_IDS: ['tank', 'grumpy', 'chunky'],
-    TRICKY_IDS: ['ghosty', 'shysh', 'cloney', 'freezy'],
+    HEAVY_IDS: ['tank', 'grumpy', 'chunky', 'magmaw', 'tidalump', 'brambull', 'glacior', 'voidmaw'],
+    TRICKY_IDS: ['ghosty', 'shysh', 'cloney', 'freezy', 'ashghast', 'bogwisp', 'hushwind', 'staticmoth', 'shiverling', 'haloghost'],
 
     _mobPool(stage) {
         return SPECIES.filter(s => s.kind === 'mob' &&

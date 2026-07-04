@@ -4,14 +4,19 @@
 // (the battle NEST defend-target) and from FieldPets (the combat roam AI).
 // Every owned pet ambles around a pastel field, naps, chases a friend, or
 // bounces on a toy; tap one for a jump + hearts reaction. My-nest mode also
-// lets you place/remove owned decor on a 6x4 grid (Decor.canPlace, Task 3).
+// lets you place/remove owned decor on a grid (Decor.canPlace, Task 3).
+//
+// v6 Task 9: grid went from 6x4 to 12x8 (NEST_CELL_W/H exactly halved - see
+// the constants below) and pets now also seek out `use`-tagged furniture
+// (sit/sleep/watch/eat), not just cat==='toy' items - see hasFurniture()/
+// furnitureCells() and the sit/sleep/watch/eat branches in enterState()/update().
 //
 // Pure half (NestAI) is exported first so tests/nest.test.js can require()
 // this file from plain Node - same dual-mode pattern as stagemap.js/dex.js.
 // =============================================================================
 
 const NestAI = {
-    STATES: ['wander', 'nap', 'chase', 'play'],
+    STATES: ['wander', 'nap', 'chase', 'play', 'sit', 'sleep', 'watch', 'eat'],
 
     // Per-state dwell time (seconds) once a state is entered.
     DWELL_MIN: 2,
@@ -19,7 +24,13 @@ const NestAI = {
 
     // Pure transition table. current = the state an agent is LEAVING;
     // rng() -> [0,1); hasToys = at least one placed decor item with
-    // cat==='toy' exists in the nest right now.
+    // cat==='toy' exists in the nest right now; hasFurniture = optional
+    // { sit, sleep, watch, eat } booleans (v6 Task 9) - each true when at
+    // least one placed decor item whose `use` tag matches exists in the
+    // nest right now (sofa/chair/stool->sit, bed->sleep, tv->watch,
+    // fridge->eat - see decor.js DECOR_ITEMS and nestscene.js hasFurniture()).
+    // Omitting hasFurniture entirely behaves exactly like pre-Task-9 code
+    // (none of the 4 furniture states are ever legal).
     //
     // Legal next states from ANY current state:
     //   wander - always
@@ -27,16 +38,30 @@ const NestAI = {
     //   nap    - any time EXCEPT immediately after another nap (an agent
     //            that just woke up doesn't fall right back asleep)
     //   play   - only when hasToys
+    //   sit    - only when hasFurniture.sit (mirrors play: no self-chain guard)
+    //   watch  - only when hasFurniture.watch (mirrors play: no self-chain guard)
+    //   eat    - only when hasFurniture.eat (mirrors play: no self-chain guard)
+    //   sleep  - only when hasFurniture.sleep, and NOT immediately after
+    //            another sleep (mirrors nap's anti-self-chain rule - sleep
+    //            IS a nap, just on a bed instead of in place)
     //
     // Weighted (not uniform) so wander reads as the "default" behavior and
-    // nap/play feel like occasional beats - but every legal state still
+    // the rest feel like occasional beats - but every legal state still
     // gets a real, reachable slice of the roll (verified by tests/nest.test.js
     // sweeping rng across [0,1)).
-    nextState(current, rng, hasToys) {
-        const WEIGHT = { wander: 0.40, chase: 0.25, nap: 0.20, play: 0.15 };
+    nextState(current, rng, hasToys, hasFurniture) {
+        const f = hasFurniture || {};
+        const WEIGHT = {
+            wander: 0.30, chase: 0.18, nap: 0.14, play: 0.10,
+            sit: 0.10, sleep: 0.08, watch: 0.06, eat: 0.04
+        };
         const legal = ['wander', 'chase'];
         if (current !== 'nap') legal.push('nap');
         if (hasToys) legal.push('play');
+        if (f.sit) legal.push('sit');
+        if (f.watch) legal.push('watch');
+        if (f.eat) legal.push('eat');
+        if (f.sleep && current !== 'sleep') legal.push('sleep');
 
         const total = legal.reduce((sum, k) => sum + WEIGHT[k], 0);
         let roll = rng() * total;
@@ -66,10 +91,18 @@ let NestScene; // eslint-disable-line no-unused-vars
 
 if (typeof Phaser !== 'undefined') {
 
-    const NEST_GRID_X0 = 42, NEST_GRID_Y0 = 268, NEST_CELL_W = 106, NEST_CELL_H = 138;
+    // v6 Task 9: 6x4 (106x138 cells) -> 12x8 (53x69 cells) - both axes
+    // exactly halved (12=6*2, 8=4*2; 106/2=53, 138/2=69), so the grid's
+    // outer footprint (42..678 x, 268..820 y) is pixel-identical to before;
+    // it's just subdivided finer. See Decor.GRID in decor.js.
+    const NEST_GRID_X0 = 42, NEST_GRID_Y0 = 268, NEST_CELL_W = 53, NEST_CELL_H = 69;
     const NEST_ROAM = { x: 30, y: 190, w: 660, h: 700 }; // pets wander/chase/play within this box
     const NEST_MAX_MINE = 20, NEST_MAX_VISIT_SIDE = 10;
     const NEST_TRAY_PER_PAGE = 8;
+    // v6 Task 9: per-state badge glyph. nap (in-place) keeps its original
+    // 💤; sleep/sit/watch/eat (furniture-targeted) get distinct emoji so a
+    // glance at the nest tells you WHY a pet stopped moving.
+    const NEST_BADGE = { nap: '💤', sleep: '😴', sit: '😌', watch: '👀', eat: '🍖' };
 
     NestScene = class NestScene extends Phaser.Scene {
         constructor() { super({ key: 'NestScene' }); }
@@ -121,7 +154,10 @@ if (typeof Phaser !== 'undefined') {
             this.add.rectangle(W / 2, 76, W, 152, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
                 fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
-            }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+            }).setOrigin(0.5).setDepth(10);
+            // v6 Task 4: isolated corner glyph - nearest interactive element
+            // (the decor grid) starts at y=268, far clear of any padding here.
+            padTapArea(back);
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
             // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
@@ -161,11 +197,12 @@ if (typeof Phaser !== 'undefined') {
                 if (!def) continue;
                 // Visit decor comes from a REMOTE snapshot (another player's
                 // save via Social.getUser) - never trust its gx/gy shape.
-                // Skip anything non-finite or out of the 6x4 grid silently.
+                // Skip anything non-finite or out of the 12x8 grid silently.
                 if (!Number.isFinite(p.gx) || !Number.isFinite(p.gy) ||
                     p.gx < 0 || p.gx >= Decor.GRID.cols || p.gy < 0 || p.gy >= Decor.GRID.rows) continue;
                 const c = this.cellCenter(p.gx, p.gy);
-                const sprite = this.add.image(c.x, c.y, 'decor-' + p.id).setDepth(1).setDisplaySize(76, 76);
+                // v6 Task 9: 76->38 (halved with the cell size, see NEST_CELL_W/H).
+                const sprite = this.add.image(c.x, c.y, 'decor-' + p.id).setDepth(1).setDisplaySize(38, 38);
                 this.decorViews.push({ id: p.id, gx: p.gx, gy: p.gy, sprite });
             }
         }
@@ -178,6 +215,25 @@ if (typeof Phaser !== 'undefined') {
         toyCells() {
             const placed = this.visit ? (this.visit.decor || []) : this.workingPlaced;
             return placed.filter(p => { const d = Decor.byId(p.id); return d && d.cat === 'toy'; });
+        }
+
+        // v6 Task 9: furniture equivalent of hasToys()/toyCells() above -
+        // keyed by decor.js's `use` tag instead of `cat`. Returns
+        // { sit, sleep, watch, eat } booleans, fed straight into
+        // NestAI.nextState()'s hasFurniture param.
+        hasFurniture() {
+            const placed = this.visit ? (this.visit.decor || []) : this.workingPlaced;
+            const out = { sit: false, sleep: false, watch: false, eat: false };
+            for (const p of placed) {
+                const d = Decor.byId(p.id);
+                if (d && d.use && Object.prototype.hasOwnProperty.call(out, d.use)) out[d.use] = true;
+            }
+            return out;
+        }
+
+        furnitureCells(useKind) {
+            const placed = this.visit ? (this.visit.decor || []) : this.workingPlaced;
+            return placed.filter(p => { const d = Decor.byId(p.id); return d && d.use === useKind; });
         }
 
         // -------------------------------------------------------------------
@@ -213,7 +269,15 @@ if (typeof Phaser !== 'undefined') {
                 state: 'wander', stateT: NestAI.dwell(Math.random),
                 tx: x, ty: y, // wander/chase movement target
                 chaseTarget: null,
-                toyCell: null
+                // v6 Task 9: actionCell is the shared "walk here and use it"
+                // target cell for play/sit/sleep/watch/eat (was `toyCell`,
+                // play-only, before this task). settled tracks whether a
+                // travel-then-dim state (currently just 'sleep') has
+                // actually arrived yet - nap never travels so it's always
+                // settled the instant it's entered. Used by exitEdit() to
+                // restore the correct alpha for a pet frozen mid-walk-to-bed.
+                actionCell: null,
+                settled: false
             };
             this.pickWanderTarget(agent);
             sprite.on('pointerdown', () => this.tapAgent(agent));
@@ -228,7 +292,9 @@ if (typeof Phaser !== 'undefined') {
         enterState(a, state) {
             a.state = state;
             a.stateT = NestAI.dwell(Math.random);
-            a.badge.setText(state === 'nap' ? '💤' : '');
+            a.actionCell = null;
+            a.settled = (state === 'nap'); // nap is "settled" immediately; sleep settles on arrival (see update())
+            a.badge.setText(NEST_BADGE[state] || '');
             a.sprite.setAlpha(state === 'nap' ? 0.55 : (a.isMine ? 1 : 0.88));
             if (state === 'wander') {
                 this.pickWanderTarget(a);
@@ -240,8 +306,21 @@ if (typeof Phaser !== 'undefined') {
                 const toys = this.toyCells();
                 if (toys.length) {
                     const t = Phaser.Utils.Array.GetRandom(toys);
-                    a.toyCell = this.cellCenter(t.gx, t.gy);
+                    a.actionCell = this.cellCenter(t.gx, t.gy);
                 } else {
+                    a.state = 'wander';
+                    this.pickWanderTarget(a);
+                }
+            } else if (state === 'sit' || state === 'sleep' || state === 'watch' || state === 'eat') {
+                const cells = this.furnitureCells(state);
+                if (cells.length) {
+                    const t = Phaser.Utils.Array.GetRandom(cells);
+                    a.actionCell = this.cellCenter(t.gx, t.gy);
+                } else {
+                    // Defense in depth: NestAI only offers these states when
+                    // hasFurniture says one exists, but fall back safely if
+                    // the nest changed underneath the agent (e.g. removed
+                    // mid-edit) anyway - same pattern as chase/play above.
                     a.state = 'wander';
                     this.pickWanderTarget(a);
                 }
@@ -252,20 +331,49 @@ if (typeof Phaser !== 'undefined') {
             if (this.editMode) return; // pets freeze in place while the grid/tray overlay is up
             const dt = Math.min(0.05, delta / 1000);
             const toys = this.hasToys();
+            const furniture = this.hasFurniture(); // v6 Task 9: { sit, sleep, watch, eat }
 
             for (const a of this.agents) {
                 a.stateT -= dt;
-                if (a.stateT <= 0) this.enterState(a, NestAI.nextState(a.state, Math.random, toys));
+                if (a.stateT <= 0) this.enterState(a, NestAI.nextState(a.state, Math.random, toys, furniture));
 
                 if (a.state === 'wander') {
                     this.moveToward(a, a.tx, a.ty, 60, dt);
                 } else if (a.state === 'chase' && a.chaseTarget) {
                     this.moveToward(a, a.chaseTarget.sprite.x, a.chaseTarget.sprite.y, 90, dt);
-                } else if (a.state === 'play' && a.toyCell) {
-                    const arrived = this.moveToward(a, a.toyCell.x, a.toyCell.y, 90, dt);
+                } else if (a.state === 'play' && a.actionCell) {
+                    const arrived = this.moveToward(a, a.actionCell.x, a.actionCell.y, 90, dt);
                     if (arrived) {
                         a._bounceT = (a._bounceT || 0) + dt * 6;
-                        a.sprite.y = a.toyCell.y - Math.abs(Math.sin(a._bounceT)) * 14;
+                        a.sprite.y = a.actionCell.y - Math.abs(Math.sin(a._bounceT)) * 14;
+                    }
+                } else if (a.state === 'eat' && a.actionCell) {
+                    // v6 Task 9: quick nibble-bounce at the fridge - same
+                    // idea as play's toy bounce but faster/smaller (a chew,
+                    // not a hop).
+                    const arrived = this.moveToward(a, a.actionCell.x, a.actionCell.y, 90, dt);
+                    if (arrived) {
+                        a._bounceT = (a._bounceT || 0) + dt * 9;
+                        a.sprite.y = a.actionCell.y - Math.abs(Math.sin(a._bounceT)) * 6;
+                    }
+                } else if ((a.state === 'sit' || a.state === 'watch') && a.actionCell) {
+                    // v6 Task 9: walk to the sofa/chair/stool or the TV and
+                    // settle - stays put once arrived, badge breathes like nap.
+                    const arrived = this.moveToward(a, a.actionCell.x, a.actionCell.y, 90, dt);
+                    if (arrived) {
+                        a.sprite.y = a.actionCell.y;
+                        a._bobT = (a._bobT || 0) + dt;
+                        a.badge.setAlpha(0.6 + 0.4 * Math.sin(a._bobT * 3));
+                    }
+                } else if (a.state === 'sleep' && a.actionCell) {
+                    // v6 Task 9: walk to the bed, THEN go dim+still like nap
+                    // (nap dims immediately since it never travels).
+                    const arrived = this.moveToward(a, a.actionCell.x, a.actionCell.y, 90, dt);
+                    if (arrived) {
+                        a.settled = true;
+                        a.sprite.setAlpha(0.55);
+                        a._bobT = (a._bobT || 0) + dt;
+                        a.badge.setAlpha(0.6 + 0.4 * Math.sin(a._bobT * 3));
                     }
                 } else if (a.state === 'nap') {
                     // stays put; only the zzz badge's alpha breathes
@@ -338,7 +446,12 @@ if (typeof Phaser !== 'undefined') {
             else this.workingPlaced = (SaveManager.state.decorPlaced || []).slice();
             this.agents.forEach(a => {
                 a.sprite.setInteractive({ useHandCursor: true });
-                a.sprite.setAlpha(a.state === 'nap' ? 0.55 : (a.isMine ? 1 : 0.88));
+                // v6 Task 9: a 'sleep' agent only dims once it has actually
+                // arrived at its bed (a.settled) - otherwise it was frozen
+                // mid-walk and should resume at normal alpha, same as any
+                // other in-transit state.
+                const dimmed = a.state === 'nap' || (a.state === 'sleep' && a.settled);
+                a.sprite.setAlpha(dimmed ? 0.55 : (a.isMine ? 1 : 0.88));
             });
             this.buildEditToggle();
         }
@@ -348,8 +461,10 @@ if (typeof Phaser !== 'undefined') {
             for (let gy = 0; gy < Decor.GRID.rows; gy++) {
                 for (let gx = 0; gx < Decor.GRID.cols; gx++) {
                     const c = this.cellCenter(gx, gy);
-                    const rect = this.add.rectangle(c.x, c.y, NEST_CELL_W - 8, NEST_CELL_H - 8, CONFIG.PASTEL.white, 0.05)
-                        .setStrokeStyle(2, CONFIG.PASTEL.inkSoft, 0.7).setDepth(2).setInteractive({ useHandCursor: true });
+                    // v6 Task 9: margin 8->4 (halved with the cell size) so
+                    // the 53x69 cells still leave a decent tap target (49x65).
+                    const rect = this.add.rectangle(c.x, c.y, NEST_CELL_W - 4, NEST_CELL_H - 4, CONFIG.PASTEL.white, 0.05)
+                        .setStrokeStyle(1.5, CONFIG.PASTEL.inkSoft, 0.7).setDepth(2).setInteractive({ useHandCursor: true });
                     rect.on('pointerdown', () => this.tapCell(gx, gy));
                     this.gridCells.push({ gx, gy, rect });
                 }

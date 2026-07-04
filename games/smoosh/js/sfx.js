@@ -11,6 +11,11 @@ const Sfx = {
     _master: null,
     _muted: false,
 
+    // v6 Task 7 - fever BGM scheduler state (see feverMusicStart/Stop below).
+    _feverMusicPlaying: false,
+    _feverTimer: null,
+    _feverActiveNodes: [],
+
     setMuted(b) {
         this._muted = b;
         if (this._master) {
@@ -102,6 +107,17 @@ const Sfx = {
         this._click(t, 0.10);
     },
 
+    // v6 Task 5: a monster's melee bite landing - a low punchy thud
+    // (distinct from hit()'s soft mid-pitch squelch and clank()'s bright
+    // shield-block square wave) plus a gritty noise snap for the "crunch"
+    // texture, timed a beat after the thud so it reads as one impact.
+    crunch() {
+        if (!this._ctx) return;
+        const t = this._now();
+        this._tone(160, t, 0.09, 'square', 0.13, 70);
+        this._click(t + 0.015, 0.11);
+    },
+
     splitPop() {
         if (!this._ctx) return;
         const t = this._now();
@@ -130,6 +146,29 @@ const Sfx = {
             this._tone(f, t + i * 0.06, 0.25, 'triangle', 0.16));
     },
 
+    // v6 Task 11 - the gacha reveal's pre-pop "charging" sweep: two layered
+    // upward-ramping tones under the intensifying egg-shake (shop.js
+    // playReveal). Distinct from feverStart's riser below (that one fires
+    // once, instantly, at the fever trigger) - this climbs for ~1s to match
+    // the egg's own build-up duration, so sound and shake peak together.
+    gachaCharge() {
+        if (!this._ctx) return;
+        const t = this._now();
+        this._tone(130, t, 0.95, 'sawtooth', 0.09, 620);
+        this._tone(200, t + 0.18, 0.75, 'triangle', 0.07, 900);
+    },
+
+    // Extra fanfare layered ON TOP of jackpot() specifically for a
+    // legendary pull - a longer 5-note ascending run plus a sub-bass boom,
+    // so the rarest pull is audibly, not just visually, the biggest moment.
+    legendaryFanfare() {
+        if (!this._ctx) return;
+        const t = this._now();
+        [523.25, 659.25, 784, 1046.5, 1318.5].forEach((f, i) =>
+            this._tone(f, t + i * 0.055, 0.5, 'triangle', 0.14));
+        this._tone(85, t, 0.45, 'sine', 0.22, 40);
+    },
+
     feverStart() {
         if (!this._ctx) return;
         const t = this._now();
@@ -141,6 +180,114 @@ const Sfx = {
         if (!this._ctx) return;
         const t = this._now();
         this._tone(900, t, 0.3, 'triangle', 0.10, 300);
+    },
+
+    // =========================================================================
+    // v6 Task 7 - FEVER BGM: an upbeat looped chiptune (8-step arpeggio over
+    // a driving bass) that runs for the whole fever window, started by
+    // Feel.feverStart() and stopped by Feel.feverEnd() (game.js).
+    //
+    // Scheduling: a classic "lookahead" sequencer (see Chris Wilson's "A Tale
+    // of Two Clocks") - a setInterval "ticker" wakes up often (50ms) and, each
+    // time, schedules every step whose start time falls within the next
+    // `LOOKAHEAD` seconds using the AudioContext's OWN sample-accurate clock
+    // (`t0` passed to osc.start/stop) - so playback timing rides the audio
+    // clock, not the sloppy JS timer. This is independent of Phaser's update
+    // loop by design: fever's on-screen countdown can freeze (e.g. the player
+    // opens the in-game shop, which calls scene.pause()) without the music
+    // stuttering out of rhythm - it simply keeps looping until
+    // feverMusicStop() is called, exactly mirroring "fever is still active,
+    // just paused" rather than drifting from the visual state.
+    // =========================================================================
+
+    // Pure pattern data (no AudioContext touched) - semitone offsets, kept as
+    // plain arrays so the note-frequency math below is unit-testable without
+    // any Web Audio object at all.
+    FEVER_ARP_STEPS: [0, 3, 7, 10, 12, 10, 7, 3],   // 8-step up/down arpeggio
+    FEVER_BASS_STEPS: [0, 0, 7, 7],                  // driving root/fifth bass
+
+    // Pure helper (no AudioContext): semitone offset -> absolute Hz. Kept
+    // free of `this._ctx` so it's directly unit-testable.
+    feverNoteFreq(rootHz, semitones) {
+        return rootHz * Math.pow(2, semitones / 12);
+    },
+
+    // Internal: schedule one arpeggio note (+ a bass note every other step)
+    // at exact time t0. Tracks the oscillator in _feverActiveNodes so
+    // feverMusicStop() can hard-stop anything still ringing/queued, and
+    // self-removes on natural completion so the array never grows unbounded
+    // across a long fever window.
+    _feverTone(freq, t0, dur, type, gain) {
+        const osc = this._ctx.createOscillator();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t0);
+        const g = this._ctx.createGain();
+        g.gain.setValueAtTime(0, t0);
+        g.gain.linearRampToValueAtTime(gain, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+        osc.connect(g); g.connect(this._master);
+        osc.start(t0); osc.stop(t0 + dur + 0.02);
+        this._feverActiveNodes.push(osc);
+        osc.onended = () => {
+            try { osc.disconnect(); } catch (e) {}
+            try { g.disconnect(); } catch (e) {}
+            const i = this._feverActiveNodes.indexOf(osc);
+            if (i !== -1) this._feverActiveNodes.splice(i, 1);
+        };
+    },
+
+    _feverScheduleStep(step, t0) {
+        const ROOT = 220; // A3
+        const arpF = this.feverNoteFreq(ROOT * 2, this.FEVER_ARP_STEPS[step]);
+        this._feverTone(arpF, t0, this._feverStepDur * 0.9, 'square', 0.045);
+        if (step % 2 === 0) { // bass on the "beat" (every other 8th-note step)
+            const bassIdx = (step / 2) % this.FEVER_BASS_STEPS.length;
+            const bassF = this.feverNoteFreq(ROOT / 2, this.FEVER_BASS_STEPS[bassIdx]);
+            this._feverTone(bassF, t0, this._feverStepDur * 1.7, 'sawtooth', 0.07);
+        }
+    },
+
+    _feverSchedulerTick() {
+        if (!this._ctx || !this._feverMusicPlaying) return;
+        const LOOKAHEAD = 0.15;
+        while (this._feverNextNoteTime < this._ctx.currentTime + LOOKAHEAD) {
+            this._feverScheduleStep(this._feverStep, this._feverNextNoteTime);
+            this._feverStep = (this._feverStep + 1) % this.FEVER_ARP_STEPS.length;
+            this._feverNextNoteTime += this._feverStepDur;
+        }
+    },
+
+    // Starts the loop. Guards (in order): muted -> silent by design, no
+    // point scheduling oscillators nobody will hear; no unlocked
+    // AudioContext yet -> safe no-op, never throws; already playing ->
+    // idempotent (a second feverStart before the first feverEnd, e.g. from
+    // an upgrade instantly refilling the gauge, must not stack two
+    // schedulers/timers).
+    feverMusicStart() {
+        if (this._muted || !this._ctx) return;
+        if (this._feverMusicPlaying) return;
+        this._feverMusicPlaying = true;
+        this._feverStep = 0;
+        this._feverStepDur = 60 / 172 / 2; // 172bpm, 8th-note steps (~0.174s)
+        this._feverNextNoteTime = this._ctx.currentTime + 0.05;
+        this._feverSchedulerTick(); // schedule the first batch immediately
+        this._feverTimer = setInterval(() => this._feverSchedulerTick(), 50);
+    },
+
+    // Stops cleanly: cancels the ticker AND hard-stops/disconnects every
+    // still-live oscillator (including ones already scheduled a few dozen ms
+    // into the future by the lookahead above) so nothing rings past the
+    // fever window. Safe to call any time, including when nothing is
+    // playing (SHUTDOWN cleanup calls this unconditionally - see game.js).
+    feverMusicStop() {
+        if (this._feverTimer) { clearInterval(this._feverTimer); this._feverTimer = null; }
+        this._feverMusicPlaying = false;
+        const now = this._ctx ? this._now() : 0;
+        for (const osc of this._feverActiveNodes.slice()) {
+            try { osc.stop(now); } catch (e) {}
+            try { osc.disconnect(); } catch (e) {}
+        }
+        this._feverActiveNodes.length = 0;
     },
 
     bossBoom() {

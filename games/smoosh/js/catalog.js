@@ -253,6 +253,22 @@ function species(def, art) {
 // every species uses >=2 non-'none' signature parts (see tests/catalog.test.js
 // "monster painter signature parts" block + phase-c-task-4-report.md's full
 // 24-row table for the verified matrix).
+//
+// v6 Task 6 signature-skill pass: `skill` reassignments only (art untouched).
+// hoppy: slow -> pull (new archetype - no chameleon/anteater species exists
+// yet, per the task-6 brief a "hop toward prey + tongue lash" read is close
+// enough to a frog/toad for the hopping mover to carry it; freed up `slow`
+// down to blob's sole use). scaredy: dash -> critaura (was a dash-dup with
+// mini; critaura was completely unused by any monster - "too jittery to
+// fight but its nervous energy sharpens the squad's aim" reads fine for a
+// coward and gives it its own distinct archetype). Remaining duplicate pairs
+// (tank/shieldy=shield, twins/cloney=clone, drop/chunky=knockback,
+// lovey/shysh=heal, splitter/king=summon) were left as-is on purpose - each
+// pair is already a strong, deliberate personality fit on BOTH sides (e.g.
+// "Twins" cloning itself, "Shieldy" wielding shield) and no test enforces
+// monster-side uniqueness (only the pet distribution test below does), so
+// reassigning either member for uniqueness's sake would trade a good fit for
+// a forced one. See v6-task-6-report.md for the full audit.
 const SPECIES = [
     // --- 10 regular mobs ---
     species({ id: 'blob',    name: 'Blob',    kind: 'mob', radius: 46, hpMult: 1.0, speed: 70,  move: 'amble',   goldMult: 1.0, attack: 'melee', elem: 'leaf', skill: 'slow' },
@@ -263,7 +279,7 @@ const SPECIES = [
         { tint: 0.80, face: 'angry',  tail: 'nub',    hat: 'helmet' }),
     species({ id: 'zippy',   name: 'Zippy',   kind: 'mob', radius: 34, hpMult: 0.8, speed: 120, move: 'dash',    goldMult: 1.2, attack: 'charge', elem: 'electric', skill: 'chain' },
         { tint: 0.15, face: 'grin',   ears: 'pointy', aura: 'spark' }),
-    species({ id: 'scaredy', name: 'Scaredy', kind: 'mob', radius: 38, hpMult: 1.0, speed: 95,  move: 'flee',    goldMult: 1.5, attack: 'none', elem: 'wind', skill: 'dash' },
+    species({ id: 'scaredy', name: 'Scaredy', kind: 'mob', radius: 38, hpMult: 1.0, speed: 95,  move: 'flee',    goldMult: 1.5, attack: 'none', elem: 'wind', skill: 'critaura' },
         { tint: 0.0,  face: 'scared', ears: 'long',   pattern: 'freckles' }),
     species({ id: 'pudding', name: 'Pudding', kind: 'mob', radius: 54, hpMult: 2.0, speed: 55,  move: 'amble',   goldMult: 1.6, attack: 'slam', elem: 'fire', skill: 'taunt' },
         { tint: 0.25, face: 'happy',  ears: 'stub',   tail: 'curly',  pattern: 'stripes' }),
@@ -279,7 +295,7 @@ const SPECIES = [
     // --- 10 v1.1 newcomers: cuter, weirder, trickier ---
     species({ id: 'ghosty',  name: 'Ghosty',  kind: 'mob', radius: 38, hpMult: 1.0, speed: 60,  move: 'amble',    goldMult: 1.8, attack: 'zap', quirk: 'phase', elem: 'dark', skill: 'stealth' },
         { tint: 0.05, face: 'sleepy', ears: 'none', tail: 'curly', aura: 'shadow', alpha: 0.8 }),
-    species({ id: 'hoppy',   name: 'Hoppy',   kind: 'mob', radius: 34, hpMult: 0.9, speed: 115, move: 'hop',      goldMult: 1.2, attack: 'melee', elem: 'wind', skill: 'slow' },
+    species({ id: 'hoppy',   name: 'Hoppy',   kind: 'mob', radius: 34, hpMult: 0.9, speed: 115, move: 'hop',      goldMult: 1.2, attack: 'melee', elem: 'wind', skill: 'pull' },
         { tint: 0.50, face: 'grin',   ears: 'long',   tail: 'nub' }),
     species({ id: 'orbity',  name: 'Orbity',  kind: 'mob', radius: 36, hpMult: 1.1, speed: 85,  move: 'orbit',    goldMult: 1.3, attack: 'spit', elem: 'light', skill: 'buffaura' },
         { tint: 0.20, face: 'happy',  ears: 'round',  aura: 'gleam' }),
@@ -306,7 +322,106 @@ const SPECIES = [
     species({ id: 'goldie',   name: 'Goldie',   kind: 'jackpot',  radius: 36, hpMult: 1.0, speed: 240, move: 'flee', goldMult: 10, attack: 'none', despawnMs: 6000, elem: 'light', skill: 'goldaura' },
         { tint: 0.85, face: 'greedy', hat: 'halo',    aura: 'gleam' }),
     species({ id: 'king',     name: 'King Jelly', kind: 'boss',   radius: 240, hpMult: 1.0, speed: 25, move: 'amble', goldMult: 1.0, attack: 'slam', elem: 'dark', skill: 'summon' },
-        { tint: 0.70, face: 'angry',  hat: 'crown',   aura: 'shadow', boss: true })
+        { tint: 0.70, face: 'angry',  hat: 'crown',   aura: 'shadow', boss: true }),
+
+    // --- 40 v6 Task 8 newcomers: an 8-element elemental cast (fire/water/
+    // leaf/wind/electric/ice/light/dark), 5 apiece, rotating through a
+    // swarmer/bruiser/flier/regal/oddball silhouette per element so parts
+    // vary naturally instead of every same-element monster looking alike.
+    // Every tuple was checked pairwise (>=2-field diff) against all 63 other
+    // species by hand and confirmed by tests/catalog.test.js's exhaustive
+    // check - see v6-task-8-report.md for the full 64x64 distinctness note
+    // and the handful of near-miss pairs that forced a field swap. `pull`
+    // (v6 Task 6's frog-tongue archetype) gets two more thematic carriers -
+    // anglerfin's anglerfish lure and duskfang's anteater snout - joining
+    // hoppy as the third and fourth users.
+    species({ id: 'embit',      name: 'Embit',      kind: 'mob', radius: 26, hpMult: 0.55, speed: 145, move: 'zigzag',  goldMult: 1.0,  attack: 'melee', elem: 'fire', skill: 'burn' },
+        { tint: 0.15, face: 'grin',   ears: 'pointy', tail: 'spike' }),
+    species({ id: 'magmaw',     name: 'Magmaw',     kind: 'mob', radius: 62, hpMult: 3.6,  speed: 40,  move: 'amble',   goldMult: 2.1,  attack: 'slam',  elem: 'fire', skill: 'rage' },
+        { tint: 0.70, face: 'angry',  tail: 'spike', pattern: 'stripes' }),
+    species({ id: 'cinderwing', name: 'Cinderwing', kind: 'mob', radius: 32, hpMult: 0.8,  speed: 95,  move: 'float',   goldMult: 1.3,  attack: 'spit',  elem: 'fire', skill: 'execute' },
+        { tint: 0.35, face: 'wink',   pattern: 'freckles', aura: 'gleam' }),
+    species({ id: 'scorchess',  name: 'Scorchess',  kind: 'mob', radius: 44, hpMult: 1.3,  speed: 78,  move: 'dash',    goldMult: 1.8,  attack: 'charge', elem: 'fire', skill: 'buffaura' },
+        { tint: 0.55, face: 'king',   horns: 'spike', hat: 'helmet' }),
+    species({ id: 'ashghast',   name: 'Ashghast',   kind: 'mob', radius: 36, hpMult: 1.0,  speed: 65,  move: 'sleeper', goldMult: 1.9,  attack: 'zap', quirk: 'phase', elem: 'fire', skill: 'stealth' },
+        { tint: 0.15, face: 'sleepy', pattern: 'freckles', aura: 'shadow', alpha: 0.75 }),
+
+    species({ id: 'dribblet',   name: 'Dribblet',   kind: 'mob', radius: 28, hpMult: 0.6,  speed: 130, move: 'zigzag',  goldMult: 1.0,  attack: 'spray', elem: 'water', skill: 'slow' },
+        { tint: 0.15, face: 'happy',  ears: 'round',  pattern: 'spots' }),
+    species({ id: 'tidalump',   name: 'Tidalump',   kind: 'mob', radius: 60, hpMult: 3.8,  speed: 38,  move: 'amble',   goldMult: 2.2,  attack: 'slam',  elem: 'water', skill: 'knockback' },
+        { tint: 0.75, face: 'angry',  horns: 'nub',   tail: 'curly' }),
+    species({ id: 'finling',    name: 'Finling',    kind: 'mob', radius: 34, hpMult: 0.9,  speed: 60,  move: 'float',   goldMult: 1.4,  attack: 'spit',  elem: 'water', skill: 'heal' },
+        { tint: 0.30, face: 'happy',  ears: 'long',   tail: 'nub', aura: 'gleam' }),
+    species({ id: 'pearlessa',  name: 'Pearlessa',  kind: 'mob', radius: 40, hpMult: 1.2,  speed: 70,  move: 'orbit',   goldMult: 1.7,  attack: 'spray', elem: 'water', skill: 'heal' },
+        { tint: 0.45, face: 'happy',  hat: 'halo',    pattern: 'belly-star' }),
+    species({ id: 'anglerfin',  name: 'Anglerfin',  kind: 'mob', radius: 34, hpMult: 1.1,  speed: 50,  move: 'sleeper', goldMult: 1.6,  attack: 'melee', elem: 'water', skill: 'pull' },
+        { tint: 0.60, face: 'grin',   horns: 'nub',   tail: 'spike', aura: 'shadow' }),
+
+    species({ id: 'sprigby',    name: 'Sprigby',    kind: 'mob', radius: 27, hpMult: 0.55, speed: 135, move: 'zigzag',  goldMult: 1.0,  attack: 'melee', elem: 'leaf', skill: 'dash' },
+        { tint: 0.15, face: 'happy',  ears: 'pointy', tail: 'nub' }),
+    species({ id: 'brambull',   name: 'Brambull',   kind: 'mob', radius: 64, hpMult: 4.0,  speed: 35,  move: 'amble',   goldMult: 2.3,  attack: 'slam',  elem: 'leaf', skill: 'taunt' },
+        { tint: 0.70, face: 'angry',  horns: 'nub',   tail: 'spike', hat: 'helmet' }),
+    species({ id: 'thornel',    name: 'Thornel',    kind: 'mob', radius: 32, hpMult: 0.85, speed: 80,  move: 'float',   goldMult: 1.3,  attack: 'spit',  elem: 'leaf', skill: 'lifesteal' },
+        { tint: 0.35, face: 'grin',   tail: 'curly',  aura: 'gleam' }),
+    species({ id: 'mossking',   name: 'Mossking',   kind: 'mob', radius: 46, hpMult: 1.5,  speed: 60,  move: 'amble',   goldMult: 2.0,  attack: 'melee', elem: 'leaf', skill: 'goldaura' },
+        { tint: 0.50, face: 'grin',   hat: 'crown',   pattern: 'freckles' }),
+    species({ id: 'bogwisp',    name: 'Bogwisp',    kind: 'mob', radius: 38, hpMult: 1.05, speed: 55,  move: 'sleeper', goldMult: 1.8,  attack: 'spit', quirk: 'shy', elem: 'leaf', skill: 'poison' },
+        { tint: 0.10, face: 'scared', ears: 'stub',   aura: 'shadow' }),
+
+    species({ id: 'gustlet',    name: 'Gustlet',    kind: 'mob', radius: 25, hpMult: 0.5,  speed: 150, move: 'zigzag',  goldMult: 1.0,  attack: 'melee', elem: 'wind', skill: 'chain' },
+        { tint: 0.15, face: 'happy',  ears: 'stub',   tail: 'curly', aura: 'spark' }),
+    species({ id: 'gale',       name: 'Gale',       kind: 'mob', radius: 58, hpMult: 3.2,  speed: 70,  move: 'dash',    goldMult: 2.0,  attack: 'charge', elem: 'wind', skill: 'slam' },
+        { tint: 0.60, face: 'angry',  horns: 'spike', pattern: 'stripes' }),
+    species({ id: 'skyferry',   name: 'Skyferry',   kind: 'mob', radius: 33, hpMult: 0.8,  speed: 100, move: 'float',   goldMult: 1.4,  attack: 'spit',  elem: 'wind', skill: 'buffaura' },
+        { tint: 0.40, face: 'wink',   ears: 'long',   aura: 'spark' }),
+    species({ id: 'zephyrex',   name: 'Zephyrex',   kind: 'mob', radius: 37, hpMult: 1.1,  speed: 85,  move: 'orbit',   goldMult: 1.6,  attack: 'spray', elem: 'wind', skill: 'critaura' },
+        { tint: 0.50, face: 'grin',   hat: 'halo',    pattern: 'spots' }),
+    species({ id: 'hushwind',   name: 'Hushwind',   kind: 'mob', radius: 35, hpMult: 0.95, speed: 60,  move: 'sleeper', goldMult: 1.75, attack: 'zap', quirk: 'blink', elem: 'wind', skill: 'freeze' },
+        { tint: 0.20, face: 'scared', ears: 'stub',   tail: 'curly', aura: 'frost' }),
+
+    species({ id: 'sparkitten', name: 'Sparkitten', kind: 'mob', radius: 26, hpMult: 0.55, speed: 140, move: 'zigzag',  goldMult: 1.0,  attack: 'zap',   elem: 'electric', skill: 'stun' },
+        { tint: 0.20, face: 'wink',   ears: 'round',  tail: 'nub', aura: 'spark' }),
+    species({ id: 'voltox',     name: 'Voltox',     kind: 'mob', radius: 56, hpMult: 3.0,  speed: 80,  move: 'dash',    goldMult: 1.9,  attack: 'charge', elem: 'electric', skill: 'shield' },
+        { tint: 0.65, face: 'angry',  horns: 'nub',   aura: 'spark' }),
+    species({ id: 'circuitina', name: 'Circuitina', kind: 'mob', radius: 34, hpMult: 0.85, speed: 90,  move: 'orbit',   goldMult: 1.5,  attack: 'spit',  elem: 'electric', skill: 'critaura' },
+        { tint: 0.40, face: 'wink',   pattern: 'stripes', aura: 'spark' }),
+    species({ id: 'thundrake',  name: 'Thundrake',  kind: 'mob', radius: 50, hpMult: 1.6,  speed: 75,  move: 'dash',    goldMult: 2.1,  attack: 'charge', elem: 'electric', skill: 'execute' },
+        { tint: 0.55, face: 'angry',  horns: 'spike', hat: 'crown' }),
+    species({ id: 'staticmoth', name: 'Staticmoth', kind: 'mob', radius: 30, hpMult: 0.75, speed: 100, move: 'chase',   goldMult: 1.65, attack: 'zap', quirk: 'blink', elem: 'electric', skill: 'lifesteal' },
+        { tint: 0.30, face: 'grin',   ears: 'long',   pattern: 'spots', aura: 'spark' }),
+
+    species({ id: 'chilla',     name: 'Chilla',     kind: 'mob', radius: 27, hpMult: 0.6,  speed: 125, move: 'zigzag',  goldMult: 1.05, attack: 'spit',  elem: 'ice', skill: 'freeze' },
+        { tint: 0.25, face: 'happy',  ears: 'pointy', aura: 'frost' }),
+    species({ id: 'glacior',    name: 'Glacior',    kind: 'mob', radius: 60, hpMult: 3.5,  speed: 34,  move: 'amble',   goldMult: 2.2,  attack: 'slam',  elem: 'ice', skill: 'taunt' },
+        { tint: 0.65, face: 'angry',  horns: 'curved', aura: 'frost' }),
+    species({ id: 'frostwing',  name: 'Frostwing',  kind: 'mob', radius: 33, hpMult: 0.85, speed: 70,  move: 'float',   goldMult: 1.35, attack: 'spray', elem: 'ice', skill: 'heal' },
+        { tint: 0.35, face: 'happy',  tail: 'curly',  aura: 'frost' }),
+    species({ id: 'iceira',     name: 'Iceira',     kind: 'mob', radius: 42, hpMult: 1.25, speed: 65,  move: 'orbit',   goldMult: 1.85, attack: 'zap',   elem: 'ice', skill: 'buffaura' },
+        { tint: 0.50, face: 'happy',  hat: 'halo',    tail: 'nub', aura: 'frost' }),
+    species({ id: 'shiverling', name: 'Shiverling', kind: 'mob', radius: 32, hpMult: 0.9,  speed: 50,  move: 'sleeper', goldMult: 1.6,  attack: 'none', quirk: 'ice', elem: 'ice', skill: 'slow' },
+        { tint: 0.15, face: 'sleepy', ears: 'stub',   tail: 'nub', aura: 'frost' }),
+
+    species({ id: 'glimmite',   name: 'Glimmite',   kind: 'mob', radius: 26, hpMult: 0.55, speed: 135, move: 'zigzag',  goldMult: 1.15, attack: 'melee', elem: 'light', skill: 'goldaura' },
+        { tint: 0.20, face: 'wink',   ears: 'round',  pattern: 'belly-star' }),
+    species({ id: 'seraphume',  name: 'Seraphume',  kind: 'mob', radius: 52, hpMult: 1.7,  speed: 68,  move: 'dash',    goldMult: 2.0,  attack: 'charge', elem: 'light', skill: 'shield' },
+        { tint: 0.45, face: 'love',   horns: 'spike', hat: 'halo' }),
+    species({ id: 'sundrop',    name: 'Sundrop',    kind: 'mob', radius: 31, hpMult: 0.8,  speed: 88,  move: 'float',   goldMult: 1.4,  attack: 'spray', elem: 'light', skill: 'critaura' },
+        { tint: 0.30, face: 'grin',   tail: 'nub',    pattern: 'spots', aura: 'gleam' }),
+    species({ id: 'haloghost',  name: 'Haloghost',  kind: 'mob', radius: 36, hpMult: 1.0,  speed: 58,  move: 'sleeper', goldMult: 1.95, attack: 'zap', quirk: 'phase', elem: 'light', skill: 'stealth' },
+        { tint: 0.15, face: 'sleepy', hat: 'halo',    aura: 'shadow' }),
+    species({ id: 'beamy',      name: 'Beamy',      kind: 'mob', radius: 35, hpMult: 0.85, speed: 66,  move: 'orbit',   goldMult: 1.5,  attack: 'none', elem: 'light', skill: 'buffaura' },
+        { tint: 0.35, face: 'love',   hat: 'bow',     aura: 'gleam' }),
+
+    species({ id: 'shadowlet',  name: 'Shadowlet',  kind: 'mob', radius: 27, hpMult: 0.6,  speed: 130, move: 'zigzag',  goldMult: 1.15, attack: 'melee', elem: 'dark', skill: 'lifesteal' },
+        { tint: 0.20, face: 'wink',   ears: 'pointy', aura: 'shadow' }),
+    species({ id: 'voidmaw',    name: 'Voidmaw',    kind: 'mob', radius: 59, hpMult: 3.4,  speed: 42,  move: 'amble',   goldMult: 2.15, attack: 'slam',  elem: 'dark', skill: 'execute' },
+        { tint: 0.70, face: 'angry',  horns: 'curved', pattern: 'freckles' }),
+    species({ id: 'wraithkite', name: 'Wraithkite', kind: 'mob', radius: 32, hpMult: 0.85, speed: 82,  move: 'float',   goldMult: 1.45, attack: 'spit',  elem: 'dark', skill: 'poison' },
+        { tint: 0.40, face: 'scared', tail: 'spike',  aura: 'shadow' }),
+    species({ id: 'nightqueen', name: 'Nightqueen', kind: 'mob', radius: 45, hpMult: 1.4,  speed: 72,  move: 'dash',    goldMult: 1.9,  attack: 'charge', elem: 'dark', skill: 'critaura' },
+        { tint: 0.55, face: 'love',   hat: 'crown',   horns: 'nub' }),
+    species({ id: 'duskfang',   name: 'Duskfang',   kind: 'mob', radius: 38, hpMult: 1.15, speed: 55,  move: 'sleeper', goldMult: 1.7,  attack: 'melee', elem: 'dark', skill: 'pull' },
+        { tint: 0.35, face: 'angry',  ears: 'long',   tail: 'spike' })
 ];
 
 // =============================================================================
@@ -489,8 +604,10 @@ function animal(id, name, element, skill, body, belly, earIn, art) {
 // electric/ice/light/dark), >=4 per element (see tests/elements.test.js).
 // v3.0 Task 9: every pet also carries a personality-matched skill archetype
 // (Skills.ARCHETYPES) - cat=dash, dog=taunt, rabbit=heal, bear=slam,
-// panda=shield, fox=stealth, etc. Distribution: every one of the 22
-// archetypes used >=1x, none >4x (see tests/catalog.test.js).
+// panda=shield, fox=stealth, etc. Distribution: every one of the 23
+// archetypes used >=1x, none >4x (see tests/catalog.test.js). v6 Task 6:
+// frog reassigned poison -> pull (the new frog-tongue archetype - the most
+// literal possible fit; skunk remains the sole 'poison' user).
 const PET_SPECIES = [
     // --- fire (7) ---
     animal('cat',      'Cat',      'fire',     'dash',      '#ffb066', '#ffd9b0', '#e8894a', { ear: 'pointy', prop: 'bow',    tailStyle: 'curly', mouth: 'w',     extra: 'whiskers' }),
@@ -503,7 +620,7 @@ const PET_SPECIES = [
 
     // --- water (10) ---
     animal('pig',      'Pig',      'water',    'lifesteal', '#ffb0c0', '#ffd0da', '#e88a9e', { ear: 'pointy', prop: 'bell', tailStyle: 'curly', mouth: 'open' }),
-    animal('frog',     'Frog',     'water',    'poison',    '#7ec850', '#c5e8a5', '#5aa032', { ear: 'round',  pattern: 'spots', mouth: 'smile' }),
+    animal('frog',     'Frog',     'water',    'pull',      '#7ec850', '#c5e8a5', '#5aa032', { ear: 'round',  pattern: 'spots', mouth: 'smile' }),
     animal('elephant', 'Elephant', 'water',    'slam',      '#b8c0d5', '#dde2f0', '#98a0b8', { ear: 'floppy', pattern: 'patch', tailStyle: 'long', mouth: 'smile', extra: 'tusk' }),
     animal('otter',    'Otter',    'water',    'execute',   '#a5825f', '#e5d0b0', '#7d5a38', { ear: 'round',  pattern: 'patch', tailStyle: 'long', mouth: 'w',    extra: 'whiskers' }),
     animal('dolphin',  'Dolphin',  'water',    'buffaura',  '#7fb8e8', '#c5e2f8', '#4a90c8', { ear: 'fin',    pattern: 'spots', tailStyle: 'fin', mouth: 'smile' }),

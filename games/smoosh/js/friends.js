@@ -82,7 +82,11 @@ if (typeof Phaser !== 'undefined') {
             this.add.rectangle(W / 2, 88, W, 176, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
                 fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
-            }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+            }).setOrigin(0.5).setDepth(10);
+            // v6 Task 4: the 3-tab bar below (buildTabs) is left un-padded by
+            // this task, so a single-sided +14 pad here only needs the
+            // existing ~26px gap to exceed 14, not 2x14=28 - safe.
+            padTapArea(back);
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
             // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
@@ -397,7 +401,15 @@ if (typeof Phaser !== 'undefined') {
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5).setDepth(17));
 
-            const closeBtn = makeUiButton(this, W / 2, top + 640, 200, 68, '✕', CONFIG.PASTEL.accent, () => this.closeGiftModal());
+            // v6 Task 4 review fix (found via full audit, not in the original
+            // overlap list): this closeBtn (top+640, h=68) sits directly under
+            // sendBtn (top+560, h=76, built in renderGiftBody() below) with
+            // only an 8px raw edge gap - the default +14/+14 pad turns that
+            // into a 20px overlap (a tap meant for SEND can land on the X and
+            // vice versa). pad:2 on both leaves a 4px margin - the tightest
+            // pair in the whole audit, but any pad greater than ~2.5px each
+            // re-overlaps given the raw 8px gap.
+            const closeBtn = makeUiButton(this, W / 2, top + 640, 200, 68, '✕', CONFIG.PASTEL.accent, () => this.closeGiftModal(), undefined, { pad: 2 });
 
             this.giftModal = {
                 parts, closeBtn, target, top, panelH,
@@ -494,8 +506,11 @@ if (typeof Phaser !== 'undefined') {
             if (gm.kind === 'decor') this.renderDecorPicker(gm.top + 230, parts);
             else this.renderAmountStepper(gm.top + 230, parts);
 
+            // v6 Task 4 review fix: pad:2 - see closeBtn's comment in
+            // showGiftModal() above (8px raw gap to that button, needs both
+            // sides trimmed to near-zero pad to stay non-overlapping).
             const sendBtn = makeUiButton(this, W / 2, gm.top + 560, 260, 76,
-                I18n.t('social.giftSend'), CONFIG.PASTEL.accent, () => this.sendGiftFlow());
+                I18n.t('social.giftSend'), CONFIG.PASTEL.accent, () => this.sendGiftFlow(), undefined, { pad: 2 });
             if (!this.giftReady()) sendBtn.disable();
             parts.push(sendBtn);
         }

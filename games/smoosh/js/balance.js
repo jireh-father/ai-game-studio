@@ -18,8 +18,22 @@ const Balance = {
     // retuned to match: gold 1.22^n, dmg 1.35^L. v3.0: uncapped waves grew
     // sim income, so tap costGrowth was raised 1.352 -> 1.372 to keep the game
     // meaningfully hard within the 1-6 taps band (the invariant test owns truth).
+    // v6 Task 1: crit slowed down (lower slope/ceiling) shrank expectedDamage,
+    // so tap costGrowth was retuned 1.372 -> 1.368 (config.js CONFIG.UPGRADES)
+    // to keep the sim back in-band - see that constant's comment for the math.
+    // v6 Task 2: HP growth steepened 1.25 -> 1.30/stage (A3 - late stages need
+    // real threat). At stage 200 this is ~2540x more HP than the old curve, so
+    // goldPerMob growth (1.22->1.25) and tapDamage growth (1.35->1.376, see
+    // that constant below) were raised together to let the greedy sim's tap
+    // level keep pace (finalTap 146 -> 161 by stage 200) - tap costGrowth
+    // itself is UNCHANGED at 1.368 (Task 1's retune). Swept ~9k (goldGrowth,
+    // tapDmgGrowth) combos at mobHP growth 1.30 with costGrowth pinned to
+    // 1.368: only 3 pairs kept the whole 200-stage sim in the 1-6 band; this
+    // one (gg=1.25, tdg=1.376) had the widest margin above both floors
+    // (48.1% >= 42%, avg 2.04 >= 1.8) while raising BOTH constants upward, as
+    // this task's guidance prefers. See tests/balance.test.js for the sim.
     mobHP(stage) {
-        return Math.round(3 * Math.pow(1.25, stage));
+        return Math.round(3 * Math.pow(1.30, stage));
     },
 
     waveSize(stage) {
@@ -28,14 +42,33 @@ const Balance = {
 
     // Boss HP multiplier grows with every boss: stage 10 -> x25 mob HP,
     // stage 50 -> x75, stage 100 -> x137.5 ... (the "huge energy" ramp).
+    // v6 Task 2: per-boss ramp steepened 0.5 -> 0.7 (paired with the steeper
+    // mobHP curve above) so bosses stay a genuine spike rather than shrinking
+    // relative to the now much-faster-growing regular mob HP. Stage 10 is
+    // unchanged (bossIndex 1 -> no ramp yet); stage 100 goes 137.5 -> 182.5x.
     bossHpMult(stage) {
         const bossIndex = Math.max(1, Math.floor(stage / CONFIG.BOSS.every));
-        return CONFIG.BOSS.hpMult * (1 + (bossIndex - 1) * 0.5);
+        return CONFIG.BOSS.hpMult * (1 + (bossIndex - 1) * 0.7);
     },
 
     // v1.2: monsters also get FASTER as stages climb (+0.6%/stage, cap 2.2x).
     speedMult(stage) {
         return Math.min(2.2, 1 + stage * 0.006);
+    },
+
+    // v6 Task 2 (A3) - monster ATTACK output also climbs per stage, independent
+    // of the tap-economy rail above: +3%/stage, capped at 6x (reached at stage
+    // ~167). Every monster->pet and monster->nest damage site (melee/slam/spit/
+    // spray/zap strikes, charge, nest-shell chip, poison/burn DoT, monster
+    // skill damage) multiplies by this - see monsters.js `_updateAttack`/
+    // `skillDmg` and game.js `monsterStrikeArea`. Deliberately OUTSIDE
+    // Balance.simulate(): the sim only models the tap-damage economy (spec
+    // scope note above the 200-stage test), never monster-on-pet/nest combat,
+    // so this constant cannot and does not move that invariant. The steeper
+    // late-game bite is offset by the Task 3 "full heal each stage" change
+    // (fresh pets every stage), so persistent pet attrition doesn't compound.
+    monsterAtkMult(stage) {
+        return Math.min(6, 1 + 0.03 * stage);
     },
 
     // =========================================================================
@@ -113,7 +146,8 @@ const Balance = {
             ? this.itemBonus(slot, items[slot].rarity, items[slot].level) : 0;
         return {
             tapDmg: this.tapDamage(up.tap) * this.levelDamageMult(st.level || 1) * (1 + b('glove')),
-            crit: Math.min(0.6, this.critChance(up.crit) + b('ring')),
+            // v6 Task 1: ceiling lowered 0.6 -> 0.5 (see critChance note above).
+            crit: Math.min(0.5, this.critChance(up.crit) + b('ring')),
             goldMult: this.goldMult(up.gold) * (1 + b('charm'))
         };
     },
@@ -169,8 +203,12 @@ const Balance = {
         return s + units[u];
     },
 
+    // v6 Task 2: growth raised 1.22 -> 1.25/stage alongside tapDamage's growth
+    // (see that constant) - see the mobHP comment above for the sweep that
+    // picked this pair to re-clear the 200-stage invariant under the steeper
+    // HP curve.
     goldPerMob(stage) {
-        return Math.max(1, Math.round(1.6 * Math.pow(1.22, stage)));
+        return Math.max(1, Math.round(1.6 * Math.pow(1.25, stage)));
     },
 
     // =========================================================================
@@ -227,9 +265,20 @@ const Balance = {
         return (def && def.maxLevel) || Infinity;
     },
 
-    tapDamage(level)    { return Math.pow(1.35, level); },              // level 0 -> 1 (tuned with tap costGrowth 1.338)
-    critChance(level)   { return Math.min(0.03 + 0.015 * level, 0.35); },
-    splashRadius(level) { return 22 * level; },                          // px (max level 10)
+    // v6 Task 2: growth raised 1.35 -> 1.376/stage (paired with goldPerMob's
+    // 1.22 -> 1.25 above) so the greedy sim's damage output keeps pace with
+    // the steeper mobHP(stage) curve - see that constant's comment for the
+    // sweep. level 0 -> 1 either way.
+    tapDamage(level)    { return Math.pow(1.376, level); },
+    // v6 Task 1: slower crit growth + lower ceiling (was 0.03 + 0.015*level,
+    // capped 0.35) - crit auras were pushing effective tap-time crit toward
+    // ~99%; halved the slope, dropped the ceiling to 0.22 (paired with
+    // effective()'s 0.6->0.5 clamp and the applyTap 0.6 hard clamp).
+    critChance(level)   { return Math.min(0.02 + 0.007 * level, 0.22); },
+    // v6 Task 1: slower per-level radius (was 22*level, max level 10 -> 220px)
+    // paired with a deeper upgrade (maxLevel 10->32 in CONFIG.UPGRADES) so the
+    // new ceiling (14*32=448px) lands at ~2x the old one instead of shrinking it.
+    splashRadius(level) { return 14 * level; },                         // px (max level 32 -> 448px)
     feverMult(level)    { return 1 + 0.12 * level; },
     goldMult(level)     { return 1 + 0.10 * level; },
 

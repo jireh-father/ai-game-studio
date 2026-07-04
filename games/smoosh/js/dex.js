@@ -16,7 +16,7 @@ const Dex = {
     // here - tests/dex.test.js enforces coverage + a length floor/ceiling so
     // every card has real, hand-written personality (not a placeholder).
     LORE: {
-        // --- monsters (24) ---
+        // --- monsters (24 original + 40 v6 Task 8 newcomers = 64) ---
         blob: {
             en: 'The original jelly. Zero ambitions, maximum bounce. Dreams of being left alone.',
             ko: '원조 젤리. 야망 제로, 통통함 최대. 꿈은 그냥 가만히 있는 것.'
@@ -34,8 +34,8 @@ const Dex = {
             ko: '젤리 모습을 한 노란 번개. 재미로 팀 전체에 감전을 퍼뜨린다.'
         },
         scaredy: {
-            en: 'Trembles, flees, and drops extra gold out of pure panic. Never picks a fight.',
-            ko: '덜덜 떨며 도망치다 겁에 질려 골드를 더 흘린다. 싸움은 절대 안 건다.'
+            en: 'Trembles and flees, but its jitters somehow sharpen the whole squad’s aim.',
+            ko: '덜덜 떨며 도망치지만, 그 긴장감이 이상하게 팀 전체의 명중률을 날카롭게 만든다.'
         },
         pudding: {
             en: 'Warm, wobbly, and weirdly proud of it. Taunts you to smack its jiggly self first.',
@@ -62,8 +62,8 @@ const Dex = {
             ko: '반투명한 몸에 오싹한 기운. 감전 공격 직전에 은신 속으로 사라진다.'
         },
         hoppy: {
-            en: 'Bounces everywhere on borrowed rabbit ears. Somehow slows you down mid-hop.',
-            ko: '빌려온 토끼 귀로 사방을 튀어 다닌다. 뛰는 와중에도 상대를 느리게 만든다.'
+            en: 'Bounces closer on borrowed rabbit ears, then snaps out a sticky tongue to reel you in.',
+            ko: '빌려온 토끼 귀로 통통 튀어 다가온 뒤, 끈적한 혀를 뻗어 확 끌어당긴다.'
         },
         orbity: {
             en: 'Circles the battlefield wearing its own halo, buffing every ally it passes.',
@@ -114,6 +114,169 @@ const Dex = {
             ko: '둥지의 악몽을 지배하는 젤리 왕. 부하를 소환하고 지진처럼 내리친다.'
         },
 
+        // --- v6 Task 8: 40 elemental newcomers (fire/water/leaf/wind/
+        // electric/ice/light/dark x5) ---
+        embit: {
+            en: 'A tiny fire imp that zips in fast, bites once, and leaves you smoldering for the trouble.',
+            ko: '빠르게 달려들어 한 입 물고 사라지는 작은 불의 임프. 물린 자리는 계속 그을린다.'
+        },
+        magmaw: {
+            en: 'A lava-veined brute that gets angrier - and faster - the more damage it takes.',
+            ko: '용암 혈관이 흐르는 거한. 맞을수록 더 화가 나서 공격이 빨라진다.'
+        },
+        cinderwing: {
+            en: 'Flits through smoke on ember wings, then swoops in to finish off the weak.',
+            ko: '연기 속을 불씨 날개로 날아다니다가, 약해진 상대에게 급강하해 끝장낸다.'
+        },
+        scorchess: {
+            en: 'A crowned fire knight in a stolen helmet, roaring the whole squad\'s attack louder.',
+            ko: '훔친 투구를 쓴 불꽃 기사 여왕. 포효 한 번으로 팀 전체의 공격력을 끌어올린다.'
+        },
+        ashghast: {
+            en: 'The last wisp of a burned-out ember, freckled with soot and gone before you can swing.',
+            ko: '다 타버린 불씨의 마지막 잔영. 그을음투성이로 휘두르기도 전에 사라진다.'
+        },
+        dribblet: {
+            en: 'A cheerful little droplet that splashes in fast and slows everyone it touches.',
+            ko: '명랑한 작은 물방울. 재빠르게 튀어와 닿는 모두를 느리게 만든다.'
+        },
+        tidalump: {
+            en: 'A curled wave given a temper - slams down like a rogue tide, then shoves you back.',
+            ko: '성격 있는 파도 덩어리. 변덕스러운 해일처럼 내려치고 다시 밀쳐낸다.'
+        },
+        finling: {
+            en: 'A gleaming little fish that drifts above the fray, patching up whoever is hurting most.',
+            ko: '반짝이는 작은 물고기. 전투 위를 떠다니며 가장 다친 아군을 치료한다.'
+        },
+        pearlessa: {
+            en: 'A pearl-crowned healer who drifts in slow circles, mending the squad between splashes.',
+            ko: '진주관을 쓴 치유사. 천천히 원을 그리며 물장구 사이사이 팀을 치료한다.'
+        },
+        anglerfin: {
+            en: 'Lurks still in the murk with a glowing lure, then yanks the curious in for a bite.',
+            ko: '어둠 속에서 빛나는 미끼를 드리우고 가만히 기다리다, 호기심 많은 상대를 확 끌어당겨 문다.'
+        },
+        sprigby: {
+            en: 'A sprouting little jelly that dashes through the grass just to see you flinch.',
+            ko: '싹이 튼 작은 젤리. 그저 놀라는 모습을 보려고 풀밭을 가로질러 돌진한다.'
+        },
+        brambull: {
+            en: 'A thorn-crowned bull of a jelly that head-slams first and dares you to complain.',
+            ko: '가시관을 쓴 황소 같은 젤리. 일단 박치기로 내려치고 항의는 받지 않는다.'
+        },
+        thornel: {
+            en: 'Drifts on thorny vines, draining a little health back with every scratch.',
+            ko: '가시 넝쿨을 타고 떠다니며, 할퀼 때마다 체력을 조금씩 빨아들인다.'
+        },
+        mossking: {
+            en: 'A self-crowned ruler of moss and mulch who somehow makes the whole squad\'s gold pile up.',
+            ko: '이끼와 부엽토의 자칭 왕. 이유는 몰라도 팀 전체의 골드를 불려준다.'
+        },
+        bogwisp: {
+            en: 'Too shy to bite, so it hides in the muck and poisons you from a safe distance.',
+            ko: '물기엔 너무 수줍어서 진흙 속에 숨어 안전한 거리에서 독을 뿌린다.'
+        },
+        gustlet: {
+            en: 'A gust of a jelly, zigzagging so fast its own static charge chains between foes.',
+            ko: '지그재그로 너무 빨리 움직여서 자체 정전기가 적들 사이로 튀는 돌풍 젤리.'
+        },
+        gale: {
+            en: 'A living windstorm that charges in and ground-pounds before you feel the breeze.',
+            ko: '돌진해 들어와 산들바람을 느끼기도 전에 바닥을 내려치는 살아있는 폭풍.'
+        },
+        skyferry: {
+            en: 'Rides the high thermals on long ears, sparking every ally\'s attack as it passes.',
+            ko: '긴 귀로 상승기류를 타고 날며, 지나칠 때마다 아군의 공격력에 불꽃을 더한다.'
+        },
+        zephyrex: {
+            en: 'A haloed breeze-jelly that spins slow circles, sharpening the whole squad\'s crits.',
+            ko: '후광을 두른 산들바람 젤리. 천천히 맴돌며 팀 전체의 치명타를 날카롭게 만든다.'
+        },
+        hushwind: {
+            en: 'A cold hush of a breeze that blinks out of sight and freezes you before you notice.',
+            ko: '차가운 정적의 바람. 눈 깜빡할 새 사라졌다가 알아채기도 전에 얼려버린다.'
+        },
+        sparkitten: {
+            en: 'A tiny electric kitten that darts about and stuns anything it winks at.',
+            ko: '찌릿찌릿 돌아다니는 작은 전기 고양이. 윙크하는 상대는 그대로 기절시킨다.'
+        },
+        voltox: {
+            en: 'A horned powerhouse crackling with charge, throwing up a shield before the first hit lands.',
+            ko: '전류가 흐르는 뿔 달린 거한. 첫 타격이 오기도 전에 보호막부터 세운다.'
+        },
+        circuitina: {
+            en: 'Traces glowing circuit lines through the air, sharpening the squad\'s aim as she loops.',
+            ko: '허공에 빛나는 회로 무늬를 그리며, 맴돌 때마다 팀의 명중률을 날카롭게 다듬는다.'
+        },
+        thundrake: {
+            en: 'A crowned little dragon crackling with rage, charging in with a thunderclap finish.',
+            ko: '분노로 지지직거리는 작은 왕관 쓴 드래곤. 천둥 같은 마무리로 돌진한다.'
+        },
+        staticmoth: {
+            en: 'Flickers in and out like bad static, draining a little life with every clinging zap.',
+            ko: '고장 난 정전기처럼 깜빡이며, 달라붙는 감전 한 번마다 생명력을 조금씩 빨아들인다.'
+        },
+        chilla: {
+            en: 'A pointy-eared little chill that darts around and freezes whatever it spits at.',
+            ko: '뾰족귀를 가진 작은 냉기 덩어리. 여기저기 튀어다니며 뱉는 것마다 얼려버린다.'
+        },
+        glacior: {
+            en: 'A glacier with curved horns and a grudge, roaring a challenge before it slams down.',
+            ko: '굽은 뿔에 원한까지 품은 빙하. 내려치기 전에 먼저 포효로 도발한다.'
+        },
+        frostwing: {
+            en: 'Floats on frosty air, patching up the most wounded ally with a chilly, gentle touch.',
+            ko: '서리 낀 공기 위를 떠다니며, 차갑지만 다정한 손길로 가장 다친 아군을 치료한다.'
+        },
+        iceira: {
+            en: 'A haloed ice queen who circles the field, chilling the air while boosting every ally\'s swing.',
+            ko: '후광을 두른 얼음 여왕. 전장을 맴돌며 공기를 식히고 아군의 공격력을 끌어올린다.'
+        },
+        shiverling: {
+            en: 'Shivers so hard it slows down everything nearby, itself included, without meaning to.',
+            ko: '너무 심하게 떨어서 자기 자신을 포함해 주변 모두를 느리게 만들어 버린다.'
+        },
+        glimmite: {
+            en: 'A tiny sparkle of a jelly whose every hit somehow leaves a little extra gold behind.',
+            ko: '작고 반짝이는 젤리. 어쩐지 때릴 때마다 골드를 조금씩 더 남긴다.'
+        },
+        seraphume: {
+            en: 'A haloed knight that charges in with love in its eyes and a shield around its allies.',
+            ko: '사랑의 눈빛으로 돌진하며 아군에게 보호막을 씌워주는 후광 두른 기사.'
+        },
+        sundrop: {
+            en: 'A drop of pure sunshine that drifts by, sharpening the squad\'s crits with every glow.',
+            ko: '순수한 햇살 한 방울. 떠다니며 빛날 때마다 팀의 치명타를 날카롭게 만든다.'
+        },
+        haloghost: {
+            en: 'A gentle spirit wrapped in light that vanishes from sight right before it strikes.',
+            ko: '빛에 감싸인 온화한 영혼. 공격 직전 시야에서 슬며시 사라진다.'
+        },
+        beamy: {
+            en: 'A drifting beam of pure encouragement that never fights, only lifts the squad\'s power.',
+            ko: '떠다니는 순수한 응원의 빛줄기. 싸우지 않고 오직 팀의 힘만 끌어올린다.'
+        },
+        shadowlet: {
+            en: 'A pointy little shadow that darts in, bites, and drinks back the health it takes.',
+            ko: '뾰족한 작은 그림자. 재빨리 달려들어 물고 그만큼 체력을 빨아들인다.'
+        },
+        voidmaw: {
+            en: 'A curved-horned void of a brute that slams down and finishes off the weakened.',
+            ko: '굽은 뿔을 가진 어둠의 거한. 내려친 뒤 약해진 상대를 끝장낸다.'
+        },
+        wraithkite: {
+            en: 'A spiked, scared little wraith that flits above the fray, spitting poison as it flees.',
+            ko: '가시 달린 겁 많은 유령. 전투 위를 날아다니며 도망치듯 독을 뱉는다.'
+        },
+        nightqueen: {
+            en: 'A crowned queen of the dark who charges in adoringly, sharpening the squad\'s every crit.',
+            ko: '어둠의 왕관을 쓴 여왕. 사랑스럽게 돌진하며 팀의 치명타를 날카롭게 만든다.'
+        },
+        duskfang: {
+            en: 'A long-snouted shadow that lies in wait, then yanks its prey in with a sticky tongue.',
+            ko: '긴 주둥이를 가진 그림자. 숨어 기다리다 끈적한 혀로 먹잇감을 확 끌어당긴다.'
+        },
+
         // --- pets (50) ---
         cat: {
             en: 'A fire-hearted cat that dashes in, swats twice, and struts off like nothing happened.',
@@ -144,8 +307,8 @@ const Dex = {
             ko: '열정 넘치는 돼지. 세게 물고 그만큼 체력을 쪽쪽 빨아들인다.'
         },
         frog: {
-            en: 'Croaks once, licks its lips, and leaves a toxic little souvenir on every target.',
-            ko: '한 번 개굴 울고 입맛을 다신 뒤 모든 대상에게 독이라는 작은 선물을 남긴다.'
+            en: 'Croaks once, then its tongue snaps out and yanks the nearest target in close.',
+            ko: '한 번 개굴 울고는 끈적한 혀를 뻗어 가장 가까운 대상을 훅 끌어당긴다.'
         },
         chick: {
             en: 'A fluffy little light-side chick that chirps encouragement and heals the weakest ally.',
@@ -398,7 +561,11 @@ if (typeof Phaser !== 'undefined') {
             const back = this.add.text(44, 56, this.fromGame ? '▶' : '‹', {
                 fontFamily: CONFIG.FONT, fontSize: this.fromGame ? '36px' : '48px',
                 color: this.fromGame ? Balance.hex(CONFIG.PASTEL.goodText) : Balance.hex(CONFIG.PASTEL.inkSoft)
-            }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+            }).setOrigin(0.5).setDepth(10);
+            // v6 Task 4: isolated corner glyph - the 2-tab bar below starts
+            // at x=134 (W/2 - 0.5*(220+12)), well clear of this button's
+            // x-range (~[20,68]), so no overlap risk from any direction.
+            padTapArea(back);
             back.on('pointerdown', () => {
                 if (this.detailParts) { this.hideDetail(); return; }
                 if (this.fromGame) { this.scene.stop(); this.scene.resume('GameScene'); }
@@ -460,6 +627,17 @@ if (typeof Phaser !== 'undefined') {
                 const y = DEX_CARD / 2 + row * DEX_ROW_H;
                 const unlocked = def.unlocked(sp.id);
 
+                // v5.0 RETRO ARCADE Task 5: pet cards get a frame in the
+                // OWNED pet's rolled rarity (gacha rarity is per-owned-pet-
+                // instance, not per species - see gacha.js); monsters have
+                // no rarity concept at all, so they get a flat neutral
+                // 'common' frame instead of an elem-tinted one (keeps every
+                // monster card visually uniform - only pets carry a rarity
+                // signal). Locked/never-seen cards also get the flat
+                // 'common' frame (no rarity to reveal yet). Computed once
+                // (v6 Task 12) and reused for the pedestal below too.
+                const rarity = def.key === 'PETS' ? Frames.rarityOf(this.ownedPet(sp.id)) : 'common';
+
                 // v4.0 Phase C Task 3: unlocked cards pop with panelLight
                 // (same "available" convention as the upgrade bar's afford
                 // state); locked cards use plain panel dimmed slightly (same
@@ -467,6 +645,10 @@ if (typeof Phaser !== 'undefined') {
                 const card = this.add.nineslice(x, y, 'btn-tex', 0, DEX_CARD, DEX_CARD, 20, 20, 20, 20)
                     .setTint(unlocked ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel)
                     .setAlpha(unlocked ? 1 : 0.85);
+                // v6 Task 12: little pedestal the sprite stands on, centered
+                // under its feet (sprite is 80px tall at y-16, so its feet
+                // sit around y+22).
+                const pedestal = Frames.drawPedestal(this, x, y + 22, 76, rarity);
                 const spr = this.add.image(x, y - 16, def.tex(sp.id)).setDisplaySize(80, 80);
                 // Locked silhouette: deep ink tint so it still reads as a
                 // "shadow" of the creature on the light card underneath.
@@ -477,17 +659,20 @@ if (typeof Phaser !== 'undefined') {
                 // v5.0 Task 2 review fix: longest species name (e.g. "King
                 // Jelly") at 1.0em/char overruns the 148px card - clamp it.
                 fitToWidth(label, DEX_CARD - 12);
-                // v5.0 RETRO ARCADE Task 5: pet cards get a frame in the
-                // OWNED pet's rolled rarity (gacha rarity is per-owned-pet-
-                // instance, not per species - see gacha.js); monsters have
-                // no rarity concept at all, so they get a flat neutral
-                // 'common' frame instead of an elem-tinted one (keeps every
-                // monster card visually uniform - only pets carry a rarity
-                // signal). Locked/never-seen cards also get the flat
-                // 'common' frame (no rarity to reveal yet).
-                const frame = Frames.draw(this, x, y, DEX_CARD, DEX_CARD,
-                    def.key === 'PETS' ? Frames.rarityOf(this.ownedPet(sp.id)) : 'common');
-                this.gridContainer.add([card, spr, label, frame]);
+                // v6 Task 12: small name-plate pill behind the label, sized
+                // to the label's OWN (already-clamped) display width so it
+                // never itself overruns the card.
+                const plate = this.add.nineslice(x, y + 50, 'pill-tex', 0,
+                    label.displayWidth + 16, 24, 12, 12, 10, 10)
+                    .setTint(CONFIG.PASTEL.panel).setAlpha(0.85);
+                // v6 Task 12: grid cards can show ~50 at once - shimmer/glow/
+                // pip/gem tweens stay OFF here (static sheen instead) no
+                // matter how rare the pet rolled; only the single detail
+                // view and gacha single-pull reveal (one card on screen at a
+                // time) get the animated version. See frames.js's
+                // drawShimmerBand comment for the full rationale.
+                const frame = Frames.draw(this, x, y, DEX_CARD, DEX_CARD, rarity, { animate: false });
+                this.gridContainer.add([card, pedestal, spr, plate, label, frame]);
 
                 this.cardViews.push({ x, y, r: DEX_CARD / 2, sp, def, unlocked });
             });
@@ -570,18 +755,45 @@ if (typeof Phaser !== 'undefined') {
             // v5.0 RETRO ARCADE Task 5: same rarity-frame rule as the grid
             // cards (owned-pet rarity for PETS, flat 'common' for monsters),
             // sized a little larger than the 150px sprite so the border
-            // doesn't hug it.
-            const frame = Frames.draw(this, W / 2, top, 190, 190,
-                def.key === 'PETS' ? Frames.rarityOf(this.ownedPet(sp.id)) : 'common').setDepth(22);
+            // doesn't hug it. v6 Task 12: computed once and reused for the
+            // pedestal below too; detail is a single big card on screen at a
+            // time, so it keeps the default `animate: true` (full sweeping
+            // shimmer/glow/gem) unlike the grid's `{ animate: false }`.
+            const rarity = def.key === 'PETS' ? Frames.rarityOf(this.ownedPet(sp.id)) : 'common';
+
+            // v6 Task 12: pedestal the sprite stands on, centered under its
+            // feet (150px sprite centered at `top` -> feet around top+62).
+            // Depth sits below the frame/sprite (22) but above the panel
+            // (21) - the panel/pedestal/frame/sprite regions don't overlap
+            // each other in a way that makes finer insertion-order control
+            // necessary here (see nameplate pill below for the case where
+            // it does).
+            const pedestal = Frames.drawPedestal(this, W / 2, top + 62, 150, rarity).setDepth(21.4);
+            parts.push(pedestal);
+
+            const frame = Frames.draw(this, W / 2, top, 190, 190, rarity).setDepth(22);
             parts.push(frame);
 
             const spr = this.add.image(W / 2, top, def.tex(sp.id)).setDisplaySize(150, 150).setDepth(22);
             parts.push(spr);
 
             const nameY = top + 104;
-            parts.push(this.add.text(W / 2, nameY, sp.name, {
+            const nameText = this.add.text(W / 2, nameY, sp.name, {
                 fontFamily: CONFIG.FONT, fontSize: '32px', color: Balance.hex(CONFIG.PASTEL.ink)
-            }).setOrigin(0.5).setDepth(22));
+            }).setOrigin(0.5).setDepth(22);
+            // v6 Task 12: "name plate (pixel font, fitToWidth)" - clamp
+            // BEFORE measuring the plate width below so a hypothetical very
+            // long localized name can never itself overrun the plate/panel.
+            fitToWidth(nameText, W - 160);
+            // v6 Task 12: name-plate pill behind the name, sized to the
+            // (already-clamped) text's own display width. Depth pinned
+            // just under the text's 22 (rather than relying on creation
+            // order, the way the container-based grid cards above do) since
+            // this pill is created AFTER measuring the text it sits behind.
+            parts.push(this.add.nineslice(W / 2, nameY, 'pill-tex', 0,
+                nameText.displayWidth + 40, 46, 18, 18, 14, 14)
+                .setTint(CONFIG.PASTEL.panelLight).setDepth(21.9));
+            parts.push(nameText);
 
             const elem = sp.elem || sp.element;
             // v5 final-review fix: this chip's fill is the element's bright
@@ -599,12 +811,20 @@ if (typeof Phaser !== 'undefined') {
             const skillId = sp.skill;
             const arche = (typeof Skills !== 'undefined' && Skills.ARCHETYPES[skillId]) || null;
             const skillY = nameY + 88;
-            parts.push(this.add.image(W / 2 - 128, skillY, 'spark-tex')
-                .setDisplaySize(26, 26).setTint(dexElementColor(elem, CONFIG.PASTEL.white)).setDepth(22));
-            parts.push(this.add.text(W / 2 - 100, skillY, I18n.t('dex.skill') + ': ' +
-                (skillId ? skillId.toUpperCase() : '-'), {
-                fontFamily: CONFIG.FONT, fontSize: '21px', color: Balance.hex(CONFIG.PASTEL.goldText)
-            }).setOrigin(0, 0.5).setDepth(22));
+            // v6 Task 12: "element + skill chips" - the skill row upgraded
+            // from a bare icon+text line into a proper chip matching the
+            // element chip above it, for the trading-card look. panelLight
+            // fill + ink text is the same "light text on dark panel"
+            // convention every other panelLight chip/card in this file
+            // already uses (unlike the element chip's bright-fill/dark-text
+            // exception, which has its own contrast-floor test).
+            const skillChip = makeChip(this, W / 2, skillY, 260, 40,
+                CONFIG.PASTEL.panelLight, 'spark-tex',
+                I18n.t('dex.skill') + ': ' + (skillId ? skillId.toUpperCase() : '-'),
+                Balance.hex(CONFIG.PASTEL.ink));
+            skillChip.parts.forEach(p => p.setDepth(22));
+            if (skillChip.parts[1]) skillChip.parts[1].setTint(dexElementColor(elem, CONFIG.PASTEL.white));
+            parts.push(...skillChip.parts);
             parts.push(this.add.text(W / 2, skillY + 32,
                 arche ? (arche.desc[I18n.locale] || arche.desc.en) : '', {
                 fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft),

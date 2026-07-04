@@ -41,7 +41,9 @@ const SaveManager = {
             // --- v3.5 ---
             social: { uid: null, nickname: null }, // Social.init() cache: Firebase uid + nickname once online
             decorOwned: {},    // v3.5 Task 3: id -> owned count (drops + shop buys)
-            decorPlaced: []    // v3.5 Task 3: [{ id, gx, gy }] - nest decor layout
+            decorPlaced: [],   // v3.5 Task 3: [{ id, gx, gy }] - nest decor layout
+            // --- v6 ---
+            decorGridV: 2      // v6 Task 9: decor grid version (1 = old 6x4, 2 = new 12x8)
         };
     },
 
@@ -49,10 +51,12 @@ const SaveManager = {
         this._storage = storage ||
             (typeof window !== 'undefined' ? window.localStorage : null);
         this.state = this._freshState();
+        let loadedData = null; // track raw data for migration checks
         try {
             const raw = this._storage && this._storage.getItem(this.KEY);
             if (raw) {
                 const data = JSON.parse(raw);
+                loadedData = data; // save for migration checks
                 const fresh = this._freshState();
                 // Deep-merge one level so new nested fields get defaults on upgrade.
                 this.state = Object.assign(fresh, data, {
@@ -102,6 +106,21 @@ const SaveManager = {
             }
         }
         if (petsSeenChanged) this.persist();
+        // v6 migration: decor grid from 6x4 to 12x8 (cell size halved).
+        // Old saves have coords (gx 0-5, gy 0-3); double them to (gx 0-10, gy 0-6)
+        // to keep relative visual position in the new grid.
+        // Check loadedData (raw data) to detect old saves that lack decorGridV or have < 2.
+        if (loadedData && (loadedData.decorGridV == null || loadedData.decorGridV < 2) &&
+            Array.isArray(this.state.decorPlaced) && this.state.decorPlaced.length > 0) {
+            for (const p of this.state.decorPlaced) {
+                if (Number.isFinite(p.gx) && Number.isFinite(p.gy)) {
+                    p.gx *= 2;
+                    p.gy *= 2;
+                }
+            }
+            this.state.decorGridV = 2;
+            this.persist();
+        }
         return this.state;
     },
 
