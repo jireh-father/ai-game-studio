@@ -37,6 +37,15 @@ const RARITY_TEXT_COLORS = {
 };
 const RARITY_STARS = { common: '★', rare: '★★', epic: '★★★', legendary: '★★★★' };
 
+// v6 Task 12: same element->color lookup as dex.js's own dexElementColor
+// (CONFIG.PASTEL.elements[e].base, not a parallel hardcoded table) - the
+// gacha single-pull reveal gains an element chip this task and shouldn't
+// invent its own color source for it.
+function shopElementColor(elem, fallback) {
+    const ramp = CONFIG.PASTEL.elements[elem];
+    return ramp ? ramp.base : fallback;
+}
+
 class ShopScene extends Phaser.Scene {
     constructor() { super({ key: 'ShopScene' }); }
 
@@ -58,7 +67,19 @@ class ShopScene extends Phaser.Scene {
         const back = this.add.text(44, 56, this.fromGame ? '▶' : '‹', {
             fontFamily: CONFIG.FONT, fontSize: this.fromGame ? '36px' : '48px',
             color: Balance.hex(this.fromGame ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
-        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setDepth(10);
+        // v6 Task 4: unlike the other scenes' isolated back arrow, THIS one
+        // sits only ~22px above the EGGS tab pill (x-ranges overlap - both
+        // hug the left edge) - a plain padTapArea() would grow the back
+        // glyph's bottom edge (+14) past the tab row's now-padded top edge
+        // (also +14), a 6px double-tap sliver between "back" and "EGGS".
+        // Padded top/left/right (open header space, safe) but NOT bottom
+        // (leaves the existing safe gap to the tab row untouched).
+        {
+            const bw = back.width, bh = back.height, P = 14;
+            back.setInteractive(new Phaser.Geom.Rectangle(-P, -P, bw + P * 2, bh + P), Phaser.Geom.Rectangle.Contains);
+            back.input.cursor = 'pointer';
+        }
         back.on('pointerdown', () => {
             if (this.fromGame) {
                 this.scene.stop();
@@ -88,8 +109,21 @@ class ShopScene extends Phaser.Scene {
         const tw = (W - 40) / this.tabs.length;
         this.tabs.forEach((name, i) => {
             const x = 20 + i * tw + tw / 2;
-            const bg = this.add.nineslice(x, 128, 'pill-tex', 0, tw - 8, 52, 16, 16, 14, 14)
-                .setTint(CONFIG.PASTEL.panel).setDepth(5).setInteractive({ useHandCursor: true });
+            const pillW = tw - 8;
+            const bg = this.add.nineslice(x, 128, 'pill-tex', 0, pillW, 52, 16, 16, 14, 14)
+                .setTint(CONFIG.PASTEL.panel).setDepth(5);
+            // v6 Task 4: 7 tabs sit only ~8px apart edge-to-edge (720px bar /
+            // 7 tabs) - a symmetric +14 pad on every side would close that
+            // gap into an overlap and make it EASIER to fat-finger the wrong
+            // neighboring tab, the opposite of what padding should do here.
+            // So padding is vertical-only (top/bottom, +14 each): the row
+            // above (back arrow/title, ~22px clear) and the tab content
+            // below (~16px clear, and non-interactive background panels
+            // there besides) have real headroom, while left/right stay at
+            // the unpadded pill width.
+            const HIT_PAD = 14;
+            bg.setInteractive(new Phaser.Geom.Rectangle(0, -HIT_PAD, pillW, 52 + HIT_PAD * 2), Phaser.Geom.Rectangle.Contains);
+            bg.input.cursor = 'pointer';
             // v5.0 Task 2: 20->17 - 7 tabs share the 720px bar (~97px/tab,
             // ~89px pill); the wider pixel font needed the headroom so
             // 'DECOR' (the longest label) can't crowd its pill edges.
@@ -148,8 +182,8 @@ class ShopScene extends Phaser.Scene {
         return c;
     }
 
-    _btn(x, y, w, h, label, color, cb, iconKey) {
-        const b = makeUiButton(this, x, y, w, h, label, color, cb, iconKey);
+    _btn(x, y, w, h, label, color, cb, iconKey, opts) {
+        const b = makeUiButton(this, x, y, w, h, label, color, cb, iconKey, opts);
         this.items.push(b);
         return b;
     }
@@ -167,10 +201,13 @@ class ShopScene extends Phaser.Scene {
         this._text(W / 2 + 60, 240, 'GOLD EGG', 34, Balance.hex(CONFIG.PASTEL.goldText));
         // v5.0 RETRO ARCADE Task 4: gold egg caps at epic - legendary is gem-egg only.
         this._text(W / 2 + 60, 282, I18n.t('shop.eggGoldTier'), 20, Balance.hex(RARITY_TEXT_COLORS.epic));
+        // v6 Task 4 review fix: 270px center-to-center gap at w=240 (half=120
+        // each) -> exactly 30px raw edge gap, which the default +14/+14 pad
+        // leaves only a 2px margin (below the 3px floor). pad:12 leaves 6px.
         this._btn(W / 2 - 60, 380, 240, 76, '1× ' + Balance.fmt(goldCost), CONFIG.PASTEL.accent,
-            () => this.doGacha(false, 1), 'coin-tex');
+            () => this.doGacha(false, 1), 'coin-tex', { pad: 12 });
         this._btn(W / 2 + 210, 380, 240, 76, '10+1 ' + Balance.fmt(goldCost * 10), CONFIG.PASTEL.accent,
-            () => this.doGacha(false, 11), 'coin-tex');
+            () => this.doGacha(false, 11), 'coin-tex', { pad: 12 });
 
         this._card(W / 2, 660, 640, 300);
         // v4.0 Phase C Task 3: elements.ice.deep (not the pale raw 0xbfe8ff) so
@@ -182,10 +219,12 @@ class ShopScene extends Phaser.Scene {
         this._text(W / 2 + 60, 580, 'GEM EGG', 34, Balance.hex(CONFIG.PASTEL.gemText));
         // v5.0 RETRO ARCADE Task 4: only the gem egg can drop a legendary pet.
         this._text(W / 2 + 60, 622, I18n.t('shop.eggGemTier'), 20, Balance.hex(RARITY_TEXT_COLORS.legendary));
+        // v6 Task 4 review fix: same 30px-raw-gap/240px-wide layout as the
+        // gold egg row above - pad:12 for the same reason (see there).
         this._btn(W / 2 - 60, 720, 240, 76, '1× ' + CONFIG.GEMS.eggCost, CONFIG.PASTEL.accent,
-            () => this.doGacha(true, 1), 'gem-tex');
+            () => this.doGacha(true, 1), 'gem-tex', { pad: 12 });
         this._btn(W / 2 + 210, 720, 240, 76, '10+1 ' + CONFIG.GEMS.eggCost * 10, CONFIG.PASTEL.accent,
-            () => this.doGacha(true, 11), 'gem-tex');
+            () => this.doGacha(true, 11), 'gem-tex', { pad: 12 });
 
         // v5 final-review fix: these 3 static lines are long single-sentence
         // copy at the pixel font's true 1.0em/char metric - wordWrap so a
@@ -224,16 +263,35 @@ class ShopScene extends Phaser.Scene {
         this.playReveal(results);
     }
 
-    // The hatch ceremony: shake -> crack -> rarity pillar -> reveal.
+    // The hatch ceremony: charge -> intensifying shake -> crack -> light
+    // rays + color wash -> rarity pillar -> reveal (legendary gets a brief
+    // slow-mo + god-rays + banner on top of all of that).
+    // v6 Task 11: dramatically bigger, built ADDITIVELY on the v5.0 RETRO
+    // ARCADE Task 5 ceremony below (shake->flash/burst/ring[+legendary
+    // confetti/burst/shake]->pillar->framed reveal) - every new FX object
+    // this adds is pushed into the SAME `overlay` cleanup array as before,
+    // and `this.tweens.killTweensOf(overlay)` (added to the close-tap
+    // handler) now force-stops every pending tween touching ANY tracked
+    // object - including ones with a Phaser `delay` still counting down
+    // (e.g. the per-cell multi-pull pop) - the instant the player closes
+    // early, so no onStart/onComplete of a killed tween can create new FX
+    // after close. See effects.js's own "v6 Task 11" section banner for
+    // gachaCharge/lightRays/rarityWash/sparkleTrail's own doc comments.
     playReveal(results) {
         const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
         const overlay = [];
+        // Defensive baseline: guarantee no leftover slow-mo from a
+        // pathologically-aborted previous legendary reveal can bleed into
+        // THIS one (the real restore paths are below, this is just a floor).
+        this.tweens.timeScale = 1;
+
         // modal dim-scrim - same near-black exception as ui.js's showSettlement.
         // Everything in `overlay` below renders directly on this dark scrim
         // (no light panel on top of it, unlike showSettlement), so its text
         // colors stay BRIGHT (white/good/gold/etc, not the *Text deep
         // variants) - same convention as game.js's "THE NEST BROKE!" panel.
-        const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.85)
+        const DIM_BASE_ALPHA = 0.85;
+        const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, DIM_BASE_ALPHA)
             .setDepth(30).setInteractive();
         overlay.push(dim);
 
@@ -243,103 +301,271 @@ class ShopScene extends Phaser.Scene {
             .setDepth(31).setDisplaySize(170, 212);
         overlay.push(egg);
 
-        // shake ×3, then crack
-        this.tweens.add({
-            targets: egg, angle: { from: -9, to: 9 }, duration: 90,
-            yoyo: true, repeat: 5, ease: 'Sine.easeInOut',
-            onComplete: () => {
-                const color = RARITY_COLORS[best.rarity];
-                if (typeof Effects !== 'undefined') {
-                    Effects.screenFlash(this, color, best.rarity === 'legendary' ? 0.5 : 0.3, 500);
-                    Effects.burst(this, W / 2, H * 0.42, color, 24, 1.6);
-                    Effects.ring(this, W / 2, H * 0.42, color, 320);
-                    if (best.rarity === 'legendary') {
-                        // v5.0 RETRO ARCADE Task 5: legendary gets the full
-                        // premium treatment on top of the existing flash/
-                        // burst/ring/confetti - a second sparkle burst plus a
-                        // real camera shake so the rarest pull is unmistakably
-                        // the biggest moment in the ceremony.
-                        Effects.confetti(this, W / 2, H * 0.4);
-                        Effects.burst(this, W / 2, H * 0.42, CONFIG.PASTEL.gold, 30, 2.2);
-                        this.cameras.main.shake(220, 0.006);
-                    }
-                }
-                Sfx.jackpot();
-                egg.destroy();
+        // v6 Task 11: anticipation build-up - a growing/pulsing glow + rising
+        // sparks + a deepening scrim (Effects.gachaCharge), running
+        // ALONGSIDE a 3-stage INTENSIFYING shake (bigger amplitude, faster
+        // beat each stage - replaces the old flat single-amplitude shake)
+        // and a rising-pitch charge sweep. `charge` always finishes before
+        // "TAP TO CLOSE" exists (no early-abort path reaches it), so it only
+        // needs the one explicit destroy() below, not a killTweensOf entry.
+        const charge = typeof Effects !== 'undefined'
+            ? Effects.gachaCharge(this, W / 2, H * 0.42, dim, DIM_BASE_ALPHA) : null;
+        Sfx.gachaCharge();
 
-                // pillar
-                const pillar = this.add.rectangle(W / 2, H * 0.45, 220, H * 0.6, color, 0.25).setDepth(30);
-                overlay.push(pillar);
+        const reveal = () => {
+            if (charge) charge.destroy();
+            const color = RARITY_COLORS[best.rarity];
+            const legendary = best.rarity === 'legendary';
 
-                if (results.length === 1) {
-                    const r = results[0];
-                    // v5.0 RETRO ARCADE Task 5: the pulled pet reveals inside
-                    // its own rarity frame - sized a bit past the 160px
-                    // sprite, and popped in with the same Back.easeOut beat
-                    // as the sprite itself so the two read as one reveal.
-                    const frame = Frames.draw(this, W / 2, H * 0.42, 190, 190, r.rarity)
-                        .setDepth(31).setScale(0.1);
-                    overlay.push(frame);
-                    this.tweens.add({ targets: frame, scale: 1, duration: 320, ease: 'Back.easeOut' });
-                    const spr = this.add.image(W / 2, H * 0.42, 'pet-' + r.species)
-                        .setDepth(32).setDisplaySize(160, 160).setScale(0.1);
-                    overlay.push(spr);
-                    this.tweens.add({ targets: spr, scale: 160 / CONFIG.PIXEL.bake, duration: 320, ease: 'Back.easeOut' });
-                    const def = PET_SPECIES.find(p => p.id === r.species);
-                    overlay.push(this.add.text(W / 2, H * 0.58, def.name + '  ' + RARITY_STARS[r.rarity], {
-                        fontFamily: CONFIG.FONT, fontSize: '42px', color: '#' + color.toString(16).padStart(6, '0')
-                    }).setOrigin(0.5).setDepth(32));
-                    overlay.push(this.add.text(W / 2, H * 0.64,
-                        r.kind === 'new' ? 'NEW PET!' :
-                            r.kind === 'upgrade' ? 'RARITY UPGRADED!' : '+' + r.shards + ' shards', {
-                        fontFamily: CONFIG.FONT, fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.white)
-                    }).setOrigin(0.5).setDepth(32));
-                } else {
-                    // multi: result grid
-                    results.forEach((r, i) => {
-                        const gx = W / 2 + ((i % 4) - 1.5) * 150;
-                        const gy = H * 0.32 + Math.floor(i / 4) * 150;
-                        const c = RARITY_COLORS[r.rarity];
-                        const cell = this.add.nineslice(gx, gy, 'btn-tex', 0, 130, 130, 20, 20, 20, 20)
-                            .setTint(c).setAlpha(0.28).setDepth(31);
-                        // v5.0 RETRO ARCADE Task 5: each grid cell gets its
-                        // own rarity frame (sized just inside the 130px
-                        // cell), depth-sandwiched between the tinted cell
-                        // and the pet sprite/tag on top of it.
-                        const frame = Frames.draw(this, gx, gy, 118, 118, r.rarity).setDepth(31.5);
-                        const spr = this.add.image(gx, gy - 8, 'pet-' + r.species)
-                            .setDepth(32).setDisplaySize(76, 76).setScale(0.05);
-                        const tag = this.add.text(gx, gy + 44,
-                            r.kind === 'shards' ? '+' + r.shards + '🧩' : r.kind.toUpperCase(), {
-                            fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.white)
-                        }).setOrigin(0.5).setDepth(32);
-                        overlay.push(cell, frame, spr, tag);
-                        this.tweens.add({
-                            targets: spr, scale: 76 / CONFIG.PIXEL.bake, delay: i * 90,
-                            duration: 220, ease: 'Back.easeOut',
-                            onStart: () => {
-                                Sfx.coin();
-                                // Legendary flourish, per-cell: a small gold
-                                // sparkle burst timed with that cell's own
-                                // reveal beat (the multi-pull otherwise has
-                                // no per-rarity FX at all).
-                                if (r.rarity === 'legendary' && typeof Effects !== 'undefined') {
-                                    Effects.burst(this, gx, gy, CONFIG.PASTEL.gold, 14, 0.9);
-                                }
-                            }
-                        });
+            // v6 Task 11: the reveal-instant beats - a full-screen rarity-
+            // colored ADD wash (flashes over everything, then fades to
+            // "unveil" what's forming underneath) + a rotating light-ray fan
+            // bursting from behind the egg, layered UNDER the existing
+            // flash/burst/ring so all of it reads as one bigger moment.
+            if (typeof Effects !== 'undefined') {
+                overlay.push(Effects.rarityWash(this, color, { peak: legendary ? 0.6 : 0.42 }));
+                overlay.push(Effects.lightRays(this, W / 2, H * 0.42, color, {
+                    count: legendary ? 14 : 9, length: legendary ? 640 : 480,
+                    life: legendary ? 1300 : 850
+                }));
+                Effects.screenFlash(this, color, legendary ? 0.5 : 0.3, 500);
+                // v6 Task 11: denser than before (24->34 particles, wider reach)
+                Effects.burst(this, W / 2, H * 0.42, color, 34, 1.9);
+                Effects.ring(this, W / 2, H * 0.42, color, 320);
+                if (legendary) {
+                    // v5.0 RETRO ARCADE Task 5 baseline (confetti/gold burst/
+                    // camera shake) + v6 Task 11's bigger treatment: a second
+                    // gold ray fan, an extra confetti burst, a stronger shake,
+                    // and a real (safely-restored) slow-mo window - see the
+                    // restore()/onShutdown pair below for how timeScale never
+                    // gets stuck.
+                    overlay.push(Effects.lightRays(this, W / 2, H * 0.42, CONFIG.PASTEL.gold, {
+                        count: 18, length: 720, life: 1400, spins: 0.4, spinDir: -1, depth: 30.32
+                    }));
+                    Effects.confetti(this, W / 2, H * 0.4);
+                    Effects.confetti(this, W / 2, H * 0.44);
+                    Effects.burst(this, W / 2, H * 0.42, CONFIG.PASTEL.gold, 40, 2.4);
+                    this.cameras.main.shake(320, 0.01);
+                    Sfx.legendaryFanfare();
+
+                    // Brief true slow-mo via the TWEEN MANAGER's own
+                    // timeScale (this.tweens.timeScale) - deliberately NOT
+                    // this.time.timeScale, which the codebase's own bug
+                    // history warns freezes Phaser's TIMERS at 0 (see
+                    // MEMORY.md common Matter.js/Phaser bugs). tweens.
+                    // timeScale only slows TWEEN playback; delayedCall below
+                    // (the restore itself) keeps running at real speed, so
+                    // the restore always fires on schedule no matter how
+                    // "slow" the visuals look.
+                    this.tweens.timeScale = 0.45;
+                    const onShutdown = () => { this.tweens.timeScale = 1; };
+                    this.events.once('shutdown', onShutdown);
+                    const restore = () => {
+                        this.tweens.timeScale = 1;
+                        this.events.off('shutdown', onShutdown);
+                        this._revealRestoreTimeScale = null;
+                    };
+                    // Real-world 900ms (unaffected by the timeScale change
+                    // above) - long enough for the slowed god-rays/banner to
+                    // read, short enough the shop doesn't feel stuck.
+                    const restoreTimer = this.time.delayedCall(900, restore);
+                    // Read by the close-tap handler below so tapping to
+                    // close EARLY (mid slow-mo) restores immediately instead
+                    // of waiting the full 900ms AND cancels the now-redundant
+                    // delayedCall so `restore` can never fire twice.
+                    this._revealRestoreTimeScale = () => { restoreTimer.remove(false); restore(); };
+
+                    // Big "LEGENDARY!" banner - same pop-in/hold/fade beat as
+                    // game.js's "FEVER!!" banner, clamped with fitToWidth so
+                    // the pixel font can never overrun the screen.
+                    const banner = this.add.text(W / 2, H * 0.22, '★ LEGENDARY! ★', {
+                        fontFamily: CONFIG.FONT, fontSize: '52px', color: Balance.hex(CONFIG.PASTEL.goldText),
+                        stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 10
+                    }).setOrigin(0.5).setDepth(35);
+                    overlay.push(banner);
+                    fitToWidth(banner, W - 60);
+                    const bScale = banner.scale;
+                    banner.setScale(bScale * 0.12);
+                    this.tweens.add({ targets: banner, scale: bScale, duration: 340, ease: 'Back.easeOut' });
+                    this.tweens.add({
+                        targets: banner, y: banner.y - 16, alpha: 0, delay: 1100, duration: 400, ease: 'Quad.easeOut'
                     });
                 }
+            }
+            Sfx.jackpot();
+            egg.destroy();
 
-                overlay.push(this.add.text(W / 2, H * 0.88, 'TAP TO CLOSE', {
-                    fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            // pillar
+            const pillar = this.add.rectangle(W / 2, H * 0.45, 220, H * 0.6, color, 0.25).setDepth(30);
+            overlay.push(pillar);
+
+            if (results.length === 1) {
+                const r = results[0];
+                const def = PET_SPECIES.find(p => p.id === r.species);
+                // v6 Task 12: pedestal the revealed pet stands on - pops in
+                // with the same Back.easeOut beat as the frame/sprite below
+                // so all three read as one reveal.
+                const pedestal = Frames.drawPedestal(this, W / 2, H * 0.42 + 74, 150, r.rarity)
+                    .setDepth(30.5).setScale(0.1);
+                overlay.push(pedestal);
+                this.tweens.add({ targets: pedestal, scale: 1, duration: 320, ease: 'Back.easeOut' });
+                // v5.0 RETRO ARCADE Task 5: the pulled pet reveals inside
+                // its own rarity frame - sized a bit past the 160px
+                // sprite, and popped in with the same Back.easeOut beat
+                // as the sprite itself so the two read as one reveal. This
+                // is a single big card on screen at a time, so it keeps
+                // Frames.draw()'s default `animate: true` (full sweeping
+                // shimmer/glow/gem), unlike the multi-pull cells below.
+                const frame = Frames.draw(this, W / 2, H * 0.42, 190, 190, r.rarity)
+                    .setDepth(31).setScale(0.1);
+                overlay.push(frame);
+                this.tweens.add({ targets: frame, scale: 1, duration: 320, ease: 'Back.easeOut' });
+                const spr = this.add.image(W / 2, H * 0.42, 'pet-' + r.species)
+                    .setDepth(32).setDisplaySize(160, 160).setScale(0.1);
+                overlay.push(spr);
+                this.tweens.add({ targets: spr, scale: 160 / CONFIG.PIXEL.bake, duration: 320, ease: 'Back.easeOut' });
+                const nameText = this.add.text(W / 2, H * 0.58, def.name + '  ' + RARITY_STARS[r.rarity], {
+                    fontFamily: CONFIG.FONT, fontSize: '42px', color: '#' + color.toString(16).padStart(6, '0')
+                }).setOrigin(0.5).setDepth(32);
+                // v6 Task 12: "name plate (pixel font, fitToWidth)" - long
+                // species name + 4-star legendary suffix is the widest this
+                // line ever gets, clamp it before sizing the plate below.
+                fitToWidth(nameText, W - 80);
+                // Name-plate pill behind the reveal name/stars line - depth
+                // pinned just under the text's 32 (created after measuring
+                // it, so insertion order alone can't be relied on here).
+                overlay.push(this.add.nineslice(W / 2, H * 0.58, 'pill-tex', 0,
+                    nameText.displayWidth + 44, 56, 20, 20, 16, 16)
+                    .setTint(CONFIG.PASTEL.panel).setAlpha(0.85).setDepth(31.9));
+                overlay.push(nameText);
+                overlay.push(this.add.text(W / 2, H * 0.64,
+                    r.kind === 'new' ? 'NEW PET!' :
+                        r.kind === 'upgrade' ? 'RARITY UPGRADED!' : '+' + r.shards + ' shards', {
+                    fontFamily: CONFIG.FONT, fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.white)
                 }).setOrigin(0.5).setDepth(32));
-                dim.once('pointerdown', () => {
-                    overlay.forEach(o => o.destroy());
-                    this.showTab('EGGS');
+                // v6 Task 12: element + skill chips, same conventions as
+                // dex.js's detail-view chips (bright element-base fill +
+                // dark bg text for the element chip; panelLight fill + ink
+                // text for the skill chip).
+                const elemChip = makeChip(this, W / 2, H * 0.71, 150, 40,
+                    shopElementColor(def.element, CONFIG.PASTEL.inkSoft), null,
+                    (def.element || '').toUpperCase(), Balance.hex(CONFIG.PASTEL.bg));
+                elemChip.parts.forEach(p => p.setDepth(32));
+                overlay.push(...elemChip.parts);
+                const skillChip = makeChip(this, W / 2, H * 0.77, 260, 40,
+                    CONFIG.PASTEL.panelLight, 'spark-tex',
+                    I18n.t('dex.skill') + ': ' + (def.skill ? def.skill.toUpperCase() : '-'),
+                    Balance.hex(CONFIG.PASTEL.ink));
+                skillChip.parts.forEach(p => p.setDepth(32));
+                if (skillChip.parts[1]) skillChip.parts[1].setTint(shopElementColor(def.element, CONFIG.PASTEL.white));
+                overlay.push(...skillChip.parts);
+                // v6 Task 11: a slow drifting sparkle field around the framed
+                // pet - "denser particles" ambience beyond the punchy one-
+                // shot burst/ring above (bigger + longer for legendary).
+                if (typeof Effects !== 'undefined') {
+                    overlay.push(Effects.sparkleTrail(this, W / 2, H * 0.42, 130, color,
+                        { count: legendary ? 22 : 12, life: 750 }));
+                }
+            } else {
+                // multi: result grid
+                const bestIdx = results.indexOf(best);
+                results.forEach((r, i) => {
+                    const gx = W / 2 + ((i % 4) - 1.5) * 150;
+                    const gy = H * 0.32 + Math.floor(i / 4) * 150;
+                    const c = RARITY_COLORS[r.rarity];
+                    const cell = this.add.nineslice(gx, gy, 'btn-tex', 0, 130, 130, 20, 20, 20, 20)
+                        .setTint(c).setAlpha(0.28).setDepth(31);
+                    // v6 Task 12: little pedestal under each cell's sprite -
+                    // depth sandwiched the same as the frame (below the
+                    // sprite, above the tinted cell).
+                    const pedestal = Frames.drawPedestal(this, gx, gy + 22, 56, r.rarity).setDepth(31.2);
+                    // v5.0 RETRO ARCADE Task 5: each grid cell gets its
+                    // own rarity frame (sized just inside the 130px
+                    // cell), depth-sandwiched between the tinted cell
+                    // and the pet sprite/tag on top of it. v6 Task 12: up
+                    // to 11 of these render at once (a full multi-pull), so
+                    // - same perf reasoning as dex.js's grid - shimmer/glow/
+                    // pip/gem tweens stay OFF here regardless of rolled
+                    // rarity (static sheen instead); only the single-pull
+                    // reveal above keeps the animated version.
+                    const frame = Frames.draw(this, gx, gy, 118, 118, r.rarity, { animate: false }).setDepth(31.5);
+                    const spr = this.add.image(gx, gy - 8, 'pet-' + r.species)
+                        .setDepth(32).setDisplaySize(76, 76).setScale(0.05);
+                    const tag = this.add.text(gx, gy + 44,
+                        r.kind === 'shards' ? '+' + r.shards + '🧩' : r.kind.toUpperCase(), {
+                        fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.white)
+                    }).setOrigin(0.5).setDepth(32);
+                    overlay.push(cell, pedestal, frame, spr, tag);
+                    // v6 Task 11: EVERY cell now gets its own rarity flash
+                    // (was legendary-only before) + the highest rarity in
+                    // the pull gets a highlight ring/beam/"BEST!" callout -
+                    // all folded into this SAME already-`delay`d tween's
+                    // onStart (rather than a fresh delayedCall) so
+                    // `tweens.killTweensOf(overlay)` on early-close (spr is
+                    // already tracked above) reliably prevents it from
+                    // firing at all after the reveal is closed.
+                    this.tweens.add({
+                        targets: spr, scale: 76 / CONFIG.PIXEL.bake, delay: i * 90,
+                        duration: 220, ease: 'Back.easeOut',
+                        onStart: () => {
+                            Sfx.coin();
+                            if (typeof Effects === 'undefined') return;
+                            Effects.flash(this, gx, gy, c, 70);
+                            if (r.rarity === 'legendary') {
+                                Effects.burst(this, gx, gy, CONFIG.PASTEL.gold, 14, 0.9);
+                                Effects.lightRays(this, gx, gy, c, { count: 8, length: 100, life: 500, depth: 30.6 });
+                            }
+                            if (i === bestIdx && results.length > 1) {
+                                Effects.ring(this, gx, gy, c, 130);
+                                Effects.lightRays(this, gx, gy, c, { count: 10, length: 150, life: 650, depth: 30.6 });
+                                const callout = this.add.text(gx, gy - 86, 'BEST!', {
+                                    fontFamily: CONFIG.FONT, fontSize: '16px',
+                                    color: Balance.hex(RARITY_TEXT_COLORS[r.rarity]),
+                                    stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 4
+                                }).setOrigin(0.5).setDepth(33);
+                                overlay.push(callout);
+                                this.tweens.add({
+                                    targets: callout, y: callout.y - 10, alpha: { from: 0, to: 1 },
+                                    duration: 180, ease: 'Quad.easeOut'
+                                });
+                            }
+                        }
+                    });
                 });
             }
-        });
+
+            overlay.push(this.add.text(W / 2, H * 0.88, 'TAP TO CLOSE', {
+                fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            }).setOrigin(0.5).setDepth(32));
+            dim.once('pointerdown', () => {
+                // Closing early must be as safe as letting the ceremony play
+                // out: restore any active slow-mo NOW (don't wait for the
+                // 900ms delayedCall), then kill every tween still touching a
+                // tracked overlay object (stops any pending-`delay` onStart/
+                // onComplete - multi-pull cells, the legendary banner fade,
+                // sparkleTrail/lightRays fade-outs - from firing AFTER close
+                // and creating orphan FX), THEN destroy the objects themselves.
+                if (this._revealRestoreTimeScale) this._revealRestoreTimeScale();
+                this.tweens.killTweensOf(overlay);
+                overlay.forEach(o => o.destroy());
+                this.showTab('EGGS');
+            });
+        };
+
+        // v6 Task 11: 3-stage INTENSIFYING shake (bigger amplitude + faster
+        // beat each stage) replacing the old flat single-amplitude shake -
+        // same ~1.05s total as before (400+320+330ms), just escalating
+        // instead of constant, so the build-up itself visibly ramps toward
+        // the pop instead of holding one steady wobble the whole time.
+        const shakeStage = (amp, dur, reps, onDone) => {
+            this.tweens.add({
+                targets: egg, angle: { from: -amp, to: amp }, duration: dur,
+                yoyo: true, repeat: reps, ease: 'Sine.easeInOut', onComplete: onDone
+            });
+        };
+        shakeStage(5, 100, 1, () =>
+            shakeStage(11, 80, 1, () =>
+                shakeStage(18, 55, 2, reveal)));
     }
 
     // =========================================================================
@@ -381,6 +607,11 @@ class ShopScene extends Phaser.Scene {
             this._text(200, y + 8, 'DPS ' + Balance.fmt(
                 Balance.petDamage(pet.level, st.upgrades.tap, pet.rarity, pet.necklace)), 19, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
 
+            // v6 Task 4 review fix: FEED (x=300,w=240) / LVUP (x=560,w=220)
+            // centers sit 260px apart (halves 120+110) -> exactly 30px raw
+            // gap, default pad leaves only 2px margin (below the 3px floor).
+            // pad:10 leaves 10px AND (see below) is also what the last row's
+            // pair needs to clear the pager underneath it.
             const feedCost = Balance.petFeedCost(this.stageRef, pet.level);
             this._btn(300, y + 56, 240, 56, 'FEED ' + Balance.fmt(feedCost), CONFIG.PASTEL.accent, () => {
                 if (!SaveManager.spendGold(feedCost)) return this.toast(I18n.t('shop.needGold'));
@@ -389,26 +620,30 @@ class ShopScene extends Phaser.Scene {
                 this.refreshWallet();
                 Sfx.coin();
                 this.showTab('PETS');
-            });
+            }, undefined, { pad: 10 });
             this._btn(560, y + 56, 220, 56, '🧩8 → LV UP', CONFIG.PASTEL.accent, () => {
                 if (!Gacha.levelWithShards(st, pet.species)) return this.toast(I18n.t('shop.needShards'));
                 SaveManager.persist();
                 Sfx.coin();
                 this.showTab('PETS');
-            });
+            }, undefined, { pad: 10 });
         });
 
         if (pages > 1) {
+            // v6 Task 4 review fix: this pager sits only 84px below the last
+            // pet row's FEED/LVUP buttons (h=56 half=28 vs pager h=60
+            // half=30) -> 26px raw gap, which the default pad turns into a
+            // 2px overlap. pad:10 (matching FEED/LVUP above) leaves 6px.
             const py = 290 + PER_PAGE * 200 - 60;
             this._btn(W / 2 - 180, py, 150, 60, '◀', CONFIG.PASTEL.accent, () => {
                 this.petPage = (this.petPage - 1 + pages) % pages;
                 this.showTab('PETS');
-            });
+            }, undefined, { pad: 10 });
             this._text(W / 2, py, (this.petPage + 1) + ' / ' + pages, 24, Balance.hex(CONFIG.PASTEL.inkSoft));
             this._btn(W / 2 + 180, py, 150, 60, '▶', CONFIG.PASTEL.accent, () => {
                 this.petPage = (this.petPage + 1) % pages;
                 this.showTab('PETS');
-            });
+            }, undefined, { pad: 10 });
         }
     }
 
@@ -457,6 +692,9 @@ class ShopScene extends Phaser.Scene {
         const W = CONFIG.WIDTH, st = SaveManager.state;
         const chestCost = Balance.chestCost(this.stageRef);
 
+        // v6 Task 4 review fix: 350px center-to-center gap at w=320 (half=160
+        // each) -> exactly 30px raw edge gap, default pad leaves only 2px
+        // margin (below the 3px floor). pad:12 leaves 6px.
         this._btn(W / 2 - 170, 210, 320, 76, 'CHEST ' + Balance.fmt(chestCost), CONFIG.PASTEL.accent, () => {
             if (!SaveManager.spendGold(chestCost)) return this.toast(I18n.t('shop.needGold'));
             const r = this._openChest(false);
@@ -467,7 +705,7 @@ class ShopScene extends Phaser.Scene {
             }
             this.toast(r.msg);
             this.time.delayedCall(700, () => this.showTab('GEAR'));
-        }, 'coin-tex');
+        }, 'coin-tex', { pad: 12 });
         this._btn(W / 2 + 180, 210, 320, 76, 'GEM CHEST ' + CONFIG.GEMS.chestCost, CONFIG.PASTEL.accent, () => {
             if (st.gems < CONFIG.GEMS.chestCost) return this.toast(I18n.t('shop.needGems'));
             st.gems -= CONFIG.GEMS.chestCost;
@@ -476,7 +714,7 @@ class ShopScene extends Phaser.Scene {
             Sfx.jackpot();
             this.toast(r.msg);
             this.time.delayedCall(700, () => this.showTab('GEAR'));
-        }, 'gem-tex');
+        }, 'gem-tex', { pad: 12 });
         // v5 final-review fix: wordWrap so this doesn't overflow the 720px
         // design width at the pixel font's 1.0em/char metric.
         this._text(W / 2, 270, 'Chests drop: glove / ring / charm / pet necklace', 19, Balance.hex(CONFIG.PASTEL.inkSoft),
@@ -621,9 +859,9 @@ class ShopScene extends Phaser.Scene {
     }
 
     // =========================================================================
-    // DECOR - v3.5 Task 3: buy nest props with gold/gems. 24-item catalog,
-    // paginated 3x3 grid (same pagination pattern as tabPETS) since Phaser
-    // has no native scroll container in this codebase.
+    // DECOR - v3.5 Task 3: buy nest props with gold/gems. 60-item catalog
+    // (v6 Task 9), paginated 3x3 grid (same pagination pattern as tabPETS)
+    // since Phaser has no native scroll container in this codebase.
     // =========================================================================
     tabDECOR() {
         const W = CONFIG.WIDTH, st = SaveManager.state;
@@ -654,9 +892,16 @@ class ShopScene extends Phaser.Scene {
                 this._text(x + cellW / 2 - 44, y - cellH / 2 + 20, I18n.t('decor.owned', { n: owned }), 13, Balance.hex(CONFIG.PASTEL.goodText));
             }
 
+            // v6 Task 4 review fix: the bottom grid row's buy button sits only
+            // 64px above the pager below it (h=52 half=26 vs pager h=56
+            // half=28) -> 10px raw gap, default pad turns that into an 18px
+            // overlap (2D: X-ranges already overlap, Y is the only
+            // separating axis). pad:3 on both this button AND the pager
+            // leaves a 4px margin - the grid's own column-to-column gap
+            // (44px raw) stays comfortably clear at pad:3 too.
             const gems = def.price.kind === 'gems';
             this._btn(x, y + 66, cellW - 44, 52, (gems ? '💎' : '') + Balance.fmt(def.price.amount),
-                CONFIG.PASTEL.accent, () => this.buyDecor(def), gems ? 'gem-tex' : 'coin-tex');
+                CONFIG.PASTEL.accent, () => this.buyDecor(def), gems ? 'gem-tex' : 'coin-tex', { pad: 3 });
         });
 
         if (pages > 1) {
@@ -664,12 +909,12 @@ class ShopScene extends Phaser.Scene {
             this._btn(W / 2 - 180, py, 120, 56, '◀', CONFIG.PASTEL.accent, () => {
                 this.decorPage = (this.decorPage - 1 + pages) % pages;
                 this.showTab('DECOR');
-            });
+            }, undefined, { pad: 3 });
             this._text(W / 2, py, (this.decorPage + 1) + ' / ' + pages, 22, Balance.hex(CONFIG.PASTEL.inkSoft));
             this._btn(W / 2 + 180, py, 120, 56, '▶', CONFIG.PASTEL.accent, () => {
                 this.decorPage = (this.decorPage + 1) % pages;
                 this.showTab('DECOR');
-            });
+            }, undefined, { pad: 3 });
         }
     }
 

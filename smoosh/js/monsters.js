@@ -208,7 +208,15 @@ class Monster {
             const nx = CONFIG.NEST.x, ny = CONFIG.NEST.y;
             const dx = nx - this.x, dy = ny - this.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (this.biting || dist < 96 + this.r * 0.6) {
+            const biteRange = 96 + this.r * 0.6;
+            // v6 final-review fix: re-evaluate against distance every frame
+            // instead of a one-way sticky flag - a knockback/pull (including
+            // the new PULL skill, whose whole point is peeling a nibbler off
+            // the nest) displaces this monster out of biteRange, so it must
+            // stop draining the nest and walk back in rather than keep
+            // biting from wherever it got shoved to.
+            if (dist >= biteRange) this.biting = false;
+            if (this.biting || dist < biteRange) {
                 this.biting = true;
                 // chomp wobble
                 this.sprite.setAngle(Math.sin(this._squashT * 4) * 14);
@@ -407,7 +415,11 @@ class Monster {
         // v3.0: orbity's buffaura skill temporarily juices nearby monsters' attacks
         const buffMult = this.status.buff_dmg ? 1 + this.status.buff_dmg.add : 1;
         this.attackCd = A.cd * (this.isBoss ? 0.8 : 1) * (0.85 + Math.random() * 0.3);
-        const dmg = Balance.mobHP(this.stage) * A.dmg * bossMult * buffMult;
+        // v6 Task 2 (A3): single choke point for every regular attack style
+        // (melee/slam/charge/spit/spray/zap all read this one `dmg` value) -
+        // Balance.monsterAtkMult(stage) is applied here ONCE so it covers all
+        // of them, including charge (stashed below as `_chargeDmg`).
+        const dmg = Balance.mobHP(this.stage) * A.dmg * bossMult * buffMult * Balance.monsterAtkMult(this.stage);
         Sfx.monsterAttack(this.r);
 
         switch (this.attackType) {
@@ -419,7 +431,20 @@ class Monster {
                     duration: 110, yoyo: true, ease: 'Quad.easeOut'
                 });
                 scene.time.delayedCall(110, () => {
-                    if (this.alive) scene.monsterStrikeArea(this, tx, ty, 70, dmg, isNest);
+                    if (!this.alive) return;
+                    scene.monsterStrikeArea(this, tx, ty, 70, dmg, isNest);
+                    // v6 Task 5: melee already dealt damage above but had no
+                    // FX of its own next to slam's ring+shake / charge's
+                    // flash - additive-only chomp: neon bite impact at the
+                    // strike point + a quick pinch-scale "chomp" on the
+                    // attacker + a crunch SFX, all landing right on impact.
+                    if (typeof Effects !== 'undefined') Effects.biteFx(scene, tx, ty, this.def.color);
+                    if (typeof Sfx !== 'undefined') Sfx.crunch();
+                    this.scene.tweens.add({
+                        targets: this.sprite,
+                        scaleX: this._baseScaleX * 1.22, scaleY: this._baseScaleY * 0.78,
+                        duration: 70, yoyo: true, ease: 'Quad.easeOut'
+                    });
                 });
                 break;
             }
@@ -537,15 +562,28 @@ class Monster {
         const ctx = ally ? Monsters.allyCtx(scene, this, now) : Monsters.enemyCtx(scene, this, now);
 
         const eff = Skills.cast(this.def.skill, ctx);
-        if (!eff) return; // condition unmet (e.g. execute below threshold) - no cooldown paid
+        // v6 Task 6 ruling (reverses v3.0 Task 7): a whiff - either no cast
+        // at all (e.g. execute below threshold, pull with nobody in range)
+        // OR a cast that landed on nobody (taunt/knockback/slam with an
+        // empty targets[]) - retries soon instead of going dark for the
+        // skill's whole cd. See Skills.isWhiff's doc comment for the full
+        // reasoning.
+        // v6 final-review fix: "soon" is Skills.WHIFF_RETRY_MS, NOT next
+        // frame - a whiff that retries every single frame (e.g. every pet KO'd,
+        // so an offensive skill whiffs indefinitely) means the instant one pet
+        // revives, every monster whose cd "elapsed" mid-whiff casts on that
+        // same frame, alpha-striking the pet right back down. The retry gate
+        // desyncs those casts across monsters instead of firing them in
+        // lockstep. A successful cast below still pays the FULL archetype cd.
+        if (Skills.isWhiff(eff)) { this.skillCdUntil = now + Skills.WHIFF_RETRY_MS; return; }
 
-        // Task 7 ruling: descriptors with empty targets are safe no-ops but still
-        // start the cooldown - a whiffed taunt/knockback/slam isn't a free recast.
         this.skillCdUntil = now + A.cd;
         // v3.0 Task 9: the descriptor -> Phaser translator now lives in
         // effects.js (Effects.applySkillEffect) so pets.js can reuse it too.
         Effects.applySkillEffect(scene, 'monster', this, eff);
-        if (typeof Effects !== 'undefined') Effects.ring(scene, this.x, this.y, this.def.color, this.r * 1.5);
+        // v6 Task 6: telegraph flash + uppercase name popup + a per-kind FX
+        // pass bigger/more distinct than the old generic ring below it replaced.
+        if (typeof Effects !== 'undefined') Effects.skillCastFx(scene, 'monster', this, this.def.skill, eff);
         Sfx.monsterAttack(this.r);
     }
 
@@ -645,8 +683,16 @@ const Monsters = {
     SKILL_DMG_FRAC: 0.15,
     CLONE_SCALE: { r: 0.6, hp: 0.3 },
 
+    // v6 Task 2 (A3): monsterAtkMult applied here. Safe for BOTH callers below
+    // (allyCtx AND enemyCtx set self.dmg to this) - only offense archetypes
+    // (poison/burn/lifesteal/chain/execute/dash/slam, see skills.js cast())
+    // ever read ctx.self.dmg, and those only ever target pet agents (monster
+    // casters' enemyCtx never includes the Nest or other monsters as targets)
+    // - heal/shield/buffaura/goldaura/critaura/stealth (allyCtx's consumers)
+    // read maxHp/mag instead, never dmg, so they're unaffected.
     skillDmg(self) {
-        return Balance.mobHP(self.stage) * Monsters.SKILL_DMG_FRAC * (self.isBoss ? 2.5 : 1);
+        return Balance.mobHP(self.stage) * Monsters.SKILL_DMG_FRAC * (self.isBoss ? 2.5 : 1)
+            * Balance.monsterAtkMult(self.stage);
     },
 
     // ctx for heal/shield/buffaura/goldaura/critaura/stealth/clone/summon:

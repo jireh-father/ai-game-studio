@@ -16,20 +16,66 @@ function fitToWidth(t, w) {
     if (t.width > w) t.setScale(w / t.width);
 }
 
+// v6 Task 4: shared tap-padding helper for the small single-glyph "back"
+// nav buttons repeated across every scene's header (game/dex/friends/
+// nestscene/pvp/shop/stagemap.js all draw the same isolated '<'/'>' text in
+// a screen corner with nothing else nearby) - a lone character is the
+// worst-case near-miss target on mobile. Same origin-independent
+// top-left-anchored local-space rect as makeUiButton below (Phaser's
+// InputPlugin always normalizes hit-test coords into that space via
+// displayOriginX/Y before testing the shape, regardless of the object's own
+// origin - see the longer comment on makeUiButton's body.setInteractive).
+// Loads before some callers' own <script> tag (game.js/dex.js/friends.js/
+// nestscene.js all load ahead of ui.js in index.html) but that's fine - this
+// is only ever called from inside a scene's create(), long after every
+// script has finished loading, same as those files' existing calls into
+// this file's makeUiButton.
+function padTapArea(obj, pad) {
+    if (pad === undefined) pad = 14;
+    const w = obj.width, h = obj.height;
+    obj.setInteractive(new Phaser.Geom.Rectangle(-pad, -pad, w + pad * 2, h + pad * 2), Phaser.Geom.Rectangle.Contains);
+    obj.input.cursor = 'pointer';
+    return obj;
+}
+
 // Rounded button: shadow + body + gloss + passive label.
 // The body is the ONLY interactive object.
 // iconKey (optional): a texture (e.g. 'coin-tex'/'gem-tex') rendered before
 // the label - use this instead of emoji so currency looks identical on
 // every device font.
-function makeUiButton(scene, x, y, w, h, label, color, cb, iconKey) {
+// opts.pad (optional, default 14): v6 Task 4 review fix - the blanket +14
+// hit-pad that made lone/isolated buttons forgiving on mobile creates NEW
+// overlaps once buttons sit close together (tight nav rows, stacked pairs,
+// paginated grids next to pager arrows) - the wrong neighbor can eat a tap.
+// Callers with tight neighbors pass a smaller opts.pad so the padded rects
+// clear each other by a few px; every other caller keeps the generous
+// default. See tests/pastel.test.js's overlap-free layout assumptions and
+// the per-call-site comments below for the exact numbers.
+function makeUiButton(scene, x, y, w, h, label, color, cb, iconKey, opts) {
     // v4.0 Phase C Task 2: this drop shadow stays near-black on purpose - a
     // raised button needs a dark contact shadow regardless of theme (same
     // exception class as the settlement/nest-broken dim scrims below).
     const shadow = scene.add.nineslice(x, y + 5, 'btn-tex', 0, w, h, 24, 24, 24, 24)
         .setTint(0x0a0714).setAlpha(0.55).setDepth(21);
     const body = scene.add.nineslice(x, y, 'btn-tex', 0, w, h, 24, 24, 24, 24)
-        .setTint(color).setDepth(21)
-        .setInteractive({ useHandCursor: true });
+        .setTint(color).setDepth(21);
+    // v6 Task 4: pad the tappable area past the visible w x h so near-misses
+    // on mobile still register. Phaser hit-tests a shape hitArea in the
+    // object's "local" space, which - regardless of this NineSlice's origin
+    // (0.5/0.5, the default, left untouched here) - Phaser's InputPlugin
+    // always normalizes back to a TOP-LEFT-anchored box before testing (it
+    // adds displayOriginX/Y to the origin-relative point first - see
+    // InputPlugin.pointWithinHitArea in phaser.min.js). So the padded rect
+    // is always (-PAD, -PAD, w+2*PAD, h+2*PAD) here, independent of origin.
+    // Passing an explicit shape drops the {useHandCursor} sugar (that path
+    // only applies when setInteractive() is called with a bare options
+    // object), so the hand cursor is re-applied by hand right after.
+    const HIT_PAD = (opts && opts.pad !== undefined) ? opts.pad : 14;
+    body.setInteractive(
+        new Phaser.Geom.Rectangle(-HIT_PAD, -HIT_PAD, w + HIT_PAD * 2, h + HIT_PAD * 2),
+        Phaser.Geom.Rectangle.Contains
+    );
+    body.input.cursor = 'pointer';
     const gloss = scene.add.nineslice(x, y - h * 0.24, 'btn-tex', 0, w - 16, Math.max(18, h * 0.34), 16, 16, 12, 12)
         .setTint(CONFIG.PASTEL.white).setAlpha(0.16).setDepth(22);
     // v5.0 retro-neon carry-over fix: every fill this helper is ever called
@@ -125,8 +171,18 @@ function buildUpgradeBar(scene) {
         const glow = scene.add.nineslice(x, BAR_Y, 'btn-tex', 0, BTN_W + 10, BTN_H + 10, 24, 24, 24, 24)
             .setTint(def.color).setAlpha(0).setDepth(9);
         const card = scene.add.nineslice(x, BAR_Y, 'btn-tex', 0, BTN_W, BTN_H, 24, 24, 24, 24)
-            .setTint(CONFIG.PASTEL.panel).setDepth(10)
-            .setInteractive({ useHandCursor: true });
+            .setTint(CONFIG.PASTEL.panel).setDepth(10);
+        // v6 Task 4: the busiest button in the game (tapped every stage to
+        // buy upgrades) - but 5 cards share the 720px bar only ~11.7px
+        // apart, so (same reasoning as the shop tab pills) a symmetric pad
+        // would let a tap meant for one upgrade buy its neighbor instead -
+        // real gold lost to a mis-tap. Vertical-only (+14 top/bottom): the
+        // divider line above and the screen edge below are both clear.
+        {
+            const HIT_PAD = 14;
+            card.setInteractive(new Phaser.Geom.Rectangle(0, -HIT_PAD, BTN_W, BTN_H + HIT_PAD * 2), Phaser.Geom.Rectangle.Contains);
+            card.input.cursor = 'pointer';
+        }
         const icon = scene.add.image(x, BAR_Y - 46, def.icon)
             .setDepth(11).setTint(def.color).setDisplaySize(42, 42);
         // v5.0 Task 2: 13->11 / 21->18 - pixel font headroom in this tight
@@ -262,7 +318,38 @@ function buildUltButton(scene) {
     const glow = scene.add.image(x, y, 'ring-tex').setDepth(15)
         .setTint(CONFIG.PASTEL.gold).setAlpha(0).setDisplaySize(R * 2.3, R * 2.3);
     const body = scene.add.nineslice(x, y, 'btn-tex', 0, R * 2, R * 2, 28, 28, 28, 28)
-        .setTint(CONFIG.PASTEL.panel).setAlpha(0.85).setDepth(16).setInteractive({ useHandCursor: true });
+        .setTint(CONFIG.PASTEL.panel).setAlpha(0.85).setDepth(16);
+    // v6 Task 4: this button reads as a circle (heavily-rounded nineslice),
+    // so its padded hit area is a Circle, not a Rectangle. Local space here
+    // is the same top-left-anchored (0,0)-(2R,2R) box as makeUiButton above,
+    // so the button's visual center is local (R,R). A plain radius-(R+PAD)
+    // circle centered there would reach PAD=14px past the visual edge on
+    // EVERY side - but this button floats only ~11px above the fever-gauge
+    // "AD" refill chip below it (buildFeverGauge, y=996..1041 once that chip
+    // gets makeUiButton's own +14 pad), and both can be active at once
+    // (fever gauge low AND ult ready are independent states). A downward
+    // +14 would push the hit circle's bottom edge to 918+66=984, three
+    // pixels INTO that chip's padded top edge (967) - a double-tap trap.
+    // Fix: shift the circle's center up by PAD instead of growing the
+    // radius past R+PAD symmetrically. That keeps the bottom edge exactly
+    // at the ORIGINAL unpadded bound (918-14+66 = 918+52 = the old edge),
+    // preserving the existing safe gap to the chip, while top/left/right
+    // still gain the full +14 of forgiveness (into open play-field space
+    // that wireInput() already shadows out of monster-tap resolution below).
+    //
+    // v6 Task 4 review fix: "the old edge" (970) is NOT actually clear of the
+    // chip below - the chip (buildFeverGauge) ALSO got the blanket +14, so
+    // its own padded top sits at (Y+8-23)-14 = 967, three px INSIDE this
+    // circle's 970 bottom reach. BOTTOM_TRIM pulls the bottom in a further
+    // 8px past the old edge (962), clearing the chip's 967 by 5px. This only
+    // trims the bottommost sliver of the circle (the part nearest the chip,
+    // where a stray tap should arguably go to the chip anyway) - radius
+    // stays R+HIT_PAD, so top/left/right keep their full existing reach into
+    // open play-field space.
+    const HIT_PAD = 14;
+    const BOTTOM_TRIM = 8;
+    body.setInteractive(new Phaser.Geom.Circle(R, R - HIT_PAD - BOTTOM_TRIM, R + HIT_PAD), Phaser.Geom.Circle.Contains);
+    body.input.cursor = 'pointer';
     const icon = scene.add.text(x, y - 8, '⚡', { fontFamily: CONFIG.FONT, fontSize: '38px' }).setOrigin(0.5).setDepth(17);
     const label = scene.add.text(x, y + 30, 'ULT', {
         fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
@@ -359,6 +446,9 @@ function showSettlement(scene, opts) {
         opts.onContinue();
     };
 
+    // v6 Task 4 review fix: adBtn/contBtn stack with a 120px center-to-center
+    // gap at h=92 (half=46 each) -> 28px raw edge gap, exactly canceled by
+    // the default +14/+14 pad (0px margin, touching). pad:10 leaves 8px.
     const adBtn = makeUiButton(scene, W / 2, H * 0.53, 480, 92,
         '▶ 2× GOLD (+' + Balance.fmt(opts.gold) + ')', CONFIG.PASTEL.accent, () => {
             adBtn.disable();
@@ -380,15 +470,27 @@ function showSettlement(scene, opts) {
             } else {
                 grant(false);
             }
-        });
+        }, undefined, { pad: 10 });
 
     const contBtn = makeUiButton(scene, W / 2, H * 0.53 + 120, 480, 92,
-        'CONTINUE', CONFIG.PASTEL.accent, close);
+        'CONTINUE', CONFIG.PASTEL.accent, close, undefined, { pad: 10 });
 }
 
 // =============================================================================
 // MenuScene
 // =============================================================================
+
+// v6 Task 10: the "yard" band pets roam in on the menu - the open strip of
+// background between the SMOOSH! logo and the button stack below. The nav
+// buttons tile almost edge-to-edge across the rest of the screen (see the
+// coordinate table in the Task 10 report), so this band is the one place a
+// wandering pet is reliably ON SCREEN; if it strays elsewhere it just
+// renders behind whatever button/HUD text is there (depth 4 vs. buttons'
+// depth 21-23 and HUD text's depth 10 - see buildMenuYard/buildMenuPets).
+const MENU_YARD = { x: 50, y: 175, w: 620, h: 420 };
+const MENU_PET_CAP = 6;
+const MENU_PET_SIZE = 58;
+
 class MenuScene extends Phaser.Scene {
     constructor() { super({ key: 'MenuScene' }); }
 
@@ -401,33 +503,28 @@ class MenuScene extends Phaser.Scene {
             this.events.once('shutdown', () => AdsManager.hideBanner());
         }
 
-        // soft decorative blobs - one notch deeper than the page bg, like the
-        // monster-field backdrop (bgField).
-        for (const [bx, by, br] of [[100, 200, 130], [640, 420, 90],
-            [140, 900, 110], [600, 1050, 140]]) {
-            this.add.circle(bx, by, br, CONFIG.PASTEL.bgField);
-        }
+        // v6 Task 10: cozy nest-yard backdrop (ground + ambient blobs + a
+        // couple of props + floating sparkles), all depth 0-2 - strictly
+        // behind the logo/HUD text (depth 10, below) and the nav buttons
+        // (depth 21-23, makeUiButton) so it never competes for legibility
+        // or steals a tap. See buildMenuYard()/task-10-report.md.
+        this.buildMenuYard();
 
         // v5.0 Task 2: 110->92 - headroom for the wider pixel-font glyphs
         // (still comfortably clears the 720px screen width; also reads
         // cleaner as a chunky arcade marquee at this size than blown up).
         const logo = this.add.text(W / 2, H * 0.2, 'SMOOSH!', {
             fontFamily: CONFIG.FONT, fontSize: '92px', color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
         this.tweens.add({
             targets: logo, scaleX: 1.06, scaleY: 0.94, duration: 700,
             yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
 
-        // mascot parade: three jellies bobbing under the logo
-        for (const [i, id] of [[0, 'lovey'], [1, 'blob'], [2, 'hoppy']].values()) {
-            const m = this.add.image(W / 2 + (i - 1) * 150, H * 0.37, 'sp-' + id + '-idle')
-                .setDisplaySize(i === 1 ? 150 : 110, i === 1 ? 150 : 110);
-            this.tweens.add({
-                targets: m, y: H * 0.37 + 14, duration: 700 + i * 130,
-                yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
-            });
-        }
+        // v6 Task 10: the player's OWN pets frolicking in the yard - replaces
+        // the old 3 static "lovey/blob/hoppy" jellies. See buildMenuPets()/
+        // update() below for the idle AI (a light reuse of NestAI).
+        this.buildMenuPets();
 
         const st = SaveManager.state;
         // v5.0 Task 2: 28->20 - this line has no panel/wordWrap and can get
@@ -440,7 +537,7 @@ class MenuScene extends Phaser.Scene {
             'BEST STAGE ' + st.bestStage + '   ·   ' + Balance.fmt(st.totalKills) + ' SMOOSHED', {
             fontFamily: CONFIG.FONT, fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
             align: 'center', wordWrap: { width: 680 }
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         // v4.0 Phase C Task 2: every generic CTA on this menu (nav buttons +
         // the main PLAY button) is now the single pastel accent - role-based
@@ -449,23 +546,34 @@ class MenuScene extends Phaser.Scene {
             'SMOOSH!  (STAGE ' + st.stage + ')', CONFIG.PASTEL.accent,
             () => SmooshGame.goto('GameScene'));
 
+        // v6 Task 4 review fix: SHOP/MAP/BATTLE centers sit 235px apart at
+        // w=220 (half=110) -> 15px raw horizontal gap, which the default
+        // +14/+14 pad turns into a 13px OVERLAP (wrong nav button eats the
+        // tap near the boundary). pad:6 leaves 3px. This row's 140px vertical
+        // offset from PLAY (h=116/96 halves) keeps a comfortable margin
+        // against the default-padded PLAY button above, so PLAY is untouched.
         makeUiButton(this, W / 2 - 235, H * 0.58 + 140, 220, 96, '🛒 SHOP', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('ShopScene'));
+            () => SmooshGame.goto('ShopScene'), undefined, { pad: 6 });
         // v3.0 Task 10: MAP nav button, alongside SHOP/BATTLE (map-pin emoji -
         // no dedicated procedural texture exists, matching this row's existing
         // emoji-prefixed-label convention rather than adding a new icon asset).
         makeUiButton(this, W / 2, H * 0.58 + 140, 220, 96, '📍 ' + I18n.t('map.navButton'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('StageMapScene'));
+            () => SmooshGame.goto('StageMapScene'), undefined, { pad: 6 });
         makeUiButton(this, W / 2 + 235, H * 0.58 + 140, 220, 96, '⚔ BATTLE', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('PvpScene'));
+            () => SmooshGame.goto('PvpScene'), undefined, { pad: 6 });
         // v3.0 Task 11: DEX nav button, own row below SHOP/MAP/BATTLE (no
         // room left in that row - all 720px of width is already spoken for).
         // v3.5 Task 4: NEST joins DEX on this row (egg emoji - no dedicated
         // procedural texture, matching this row's emoji-prefixed convention).
+        // v6 Task 4 review fix: this row sits only 22px (raw) below the
+        // SHOP/MAP/BATTLE row (h=96 vs h=84 halves) -> default pad turns that
+        // into a 6px overlap band. Matching pad:6 here (same as the row
+        // above) restores a 10px vertical margin; this row's own DEX-NEST
+        // horizontal gap (40px raw) stays comfortably clear at pad:6 too.
         makeUiButton(this, W / 2 - 160, H * 0.58 + 252, 280, 84, '📖 ' + I18n.t('dex.title'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('DexScene'));
+            () => SmooshGame.goto('DexScene'), undefined, { pad: 6 });
         makeUiButton(this, W / 2 + 160, H * 0.58 + 252, 280, 84, '🥚 ' + I18n.t('nest.title'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('NestScene'));
+            () => SmooshGame.goto('NestScene'), undefined, { pad: 6 });
         // v3.5 Task 5: FRIENDS nav button, own row below DEX/NEST - players
         // list + friend requests + gift inbox (offline-first, degrades to a
         // single "offline" card + retry until Social.ready flips true).
@@ -473,22 +581,22 @@ class MenuScene extends Phaser.Scene {
             () => SmooshGame.goto('FriendsScene'));
 
         // wallet
-        this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26);
+        this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26).setDepth(10);
         this.add.text(W / 2 - 90, H * 0.53, Balance.fmt(st.gold), {
             fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.goldText)
-        }).setOrigin(0, 0.5);
-        this.add.image(W / 2 + 40, H * 0.53, 'gem-tex').setDisplaySize(24, 24);
+        }).setOrigin(0, 0.5).setDepth(10);
+        this.add.image(W / 2 + 40, H * 0.53, 'gem-tex').setDisplaySize(24, 24).setDepth(10);
         // gems are the premium currency - accent (violet) keeps them visually
         // distinct from gold at a glance.
         this.add.text(W / 2 + 60, H * 0.53, Balance.fmt(st.gems), {
             fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.accent)
-        }).setOrigin(0, 0.5);
+        }).setOrigin(0, 0.5).setDepth(10);
 
         // sound toggle
         const soundLabel = () => st.muted ? 'SOUND OFF' : 'SOUND ON';
         const toggle = this.add.text(W - 36, 52, soundLabel(), {
             fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(st.muted ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.goodText)
-        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+        }).setOrigin(1, 0.5).setDepth(10).setInteractive({ useHandCursor: true });
         toggle.on('pointerdown', () => {
             st.muted = !st.muted;
             SaveManager.persist();
@@ -501,7 +609,7 @@ class MenuScene extends Phaser.Scene {
         let armed = false;
         const reset = this.add.text(W / 2, H - 100, 'RESET PROGRESS', {
             fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
         reset.on('pointerdown', () => {
             if (!armed) {
                 armed = true;
@@ -515,5 +623,191 @@ class MenuScene extends Phaser.Scene {
                 this.scene.restart();
             }
         });
+    }
+
+    // -------------------------------------------------------------------
+    // v6 Task 10: cozy nest-yard backdrop - ground + ambient blobs + a
+    // couple of props + gentle floating sparkles. Everything here is depth
+    // 0-2, strictly below the pets (depth 3-5), the HUD text (depth 10,
+    // create() above) and the nav buttons (depth 21-23, makeUiButton).
+    // -------------------------------------------------------------------
+    buildMenuYard() {
+        const W = CONFIG.WIDTH;
+
+        // ambient blobs - same "one notch deeper than page bg" convention
+        // every other scene's backdrop uses (nestscene.js, game.js field).
+        for (const [bx, by, br] of [[100, 200, 130], [640, 420, 90],
+            [140, 900, 110], [600, 1050, 140]]) {
+            this.add.circle(bx, by, br, CONFIG.PASTEL.bgField).setDepth(0);
+        }
+
+        // yard ground tile - same bordered-panel look nestscene.js uses for
+        // its own pet roam box, so the pet band reads as an intentional
+        // "cozy corner" rather than empty space between the logo and the
+        // button stack (see the MENU_YARD comment above for why this exact
+        // band is the one place a wandering pet is reliably visible).
+        this.add.rectangle(MENU_YARD.x + MENU_YARD.w / 2, MENU_YARD.y + MENU_YARD.h / 2,
+            MENU_YARD.w, MENU_YARD.h, CONFIG.PASTEL.bgField)
+            .setStrokeStyle(2, CONFIG.PASTEL.ink).setAlpha(0.55).setDepth(0);
+
+        // a couple of cozy props: the player's OWN placed nest decor if they
+        // have any (Task 3 my-nest edit mode, nestscene.js) so the menu
+        // reflects THEIR home, else two generic primitives (a rug + a
+        // plant, colored to match the actual rug_stripe/plant_pot decor
+        // items in decor.js) that don't imply ownership of anything.
+        const spots = [
+            { x: MENU_YARD.x + 90, y: MENU_YARD.y + MENU_YARD.h - 44 },
+            { x: W / 2, y: MENU_YARD.y + 40 },
+            { x: MENU_YARD.x + MENU_YARD.w - 90, y: MENU_YARD.y + MENU_YARD.h - 44 }
+        ];
+        const placed = SaveManager.state.decorPlaced || [];
+        if (placed.length && typeof Decor !== 'undefined') {
+            const sample = Phaser.Utils.Array.Shuffle(placed.slice()).slice(0, 3);
+            sample.forEach((p, i) => {
+                if (!Decor.byId(p.id)) return;
+                this.add.image(spots[i].x, spots[i].y, 'decor-' + p.id)
+                    .setDisplaySize(52, 52).setAlpha(0.92).setDepth(1);
+            });
+        } else {
+            // default rug (rug_stripe's cream tone, decor.js)
+            this.add.nineslice(spots[0].x, spots[0].y, 'btn-tex', 0, 130, 44, 20, 20, 20, 20)
+                .setTint(0xffe0b8).setAlpha(0.35).setDepth(1);
+            // default plant (plant_pot's trunk/canopy tones, decor.js)
+            this.add.rectangle(spots[2].x, spots[2].y + 14, 10, 26, 0xc9a06a).setDepth(1);
+            this.add.circle(spots[2].x, spots[2].y - 6, 22, 0x7dffb2).setAlpha(0.85).setDepth(1);
+            this.add.circle(spots[2].x - 14, spots[2].y + 4, 14, 0x7dffb2).setAlpha(0.7).setDepth(1);
+        }
+
+        // gentle floating sparkles - purely tween-driven ambient motion, no
+        // per-frame update() cost.
+        for (let i = 0; i < 8; i++) {
+            const tint = i % 2 === 0 ? CONFIG.PASTEL.gold : CONFIG.PASTEL.accent;
+            const s = this.add.image(Phaser.Math.Between(40, W - 40), Phaser.Math.Between(600, 1180), 'spark-tex')
+                .setDepth(2).setTint(tint).setScale(Phaser.Math.FloatBetween(0.4, 0.9)).setAlpha(0);
+            this.tweens.add({
+                targets: s, y: '-=140', alpha: { from: 0, to: 0.75 },
+                duration: Phaser.Math.Between(2600, 4200), delay: Phaser.Math.Between(0, 3000),
+                ease: 'Sine.easeInOut', yoyo: true, repeat: -1,
+                onRepeat: () => s.setPosition(Phaser.Math.Between(40, W - 40), Phaser.Math.Between(600, 1180))
+            });
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // v6 Task 10: the player's own pets, frolicking. Idle AI is a light
+    // reuse of NestAI's pure transition table (nestscene.js) - calling it
+    // with hasToys=false/hasFurniture=undefined (the menu has no placed
+    // toys/furniture) naturally collapses its state machine down to just
+    // wander/chase/nap, which IS the "wander + bob + occasional hop" idle
+    // this task calls for, without needing a second idle implementation.
+    // -------------------------------------------------------------------
+    buildMenuPets() {
+        // 0-pet guard: every save gets the starter pet (save.js init()), so
+        // this fallback should never actually fire - but a menu with zero
+        // pets would look broken, so show one default anyway.
+        const owned = (SaveManager.state.pets && SaveManager.state.pets.length)
+            ? SaveManager.state.pets
+            : [{ species: (typeof PET_SPECIES !== 'undefined' && PET_SPECIES[0]) ? PET_SPECIES[0].id : 'cat' }];
+        // v6 Task 10: cap shown pets (perf + a legible, uncluttered yard) and
+        // shuffle so which ones show up varies menu-visit to menu-visit.
+        const sample = Phaser.Utils.Array.Shuffle(owned.slice()).slice(0, Math.min(MENU_PET_CAP, owned.length));
+        this.menuPets = sample.map(p => this.spawnMenuPet(p.species));
+    }
+
+    spawnMenuPet(speciesId) {
+        const def = (typeof PET_SPECIES !== 'undefined') ? PET_SPECIES.find(p => p.id === speciesId) : null;
+        const key = 'pet-' + (def ? def.id : speciesId);
+        const x = Phaser.Math.Between(MENU_YARD.x + 40, MENU_YARD.x + MENU_YARD.w - 40);
+        const y = Phaser.Math.Between(MENU_YARD.y + 40, MENU_YARD.y + MENU_YARD.h - 40);
+        // non-interactive by design (v6 Task 10 review: an interactive pet
+        // sitting UNDER a nav button is harmless under Phaser's default
+        // topOnly input routing, since only the topmost - the button body,
+        // depth 21 - actually receives the event, but skipping interactivity
+        // entirely removes even the possibility of a regression here).
+        const shadow = this.add.ellipse(x, y + MENU_PET_SIZE * 0.42, MENU_PET_SIZE * 0.8, MENU_PET_SIZE * 0.26, 0x000000, 0.22).setDepth(3);
+        const sprite = this.add.image(x, y, key).setDisplaySize(MENU_PET_SIZE, MENU_PET_SIZE).setDepth(4);
+        const badge = this.add.text(x, y - MENU_PET_SIZE * 0.72, '', {
+            fontFamily: CONFIG.FONT, fontSize: '16px'
+        }).setOrigin(0.5).setDepth(5);
+        const agent = {
+            sprite, shadow, badge, x, y, tx: x, ty: y,
+            baseScale: sprite.scaleX,
+            state: 'wander', stateT: NestAI.dwell(Math.random),
+            chaseTarget: null, bobPhase: Math.random() * Math.PI * 2,
+            hopT: Phaser.Math.FloatBetween(2.5, 5)
+        };
+        this.pickMenuWanderTarget(agent);
+        return agent;
+    }
+
+    pickMenuWanderTarget(a) {
+        a.tx = Phaser.Math.Between(MENU_YARD.x + 40, MENU_YARD.x + MENU_YARD.w - 40);
+        a.ty = Phaser.Math.Between(MENU_YARD.y + 40, MENU_YARD.y + MENU_YARD.h - 40);
+    }
+
+    // Returns true once within arrival radius of (tx,ty). Moves the agent's
+    // LOGICAL x/y (a.x/a.y) only - update() layers a bob offset on top of
+    // this for the displayed sprite position, so movement and bob never
+    // fight over the same field (same split nestscene.js doesn't need
+    // because it has no bob - this menu's lighter idle adds one).
+    moveMenuPet(a, tx, ty, speed, dt) {
+        const dx = tx - a.x, dy = ty - a.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 6) return true;
+        const step = Math.min(dist, speed * dt);
+        a.x += (dx / dist) * step;
+        a.y += (dy / dist) * step;
+        if (Math.abs(dx) > 2) a.sprite.flipX = dx < 0;
+        return false;
+    }
+
+    update(time, delta) {
+        if (!this.menuPets || !this.menuPets.length) return;
+        const dt = Math.min(0.05, delta / 1000);
+        for (const a of this.menuPets) {
+            a.stateT -= dt;
+            if (a.stateT <= 0) {
+                a.state = NestAI.nextState(a.state, Math.random, false, undefined);
+                a.stateT = NestAI.dwell(Math.random);
+                a.sprite.setScale(a.baseScale); // undo any in-flight hop tween drift
+                if (a.state === 'wander') {
+                    this.pickMenuWanderTarget(a);
+                } else if (a.state === 'chase') {
+                    const others = this.menuPets.filter(o => o !== a);
+                    a.chaseTarget = others.length ? Phaser.Utils.Array.GetRandom(others) : null;
+                    if (!a.chaseTarget) { a.state = 'wander'; this.pickMenuWanderTarget(a); }
+                }
+            }
+
+            if (a.state === 'wander') {
+                this.moveMenuPet(a, a.tx, a.ty, 46, dt);
+            } else if (a.state === 'chase' && a.chaseTarget) {
+                this.moveMenuPet(a, a.chaseTarget.x, a.chaseTarget.y, 70, dt);
+            }
+
+            if (a.state !== 'nap') {
+                // occasional hop/react flourish - a quick squash-stretch
+                // punch, independent of movement/bob.
+                a.hopT -= dt;
+                if (a.hopT <= 0) {
+                    a.hopT = Phaser.Math.FloatBetween(3, 6);
+                    this.tweens.add({
+                        targets: a.sprite, scaleX: a.baseScale * 0.82, scaleY: a.baseScale * 1.18,
+                        duration: 110, yoyo: true, ease: 'Quad.easeOut'
+                    });
+                }
+                a.sprite.setAlpha(1);
+                a.sprite.y = a.y + Math.sin(time / 260 + a.bobPhase) * 4; // gentle bob while active
+                a.badge.setText('');
+            } else {
+                a.sprite.setAlpha(0.6);
+                a.sprite.y = a.y;
+                a.sprite.setScale(a.baseScale * (1 + Math.sin(time / 500 + a.bobPhase) * 0.03)); // slow "breathing"
+                a.badge.setText('💤').setAlpha(0.6 + 0.4 * Math.sin(time / 400 + a.bobPhase));
+            }
+            a.sprite.x = a.x;
+            a.shadow.setPosition(a.x, a.y + MENU_PET_SIZE * 0.42);
+            a.badge.setPosition(a.x, a.sprite.y - MENU_PET_SIZE * 0.72);
+        }
     }
 }

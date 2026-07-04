@@ -173,14 +173,34 @@ class BootScene extends Phaser.Scene {
     _makeUpgradeIcons() {
         let g;
 
-        // up-tap: pressing finger + impact wedges
+        // up-tap: sword (blade + crossguard + hilt/pommel) - reads as
+        // "attack power" at a glance, unlike the old abstract pressing-
+        // finger glyph. v6 Task 4 review: this texture is reused far beyond
+        // the Tap Power upgrade card - the live stats readout tints it the
+        // same upgrade blue (game.js ~L128), but spawnItemDrop's 'gear'
+        // field drop AND shop.js's GLOVE gear listing tint it per-RARITY
+        // (common/rare/epic/legendary, 4 different hues - see game.js
+        // spawnItemDrop / shop.js RARITY_COLORS). So, same convention as
+        // every sibling up-* icon in this function: a PURE WHITE silhouette
+        // only - baking in fixed accent/gold colors for the guard/hilt would
+        // multiply-blend into muddy off-hues under those other 3 tint
+        // contexts. Shape definition instead comes from a tint-neutral
+        // black-alpha edge stroke + center fuller groove (same trick as
+        // up-gold's stroked ellipses below).
         g = this.add.graphics();
         g.fillStyle(0xffffff, 1);
-        g.fillRoundedRect(19, 4, 12, 26, 6);         // finger
-        g.fillRoundedRect(14, 24, 22, 12, 6);        // knuckle
-        g.fillTriangle(6, 40, 12, 34, 14, 42);       // impact wedges
-        g.fillTriangle(44, 40, 38, 34, 36, 42);
-        g.fillRect(22, 40, 6, 6);
+        g.fillPoints([                                 // tapered blade
+            { x: 24, y: 3 }, { x: 29, y: 11 }, { x: 27, y: 28 }, { x: 21, y: 28 }, { x: 19, y: 11 }
+        ], true);
+        g.fillRoundedRect(9, 26, 30, 7, 3);            // crossguard
+        g.fillRoundedRect(20, 32, 8, 10, 2);           // grip
+        g.fillCircle(24, 42, 4);                       // pommel
+        g.lineStyle(2, 0x000000, 0.22);
+        g.strokePoints([
+            { x: 24, y: 3 }, { x: 29, y: 11 }, { x: 27, y: 28 }, { x: 21, y: 28 }, { x: 19, y: 11 }
+        ], true, true);
+        g.fillStyle(0x000000, 0.16);
+        g.fillRect(23, 12, 2, 14);                     // center fuller groove
         g.generateTexture('up-tap', 48, 48);
         g.destroy();
 

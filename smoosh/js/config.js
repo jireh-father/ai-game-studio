@@ -113,9 +113,24 @@ const CONFIG = {
         // keeps the 1-6 taps band intact) to restore meaningful difficulty:
         // greedy sim stays in the 1-6 band, ~42% of stages need 2+ taps
         // (see tests/balance.test.js). Any higher pushes tail stages past 6.
-        { id: 'tap',    name: 'Tap Power',    baseCost: 10, costGrowth: 1.372, icon: 'up-tap',    color: 0x5aa9ff },
+        // v6 Task 1: lowering Balance.critChance's slope/ceiling (0.6->0.5-ish
+        // effective crit) shrinks expectedDamage, so the sim needs MORE taps
+        // per mob than before - 1.372 pushed tail stages (~198) to 8-9 taps,
+        // out of band. Retuned 1.372 -> 1.368 (smallest 0.001 step that brings
+        // the band back to <=6 at every stage 5-200; verified maxTaps=6 at
+        // stage 196) - the 2+-taps floor and avg-taps floor both stay well
+        // clear (~47.5% >= 42%, avg ~1.93 >= 1.8), so difficulty intent holds.
+        // v6 Task 2: mobHP growth steepened 1.25 -> 1.30/stage (balance.js).
+        // costGrowth here is UNCHANGED - the ~9k-combo sweep (balance.js
+        // mobHP comment) found passing pairs by raising goldPerMob growth
+        // (1.22->1.25) and tapDamage growth (1.35->1.376) instead, so this
+        // stays 1.368.
+        { id: 'tap',    name: 'Tap Power',    baseCost: 10, costGrowth: 1.368, icon: 'up-tap',    color: 0x5aa9ff },
         { id: 'crit',   name: 'Critical',     baseCost: 25, costGrowth: 1.22, icon: 'up-crit',   color: 0xffe066, maxLevel: 22 },
-        { id: 'splash', name: 'Splash',       baseCost: 40, costGrowth: 1.30, icon: 'up-splash', color: 0xff9a5a, maxLevel: 10 },
+        // v6 Task 1: maxLevel raised 10 -> 32 to pair with balance.js's slower
+        // per-level radius (14px, was 22px) - new ceiling 14*32=448px, ~2x the
+        // old 22*10=220px ceiling instead of shrinking it.
+        { id: 'splash', name: 'Splash',       baseCost: 40, costGrowth: 1.30, icon: 'up-splash', color: 0xff9a5a, maxLevel: 32 },
         { id: 'fever',  name: 'Fever Charge', baseCost: 30, costGrowth: 1.25, icon: 'up-fever',  color: 0xff5ec4 },
         { id: 'gold',   name: 'Gold Boost',   baseCost: 30, costGrowth: 1.25, icon: 'up-gold',   color: 0xffd54a }
     ],
@@ -124,7 +139,9 @@ const CONFIG = {
         gaugeMax: 30,
         durationMs: 6000,
         damageMult: 10,
-        splashRadius: 140,     // universal splash radius during fever (px)
+        // v6 Task 1: doubled 140 -> 280 to stay proportionally impactful next
+        // to the new, higher per-upgrade splash ceiling (see UPGRADES.splash).
+        splashRadius: 280,     // universal splash radius during fever (px)
         adRefillBelow: 0.5     // AD refill chip visible when gauge < 50%
     },
 

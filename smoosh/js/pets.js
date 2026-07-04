@@ -70,7 +70,8 @@ class FieldPets {
                 homeX: x, homeY: y, bobT: Math.random() * 6,
                 status: {},  // v3.0: statusId -> {until, dotPerSec?, forceTarget?} - see _updateAgentStatus
                 skillCdUntil: this.scene.time.now + 500 + Math.random() * 3000, // v3.0 Task 9: desync first casts
-                reviveUsed: false // v3.0 review fix: revive passive's once-per-stage flag - see _knockOut/onStageStart
+                reviveUsed: false, // v3.0 review fix: revive passive's once-per-stage flag - see _knockOut/onStageStart
+                invulnUntil: 0 // v6 final-review fix: post-revive damage immunity window - see _revive/damageAgent
             });
         });
     }
@@ -157,6 +158,13 @@ class FieldPets {
     // here first, mirroring Monster.hit()'s shield consumption.
     damageAgent(a, dmg, tint) {
         if (a.ko) return;
+        // v6 final-review fix: brief post-revive immunity (see _revive) -
+        // incoming damage only, a shielded pet can still attack normally.
+        if (a.invulnUntil && this.scene.time.now < a.invulnUntil) {
+            Sfx.clank();
+            Haptic.tick(0.8);
+            return;
+        }
         const shield = a.status.shield;
         if (shield && shield.amount > 0) {
             const absorbed = Math.min(shield.amount, dmg);
@@ -194,6 +202,12 @@ class FieldPets {
         a._reviving = false;
         a.hp = Math.max(1, Math.round(a.maxHp * frac));
         a.status = {}; // v3.0: a fresh nap wipes stale CC/DoT from before the KO
+        // v6 final-review fix: ~1.2s of incoming-damage immunity (see
+        // damageAgent) - while this pet was KO'd, EVERY monster offensive
+        // skill was whiffing (no valid target); the instant it revives it's
+        // the only target for potentially every ready skill at once, which
+        // would otherwise re-KO it on the very same frame it stood back up.
+        a.invulnUntil = this.scene.time.now + 1200;
         a.sprite.clearTint().setAlpha(1);
         a.badge.setText('Lv.' + a.pet.level);
         if (typeof Effects !== 'undefined') {
@@ -265,14 +279,22 @@ class FieldPets {
         const ctx = ally ? this._allySkillCtx(a, now) : this._enemySkillCtx(a, now);
 
         const eff = Skills.cast(a.def.skill, ctx);
-        if (!eff) return; // condition unmet (e.g. execute below threshold) - no cooldown paid
+        // v6 Task 6 ruling (reverses v3.0 Task 7) - see Monster._updateSkill's
+        // identical comment / Skills.isWhiff's doc comment: whiffs (null, or
+        // a cast that landed on nobody) retry soon instead of going dark for
+        // the whole cd.
+        // v6 final-review fix: "soon" is Skills.WHIFF_RETRY_MS (see the
+        // matching Monster._updateSkill fix) rather than every frame, so a
+        // pet stuck whiffing (e.g. no live monster in range) doesn't rebuild
+        // its cast ctx 60x/sec for nothing. A successful cast below still
+        // pays the FULL archetype cd, unchanged.
+        if (Skills.isWhiff(eff)) { a.skillCdUntil = now + Skills.WHIFF_RETRY_MS; return; }
 
-        // Task 7 ruling: descriptors with empty targets are safe no-ops but
-        // still start the cooldown - a whiffed taunt/knockback/slam isn't a
-        // free recast.
         a.skillCdUntil = now + A.cd;
         Effects.applySkillEffect(scene, 'pet', a, eff);
-        if (typeof Effects !== 'undefined') Effects.ring(scene, a.sprite.x, a.sprite.y, a.def.color, a.size * 0.9);
+        // v6 Task 6: telegraph flash + uppercase name popup + a per-kind FX
+        // pass bigger/more distinct than the old generic ring below it replaced.
+        if (typeof Effects !== 'undefined') Effects.skillCastFx(scene, 'pet', a, a.def.skill, eff);
         Sfx.petYelp(a.def.element);
     }
 
@@ -481,13 +503,27 @@ class FieldPets {
     // both normal progression and the nest-break retry funnel through it) -
     // resets the once-per-stage revive flag on every real agent and purges
     // any clone/summon spirits left over from the stage that just ended.
+    // v6 task-3: also full-heals the whole squad (hp/status wiped, any KO'd
+    // pet revived) so nothing a pet suffered last stage carries into the
+    // fresh wave - runs BEFORE GameScene.startStage() calls fillFromQueue(),
+    // so every pet is already standing at full hp when the new wave spawns.
     onStageStart() {
-        for (const a of this.agents) a.reviveUsed = false;
         for (let i = this.agents.length - 1; i >= 0; i--) {
             const a = this.agents[i];
             if (a.temp) {
                 a.sprite.destroy(); a.badge.destroy(); a.hpBg.destroy(); a.hpFill.destroy();
                 this.agents.splice(i, 1);
+            }
+        }
+        for (const a of this.agents) {
+            a.reviveUsed = false;
+            if (a.ko) {
+                // _revive() already does hp=maxHp/status={}/ko=false and
+                // restores the sprite's tint/alpha/badge that _knockOut() set.
+                this._revive(a, 1);
+            } else {
+                a.hp = a.maxHp;
+                a.status = {};
             }
         }
     }

@@ -70,7 +70,10 @@ if (typeof Phaser !== 'undefined') {
             this.add.rectangle(W / 2, 72, W, 144, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
                 fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
-            }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
+            }).setOrigin(0.5).setDepth(10);
+            // v6 Task 4: isolated corner glyph - the scrollable node path
+            // starts at viewTop=150, far clear of any padding here.
+            padTapArea(back);
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
             // v4.0 Phase C Task 3: title is on-bg (not on-panel) but still a

@@ -15,8 +15,13 @@ const Feel = {
     jackpot() { Sfx.jackpot(); Haptic.medium(); },
     bossRoar() { Sfx.bossRoar(); Haptic.heavy(); },
     bossBoom() { Sfx.bossBoom(); Sfx.bossRoar(); Haptic.heavy(); },
-    feverStart() { Sfx.feverStart(); Haptic.heavy(); },
-    feverEnd() { Sfx.feverEnd(); },
+    // v6 Task 7: the fever BGM loop rides the same funnel as the existing
+    // one-shot riser/descend stingers - feverMusicStart/Stop (sfx.js) are
+    // self-guarding (no-op muted/unlocked-audio/already-in-that-state), so
+    // this stays a plain unconditional call exactly like every other Feel
+    // entry here.
+    feverStart() { Sfx.feverStart(); Sfx.feverMusicStart(); Haptic.heavy(); },
+    feverEnd() { Sfx.feverEnd(); Sfx.feverMusicStop(); },
     stageClear() { Sfx.stageClear(); },
     coin() { Sfx.coin(); }
 };
@@ -58,6 +63,14 @@ class GameScene extends Phaser.Scene {
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             this.stopTrickle();
             this.clearDrops();
+            // v6 Task 7: leaving the scene (back to menu, replay-clear ->
+            // StageMapScene, etc.) mid-fever must never leave the overlay or
+            // the looping BGM running past this scene's lifetime - neither
+            // is tied to Phaser's update loop (the music runs on the
+            // AudioContext's own clock), so both need an explicit stop here
+            // regardless of whether updateFever()'s natural countdown ever
+            // got to fire Feel.feverEnd() itself.
+            this.stopFeverEffects();
         });
 
         // subtle field boundary
@@ -162,7 +175,11 @@ class GameScene extends Phaser.Scene {
             .setTint(CONFIG.PASTEL.panel).setDepth(10);
         const back = this.add.text(56, 58, '‹', {
             fontFamily: CONFIG.FONT, fontSize: '44px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
-        }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+        }).setOrigin(0.5).setDepth(11);
+        // v6 Task 4: the in-game SHOP shortcut sits ~44px to the right
+        // (glyph-to-glyph, well past the 2*14 both-sides-padded threshold),
+        // nothing else nearby - safe to pad on every side.
+        padTapArea(back);
         back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
         // v2.3: in-game SHOP - pauses the fight, opens the shop as an overlay
@@ -375,7 +392,10 @@ class GameScene extends Phaser.Scene {
     onStageClear() {
         this.transitioning = true;
         this.stopTrickle(); // no reinforcements during the clear animation
-        this.clearDrops();  // v3.0: uncollected drops don't carry into next stage
+        // v6: uncollected drops now persist into the next stage (they still
+        // despawn on their own 8s lifetime via tickDrops/despawnDrop) - see
+        // task-3-brief.md A4. clearDrops() stays for SHUTDOWN and
+        // onNestBroken(), where the stage really is over.
         Feel.stageClear();
 
         // v3.0 Task 10: a REPLAY clear never advances the map pointer - the
@@ -502,6 +522,9 @@ class GameScene extends Phaser.Scene {
         const eff = Balance.effective(SaveManager.state);
         // v3.0 Task 9: a pet-cast critaura (unicorn/toucan) adds straight onto
         // the player's own crit chance while it's active.
+        // v6 Task 1: this 0.6 hard ceiling already stopped critaura stacking
+        // from pushing live tap-time crit toward ~99% - kept as-is (eff.crit's
+        // own ceiling was separately lowered 0.6 -> 0.5 in Balance.effective()).
         const critChance = Math.min(0.6, eff.crit + this.teamBuffAdd('crit'));
         const isCrit = Math.random() < critChance;
         let dmg = eff.tapDmg * (isCrit ? 5 : 1);
@@ -658,21 +681,12 @@ class GameScene extends Phaser.Scene {
             Effects.damageText(this, m.x, m.y, '+' + Balance.fmt(gold), Balance.hex(CONFIG.PASTEL.gold));
         }
 
-        // v3 review fix: a drop that spawns then despawns in the very same
-        // call stack (because this kill also clears the stage - onStageClear
-        // below calls clearDrops()) is an invisible loss for the player, so
-        // skip the ROLL entirely on the stage-clearing kill. This mirrors
-        // checkStageClear()'s own predicate (m is already off this.active -
-        // removeActive() ran at the top of onKill), except for a splitter
-        // kill, which never actually clears since onSpecialDeath() below
-        // always queues its 2 children first.
-        const willSplit = m.def.kind === 'splitter' && !m.noSplit;
-        const stageWouldClear = !this.transitioning && !willSplit &&
-            (!this.pendingWave || this.pendingWave.length === 0) &&
-            this.aliveBlocking().length === 0;
-
-        // v2.3: random item drops - pick up = instant use
-        if (!m.isBoss && !stageWouldClear && Math.random() < CONFIG.DROPS.chance) this.spawnItemDrop(m.x, m.y);
+        // v2.3: random item drops - pick up = instant use.
+        // v6: the stage-clearing kill used to skip this roll (a drop that
+        // spawned then got wiped by onStageClear()'s clearDrops() in the same
+        // call stack was an invisible loss) - onStageClear() no longer clears
+        // drops, so the final kill rolls exactly like any other now.
+        if (!m.isBoss && Math.random() < CONFIG.DROPS.chance) this.spawnItemDrop(m.x, m.y);
 
         this.onSpecialDeath(m); // splitter/jackpot/boss consequences
         m.burst();
@@ -814,9 +828,11 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    // Wipe every uncollected drop with no effect applied - stage clear, nest
-    // broken (stage retry), and scene SHUTDOWN all mean "this stage is over,
-    // whatever's still sitting on the field doesn't carry over."
+    // Wipe every uncollected drop with no effect applied. v6 final-review fix:
+    // stage CLEAR is no longer a wipe path (T3 made drops persist across a
+    // clean stage clear) - only nest-broken (stage retry) and scene SHUTDOWN
+    // still mean "this stage is over, whatever's still sitting on the field
+    // doesn't carry over."
     clearDrops() {
         for (const spr of this.liveDrops) {
             this.tweens.killTweensOf(spr);
@@ -1140,6 +1156,19 @@ class GameScene extends Phaser.Scene {
         if (st.feverGauge >= CONFIG.FEVER.gaugeMax) this.triggerFever();
     }
 
+    // v6 Task 7: single funnel to tear down BOTH the persistent screen
+    // overlay and the looping BGM - called from updateFever()'s natural
+    // end-of-fever branch AND unconditionally from SHUTDOWN (see create()),
+    // so every exit path converges here. Safe to call when fever isn't
+    // active at all (both halves are already null-safe/idempotent).
+    stopFeverEffects() {
+        if (this._feverOverlay) {
+            Effects.clearFeverOverlay(this._feverOverlay);
+            this._feverOverlay = null;
+        }
+        if (typeof Sfx !== 'undefined' && Sfx.feverMusicStop) Sfx.feverMusicStop();
+    }
+
     triggerFever() {
         if (this.feverLeft > 0) return;
         this.feverLeft = CONFIG.FEVER.durationMs / 1000;
@@ -1147,6 +1176,10 @@ class GameScene extends Phaser.Scene {
         if (typeof Effects !== 'undefined') {
             Effects.screenFlash(this, CONFIG.PASTEL.fever, 0.3, 420);
             Effects.ring(this, CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, CONFIG.PASTEL.fever, 900);
+            // v6 Task 7: the persistent whole-screen spectacle - lives until
+            // updateFever()'s natural end (or an earlier scene SHUTDOWN)
+            // calls stopFeverEffects() above.
+            this._feverOverlay = Effects.feverOverlay(this);
         }
 
         const banner = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.3, 'FEVER!!', {
@@ -1283,12 +1316,21 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor(
             Phaser.Display.Color.GetColor(c.r, c.g, c.b));
 
+        // v6 Task 7: drive the whole-screen overlay (border/tint/scanline/
+        // embers) every frame this fever is live - this keeps running
+        // through stage-clear/nest-broken transitions too, since update()
+        // calls updateFever(dt) unconditionally regardless of
+        // this.transitioning (see update() above), which is exactly why
+        // those paths need no fever-specific handling of their own.
+        if (this._feverOverlay) this._feverOverlay.update(dt);
+
         if (this.feverLeft <= 0) {
             this.feverLeft = 0;
             SaveManager.state.feverGauge = 0;
             SaveManager.persist();
             this.cameras.main.setBackgroundColor(CONFIG.COLORS.bg);
             this.events.emit('feverChanged');
+            this.stopFeverEffects(); // v6 Task 7: overlay + BGM teardown
             Feel.feverEnd();
         }
     }
@@ -1332,7 +1374,11 @@ class GameScene extends Phaser.Scene {
         }
         if (canHitNest && this.nest && !this.nest.broken) {
             if ((CONFIG.NEST.x - x) ** 2 + (CONFIG.NEST.y - y) ** 2 <= (radius + 70) ** 2) {
-                this.damageNest(3 * (m.isBoss ? 3 : 1));
+                // v6 Task 2 (A3): this flat nest-shell chip was previously
+                // stage-independent (always 3, or 9 for a boss) - multiply by
+                // monsterAtkMult(m.stage) so nest shelling scales with the
+                // rest of monster offense.
+                this.damageNest(3 * (m.isBoss ? 3 : 1) * Balance.monsterAtkMult(m.stage));
             }
         }
     }

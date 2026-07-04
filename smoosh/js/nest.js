@@ -68,7 +68,7 @@ class Nest {
         const L = SaveManager.state.nestLevel;
 
         if (biters.length) {
-            this.hp -= Balance.NEST_BITE_DPS * biters.length * dt;
+            this.hp -= Balance.NEST_BITE_DPS * biters.length * dt * Balance.monsterAtkMult(this.scene.stageNum || 1);
             this._hurtFlash += dt;
             if (this._hurtFlash > 0.35) {
                 this._hurtFlash = 0;
