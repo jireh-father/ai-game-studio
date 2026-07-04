@@ -37,7 +37,11 @@ const SaveManager = {
             repPet: null,      // species id of the representative (ultimate) pet; null = first owned
             kills: {},         // v3.0 Task 11: per-species kill counters (Dex.monsterUnlocked)
             petsSeen: [],      // v3.0 Task 11: every pet species ever owned (Dex.petUnlocked)
-            adsRemoved: false  // v3.0 Task 12: $0.99 remove-ads IAP (banner + interstitial gate)
+            adsRemoved: false, // v3.0 Task 12: $0.99 remove-ads IAP (banner + interstitial gate)
+            // --- v3.5 ---
+            social: { uid: null, nickname: null }, // Social.init() cache: Firebase uid + nickname once online
+            decorOwned: {},    // v3.5 Task 3: id -> owned count (drops + shop buys)
+            decorPlaced: []    // v3.5 Task 3: [{ id, gx, gy }] - nest decor layout
         };
     },
 
@@ -55,6 +59,9 @@ const SaveManager = {
                     upgrades: Object.assign(fresh.upgrades, data.upgrades || {}),
                     items: Object.assign(fresh.items, data.items || {}),
                     pvp: Object.assign(fresh.pvp, data.pvp || {}),
+                    social: Object.assign(fresh.social, data.social || {}),
+                    decorOwned: Object.assign(fresh.decorOwned, data.decorOwned || {}),
+                    decorPlaced: Array.isArray(data.decorPlaced) ? data.decorPlaced : [],
                     pets: Array.isArray(data.pets) ? data.pets : []
                 });
                 // v2.1 migrations: per-species petShards -> global shards,

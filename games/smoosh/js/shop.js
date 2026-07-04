@@ -54,7 +54,7 @@ class ShopScene extends Phaser.Scene {
         this.refreshWallet();
 
         // tab bar
-        this.tabs = ['EGGS', 'PETS', 'GEAR', 'NEST', 'GEMS', 'DEX'];
+        this.tabs = ['EGGS', 'PETS', 'GEAR', 'NEST', 'GEMS', 'DECOR', 'DEX'];
         this.tabButtons = [];
         const tw = (W - 40) / this.tabs.length;
         this.tabs.forEach((name, i) => {
@@ -493,6 +493,73 @@ class ShopScene extends Phaser.Scene {
         });
         this._text(W / 2, 1055, IapManager.storeConnected
             ? '' : '(billing goes live with the store release)', 18, '#5a5570');
+    }
+
+    // =========================================================================
+    // DECOR - v3.5 Task 3: buy nest props with gold/gems. 24-item catalog,
+    // paginated 3x3 grid (same pagination pattern as tabPETS) since Phaser
+    // has no native scroll container in this codebase.
+    // =========================================================================
+    tabDECOR() {
+        const W = CONFIG.WIDTH, st = SaveManager.state;
+        if (!st.decorOwned) st.decorOwned = {};
+        this._text(W / 2, 178, I18n.t('decor.title'), 30, '#7dffb2');
+
+        const COLS = 3, ROWS = 3, PER_PAGE = COLS * ROWS;
+        const pages = Math.ceil(DECOR_ITEMS.length / PER_PAGE);
+        this.decorPage = Math.min(this.decorPage || 0, pages - 1);
+        const pageItems = DECOR_ITEMS.slice(this.decorPage * PER_PAGE, this.decorPage * PER_PAGE + PER_PAGE);
+
+        const cellW = 220, cellH = 250;
+        const startX = W / 2 - cellW, startY = 320;
+
+        pageItems.forEach((def, i) => {
+            const col = i % COLS, row = Math.floor(i / COLS);
+            const x = startX + col * cellW, y = startY + row * cellH;
+            const owned = st.decorOwned[def.id] || 0;
+
+            this._card(x, y, cellW - 16, cellH - 20);
+            const icon = this.add.image(x, y - 68, 'decor-' + def.id).setDisplaySize(84, 84);
+            this.items.push(icon);
+            this._text(x, y - 8, def.name[I18n.locale] || def.name.en, 17, '#e8e6f5');
+            this._text(x, y + 16, I18n.t('decor.cat.' + def.cat), 13, '#8d86a8');
+            if (owned > 0) {
+                this._text(x + cellW / 2 - 44, y - cellH / 2 + 20, I18n.t('decor.owned', { n: owned }), 13, '#7dffb2');
+            }
+
+            const gems = def.price.kind === 'gems';
+            this._btn(x, y + 66, cellW - 44, 52, (gems ? '💎' : '') + Balance.fmt(def.price.amount),
+                gems ? 0x7fd2ff : 0x2fa86b, () => this.buyDecor(def), gems ? 'gem-tex' : 'coin-tex');
+        });
+
+        if (pages > 1) {
+            const py = startY + (ROWS - 1) * cellH + 130;
+            this._btn(W / 2 - 180, py, 120, 56, '◀', 0x39424f, () => {
+                this.decorPage = (this.decorPage - 1 + pages) % pages;
+                this.showTab('DECOR');
+            });
+            this._text(W / 2, py, (this.decorPage + 1) + ' / ' + pages, 22, '#8d86a8');
+            this._btn(W / 2 + 180, py, 120, 56, '▶', 0x39424f, () => {
+                this.decorPage = (this.decorPage + 1) % pages;
+                this.showTab('DECOR');
+            });
+        }
+    }
+
+    buyDecor(def) {
+        const st = SaveManager.state;
+        if (def.price.kind === 'gems') {
+            if (st.gems < def.price.amount) return this.toast(I18n.t('decor.needGems'));
+            st.gems -= def.price.amount;
+        } else if (!SaveManager.spendGold(def.price.amount)) {
+            return this.toast(I18n.t('decor.needGold'));
+        }
+        st.decorOwned[def.id] = (st.decorOwned[def.id] || 0) + 1;
+        SaveManager.persist();
+        this.refreshWallet();
+        Sfx.coin();
+        this.toast('+' + (def.name[I18n.locale] || def.name.en));
+        this.showTab('DECOR');
     }
 
     // =========================================================================

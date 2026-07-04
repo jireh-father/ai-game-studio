@@ -246,6 +246,43 @@ const Balance = {
             }
         }
         return { taps, finalUpgrades: up };
+    },
+
+    // =========================================================================
+    // v3.5 - Social gifting validation
+    // =========================================================================
+    /**
+     * Validate if a gift is allowed based on caps and daily limit.
+     * @param {string} kind - gift type: 'gold', 'gems', or 'decor'
+     * @param {number} amount - amount to gift
+     * @param {number} sentTodayCount - how many gifts already sent today
+     * @returns {{ ok: boolean, reason?: string }} validation result
+     *          - ok: true if allowed
+     *          - reason: 'cap' (exceeds max), 'daily' (hit daily limit), 'kind' (invalid type)
+     */
+    giftAllowed(kind, amount, sentTodayCount) {
+        const caps = {
+            gold: CONFIG.GIFT.maxGoldPerGift,
+            gems: CONFIG.GIFT.maxGemsPerGift,
+            decor: CONFIG.GIFT.maxDecorPerGift
+        };
+
+        // Check if kind is valid
+        if (!(kind in caps)) {
+            return { ok: false, reason: 'kind' };
+        }
+
+        // Check amount cap for this kind
+        if (amount > caps[kind]) {
+            return { ok: false, reason: 'cap' };
+        }
+
+        // Check daily limit
+        if (sentTodayCount >= CONFIG.GIFT.dailySendLimit) {
+            return { ok: false, reason: 'daily' };
+        }
+
+        return { ok: true };
     }
 };
 

@@ -407,8 +407,17 @@ class MenuScene extends Phaser.Scene {
             () => SmooshGame.goto('PvpScene'));
         // v3.0 Task 11: DEX nav button, own row below SHOP/MAP/BATTLE (no
         // room left in that row - all 720px of width is already spoken for).
-        makeUiButton(this, W / 2, H * 0.58 + 252, 300, 84, '📖 ' + I18n.t('dex.title'), 0xb06fff,
+        // v3.5 Task 4: NEST joins DEX on this row (egg emoji - no dedicated
+        // procedural texture, matching this row's emoji-prefixed convention).
+        makeUiButton(this, W / 2 - 160, H * 0.58 + 252, 280, 84, '📖 ' + I18n.t('dex.title'), 0xb06fff,
             () => SmooshGame.goto('DexScene'));
+        makeUiButton(this, W / 2 + 160, H * 0.58 + 252, 280, 84, '🥚 ' + I18n.t('nest.title'), 0xff9ad5,
+            () => SmooshGame.goto('NestScene'));
+        // v3.5 Task 5: FRIENDS nav button, own row below DEX/NEST - players
+        // list + friend requests + gift inbox (offline-first, degrades to a
+        // single "offline" card + retry until Social.ready flips true).
+        makeUiButton(this, W / 2, H * 0.58 + 364, 320, 84, '👥 ' + I18n.t('social.title'), 0x4ac9ff,
+            () => SmooshGame.goto('FriendsScene'));
 
         // wallet
         this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26);
