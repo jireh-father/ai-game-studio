@@ -51,7 +51,10 @@ class FieldPets {
             const badge = this.scene.add.text(x, y - size * 0.72, 'Lv.' + pet.level, {
                 fontFamily: 'Arial, sans-serif',
                 fontSize: (size >= 50 ? 14 : 12) + 'px', fontStyle: 'bold',
-                color: '#e8e6f5', stroke: '#141020', strokeThickness: 3
+                // v4.0 Phase C final-review: labels sit over the light
+                // bgField (nest/battle field bg), not a dark surface - dark
+                // ink text + a light stroke reads correctly there.
+                color: Balance.hex(CONFIG.PASTEL.ink), stroke: Balance.hex(CONFIG.PASTEL.white), strokeThickness: 3
             }).setOrigin(0.5).setDepth(4);
             const barW = size - 6;
             const hpBg = this.scene.add.image(x, y - size * 0.56, 'white-tex')
@@ -506,7 +509,8 @@ class FieldPets {
         const { dmg, mult } = Balance.applyElement(styleDmg, atkElem, m.def.elem);
         if (mult !== 1 && typeof Effects !== 'undefined') {
             Effects.damageText(scene, m.x, m.y - m.radius - 30,
-                mult > 1 ? 'Super!' : 'Resisted', mult > 1 ? '#fff06a' : '#8d86a8');
+                mult > 1 ? 'Super!' : 'Resisted',
+                Balance.hex(mult > 1 ? CONFIG.PASTEL.gold : CONFIG.PASTEL.inkSoft));
         }
         return dmg;
     }

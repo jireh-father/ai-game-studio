@@ -11,16 +11,19 @@
 // the label - use this instead of emoji so currency looks identical on
 // every device font.
 function makeUiButton(scene, x, y, w, h, label, color, cb, iconKey) {
+    // v4.0 Phase C Task 2: this drop shadow stays near-black on purpose - a
+    // raised button needs a dark contact shadow regardless of theme (same
+    // exception class as the settlement/nest-broken dim scrims below).
     const shadow = scene.add.nineslice(x, y + 5, 'btn-tex', 0, w, h, 24, 24, 24, 24)
         .setTint(0x0a0714).setAlpha(0.55).setDepth(21);
     const body = scene.add.nineslice(x, y, 'btn-tex', 0, w, h, 24, 24, 24, 24)
         .setTint(color).setDepth(21)
         .setInteractive({ useHandCursor: true });
     const gloss = scene.add.nineslice(x, y - h * 0.24, 'btn-tex', 0, w - 16, Math.max(18, h * 0.34), 16, 16, 12, 12)
-        .setTint(0xffffff).setAlpha(0.16).setDepth(22);
+        .setTint(CONFIG.PASTEL.white).setAlpha(0.16).setDepth(22);
     const txt = scene.add.text(x, y, label, {
         fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold',
-        color: '#ffffff'
+        color: Balance.hex(CONFIG.PASTEL.white)
     }).setOrigin(0.5).setDepth(23);
 
     const iconSize = Math.min(34, h * 0.48);
@@ -69,7 +72,7 @@ function makeChip(scene, x, y, w, h, tint, iconKey, text, textColor) {
     }
     const label = scene.add.text(tx, y, text, {
         fontFamily: 'Arial, sans-serif', fontSize: Math.round(h * 0.48) + 'px',
-        fontStyle: 'bold', color: textColor || '#e8e6f5'
+        fontStyle: 'bold', color: textColor || Balance.hex(CONFIG.PASTEL.ink)
     }).setOrigin(0.5).setDepth(11);
     return {
         setText(s) { label.setText(s); },
@@ -86,8 +89,8 @@ function buildUpgradeBar(scene) {
 
     // bar panel
     scene.add.nineslice(CONFIG.WIDTH / 2, BAR_Y + 4, 'btn-tex', 0, CONFIG.WIDTH - 12, 194, 24, 24, 24, 24)
-        .setTint(0x1c1631).setDepth(9);
-    scene.add.rectangle(CONFIG.WIDTH / 2, BAR_Y - 93, CONFIG.WIDTH - 40, 2, 0x342a52)
+        .setTint(CONFIG.PASTEL.panel).setDepth(9);
+    scene.add.rectangle(CONFIG.WIDTH / 2, BAR_Y - 93, CONFIG.WIDTH - 40, 2, CONFIG.PASTEL.inkSoft)
         .setDepth(9);
 
     const buttons = [];
@@ -98,13 +101,13 @@ function buildUpgradeBar(scene) {
         const glow = scene.add.nineslice(x, BAR_Y, 'btn-tex', 0, BTN_W + 10, BTN_H + 10, 24, 24, 24, 24)
             .setTint(def.color).setAlpha(0).setDepth(9);
         const card = scene.add.nineslice(x, BAR_Y, 'btn-tex', 0, BTN_W, BTN_H, 24, 24, 24, 24)
-            .setTint(0x2c2448).setDepth(10)
+            .setTint(CONFIG.PASTEL.panel).setDepth(10)
             .setInteractive({ useHandCursor: true });
         const icon = scene.add.image(x, BAR_Y - 46, def.icon)
             .setDepth(11).setTint(def.color).setDisplaySize(42, 42);
         const name = scene.add.text(x, BAR_Y - 12, def.name.toUpperCase(), {
             fontFamily: 'Arial, sans-serif', fontSize: '13px', fontStyle: 'bold',
-            color: '#bcb4d8'
+            color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(11);
         if (name.width > BTN_W - 14) name.setScale((BTN_W - 14) / name.width);
 
@@ -112,14 +115,14 @@ function buildUpgradeBar(scene) {
             .setTint(def.color).setAlpha(0.22).setDepth(11);
         const lvl = scene.add.text(x, BAR_Y + 14, '', {
             fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold',
-            color: '#e8e6f5'
+            color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(12);
 
         const costIcon = scene.add.image(x - 26, BAR_Y + 50, 'coin-tex')
             .setDepth(11).setDisplaySize(22, 22);
         const cost = scene.add.text(x - 10, BAR_Y + 50, '', {
             fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold',
-            color: '#ffd54a'
+            color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0, 0.5).setDepth(11);
 
         const refresh = () => {
@@ -127,19 +130,19 @@ function buildUpgradeBar(scene) {
             const maxed = level >= Balance.maxLevel(def.id);
             lvl.setText('Lv.' + level);
             if (maxed) {
-                cost.setText('MAX').setColor('#7dffb2').setX(x - 22);
+                cost.setText('MAX').setColor(Balance.hex(CONFIG.PASTEL.goodText)).setX(x - 22);
                 costIcon.setVisible(false);
                 glow.setAlpha(0);
-                card.setTint(0x241f3d).setAlpha(0.85);
+                card.setTint(CONFIG.PASTEL.panel).setAlpha(0.85);
                 icon.setAlpha(0.7);
             } else {
                 const c = Balance.upgradeCost(def.id, level);
                 cost.setText(Balance.fmt(c)).setX(x - 10);
                 costIcon.setVisible(true);
                 const afford = SaveManager.state.gold >= c;
-                cost.setColor(afford ? '#ffd54a' : '#6a6386');
+                cost.setColor(Balance.hex(afford ? CONFIG.PASTEL.goldText : CONFIG.PASTEL.inkSoft));
                 glow.setAlpha(afford ? 0.32 : 0);
-                card.setTint(afford ? 0x342a52 : 0x241f3d).setAlpha(1);
+                card.setTint(afford ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel).setAlpha(1);
                 icon.setAlpha(afford ? 1 : 0.55);
             }
         };
@@ -175,7 +178,7 @@ function buildFeverGauge(scene) {
     scene.add.text(X - 8, Y + H / 2, '🔥', { fontSize: '20px' })
         .setOrigin(1, 0.5).setDepth(10);
 
-    const chip = makeUiButton(scene, CONFIG.WIDTH - 90, Y + 8, 132, 46, '⚡ AD', 0xe8953a, () => {
+    const chip = makeUiButton(scene, CONFIG.WIDTH - 90, Y + 8, 132, 46, '⚡ AD', CONFIG.PASTEL.accent, () => {
         chip.disable();
         const done = (ok) => {
             if (ok) {
@@ -195,13 +198,16 @@ function buildFeverGauge(scene) {
     const redraw = () => {
         const frac = Phaser.Math.Clamp(SaveManager.state.feverGauge / CONFIG.FEVER.gaugeMax, 0, 1);
         gfx.clear();
-        gfx.fillStyle(0x0a0714, 0.8).fillRoundedRect(X - 2, Y - 2, W + 4, H + 4, 10);
-        gfx.fillStyle(0x241f3d, 1).fillRoundedRect(X, Y, W, H, 8);
+        // v4.0 Phase C Task 2: dark ink frame + light panel track, so the
+        // fever-colored fill still pops on a gauge - same rail convention as
+        // GameScene.drawBossBar().
+        gfx.fillStyle(CONFIG.PASTEL.ink, 0.8).fillRoundedRect(X - 2, Y - 2, W + 4, H + 4, 10);
+        gfx.fillStyle(CONFIG.PASTEL.panel, 1).fillRoundedRect(X, Y, W, H, 8);
         if (frac > 0.01) {
             const fw = Math.max(10, (W - 4) * frac);
             gfx.fillStyle(CONFIG.COLORS.fever, 1).fillRoundedRect(X + 2, Y + 2, fw, H - 4, 6);
-            gfx.fillStyle(0xffffff, 0.35).fillRoundedRect(X + 2, Y + 2, fw, (H - 4) * 0.45, 6);
-            gfx.fillStyle(0xffffff, 0.9).fillCircle(X + 2 + fw, Y + H / 2, 5);
+            gfx.fillStyle(CONFIG.PASTEL.white, 0.35).fillRoundedRect(X + 2, Y + 2, fw, (H - 4) * 0.45, 6);
+            gfx.fillStyle(CONFIG.PASTEL.white, 0.9).fillCircle(X + 2 + fw, Y + H / 2, 5);
         }
         const showChip = frac < CONFIG.FEVER.adRefillBelow && scene.feverLeft <= 0;
         chip.rect.setVisible(showChip);
@@ -225,12 +231,12 @@ function buildUltButton(scene) {
     const x = CONFIG.WIDTH - 76, y = 918, R = 52;
 
     const glow = scene.add.image(x, y, 'ring-tex').setDepth(15)
-        .setTint(0xffd54a).setAlpha(0).setDisplaySize(R * 2.3, R * 2.3);
+        .setTint(CONFIG.PASTEL.gold).setAlpha(0).setDisplaySize(R * 2.3, R * 2.3);
     const body = scene.add.nineslice(x, y, 'btn-tex', 0, R * 2, R * 2, 28, 28, 28, 28)
-        .setTint(0x3a3350).setAlpha(0.85).setDepth(16).setInteractive({ useHandCursor: true });
+        .setTint(CONFIG.PASTEL.panel).setAlpha(0.85).setDepth(16).setInteractive({ useHandCursor: true });
     const icon = scene.add.text(x, y - 8, '⚡', { fontSize: '38px' }).setOrigin(0.5).setDepth(17);
     const label = scene.add.text(x, y + 30, 'ULT', {
-        fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold', color: '#8d86a8'
+        fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
     }).setOrigin(0.5).setDepth(17);
 
     // wireInput() (game.js) shadows this button out of field-tap resolution -
@@ -254,14 +260,14 @@ function buildUltButton(scene) {
         const gauge = scene.ultGauge || 0;
         const ready = gauge >= Balance.ULT_MAX;
         const frac = Phaser.Math.Clamp(gauge / Balance.ULT_MAX, 0, 1);
-        body.setTint(ready ? 0xffd54a : 0x3a3350);
+        body.setTint(ready ? CONFIG.PASTEL.gold : CONFIG.PASTEL.panel);
         icon.setAlpha(ready ? 1 : 0.3 + frac * 0.5);
-        label.setColor(ready ? '#141020' : '#8d86a8');
+        label.setColor(Balance.hex(ready ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft));
         setPulse(ready);
         if (ready && !scene._ultReadyToasted) {
             scene._ultReadyToasted = true;
             if (typeof Effects !== 'undefined') {
-                Effects.damageText(scene, x, y - R - 16, I18n.t('ult.ready'), '#ffd54a', { big: true });
+                Effects.damageText(scene, x, y - R - 16, I18n.t('ult.ready'), Balance.hex(CONFIG.PASTEL.gold), { big: true });
             }
         }
     };
@@ -284,31 +290,33 @@ function showSettlement(scene, opts) {
     const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
     const items = [];
 
+    // v4.0 Phase C Task 2: modal dim-scrim - stays near-black regardless of
+    // theme (same exception class as the button drop-shadow above).
     items.push(scene.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.78)
         .setDepth(20).setInteractive());
     items.push(scene.add.nineslice(W / 2, H * 0.44, 'btn-tex', 0, 560, 460, 24, 24, 24, 24)
-        .setTint(0x201a33).setDepth(20));
+        .setTint(CONFIG.PASTEL.panel).setDepth(20));
 
     // v3.0 Task 10: a replay settles a SINGLE stage - "STAGES N-N CLEAR!"
     // would read oddly, so it gets its own singular title + a REPLAY badge.
     const title = opts.replay ? `STAGE ${opts.to} CLEAR!` : `STAGES ${opts.from}–${opts.to} CLEAR!`;
     items.push(scene.add.text(W / 2, H * 0.3, title, {
         fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold',
-        color: '#7dffb2'
+        color: Balance.hex(CONFIG.PASTEL.goodText)
     }).setOrigin(0.5).setDepth(21));
 
     if (opts.replay) {
         items.push(scene.add.nineslice(W / 2, H * 0.35, 'pill-tex', 0, 150, 40, 16, 16, 14, 14)
-            .setTint(0xff5ec4).setDepth(21));
+            .setTint(CONFIG.PASTEL.accent).setDepth(21));
         items.push(scene.add.text(W / 2, H * 0.35, I18n.t('map.replay'), {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#141020'
+            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(22));
     }
 
     items.push(scene.add.image(W / 2 - 80, H * 0.42, 'coin-tex').setDepth(21).setScale(1.4));
     const goldTxt = scene.add.text(W / 2 - 40, H * 0.42, '+' + Balance.fmt(opts.gold), {
         fontFamily: 'Arial, sans-serif', fontSize: '56px', fontStyle: 'bold',
-        color: '#ffd54a'
+        color: Balance.hex(CONFIG.PASTEL.goldText)
     }).setOrigin(0, 0.5).setDepth(21);
     items.push(goldTxt);
 
@@ -320,7 +328,7 @@ function showSettlement(scene, opts) {
     };
 
     const adBtn = makeUiButton(scene, W / 2, H * 0.53, 480, 92,
-        '▶ 2× GOLD (+' + Balance.fmt(opts.gold) + ')', 0xe8953a, () => {
+        '▶ 2× GOLD (+' + Balance.fmt(opts.gold) + ')', CONFIG.PASTEL.accent, () => {
             adBtn.disable();
             const grant = (ok) => {
                 if (ok) {
@@ -343,7 +351,7 @@ function showSettlement(scene, opts) {
         });
 
     const contBtn = makeUiButton(scene, W / 2, H * 0.53 + 120, 480, 92,
-        'CONTINUE', 0x2f89ff, close);
+        'CONTINUE', CONFIG.PASTEL.accent, close);
 }
 
 // =============================================================================
@@ -361,15 +369,16 @@ class MenuScene extends Phaser.Scene {
             this.events.once('shutdown', () => AdsManager.hideBanner());
         }
 
-        // soft decorative blobs
-        for (const [bx, by, br, c] of [[100, 200, 130, 0x201a33], [640, 420, 90, 0x1c1631],
-            [140, 900, 110, 0x1c1631], [600, 1050, 140, 0x201a33]]) {
-            this.add.circle(bx, by, br, c);
+        // soft decorative blobs - one notch deeper than the page bg, like the
+        // monster-field backdrop (bgField).
+        for (const [bx, by, br] of [[100, 200, 130], [640, 420, 90],
+            [140, 900, 110], [600, 1050, 140]]) {
+            this.add.circle(bx, by, br, CONFIG.PASTEL.bgField);
         }
 
         const logo = this.add.text(W / 2, H * 0.2, 'SMOOSH!', {
             fontFamily: 'Arial, sans-serif', fontSize: '110px', fontStyle: 'bold',
-            color: '#7dffb2', stroke: '#141020', strokeThickness: 12
+            color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
         }).setOrigin(0.5);
         this.tweens.add({
             targets: logo, scaleX: 1.06, scaleY: 0.94, duration: 700,
@@ -389,72 +398,77 @@ class MenuScene extends Phaser.Scene {
         const st = SaveManager.state;
         this.add.text(W / 2, H * 0.49,
             'BEST STAGE ' + st.bestStage + '   ·   ' + Balance.fmt(st.totalKills) + ' SMOOSHED', {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', color: '#8d86a8'
+            fontFamily: 'Arial, sans-serif', fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5);
 
+        // v4.0 Phase C Task 2: every generic CTA on this menu (nav buttons +
+        // the main PLAY button) is now the single pastel accent - role-based
+        // mapping ("buttons/accents -> accent"), not per-button hue variety.
         makeUiButton(this, W / 2, H * 0.58, 520, 116,
-            'SMOOSH!  (STAGE ' + st.stage + ')', 0xff5ec4,
+            'SMOOSH!  (STAGE ' + st.stage + ')', CONFIG.PASTEL.accent,
             () => SmooshGame.goto('GameScene'));
 
-        makeUiButton(this, W / 2 - 235, H * 0.58 + 140, 220, 96, '🛒 SHOP', 0x2fa86b,
+        makeUiButton(this, W / 2 - 235, H * 0.58 + 140, 220, 96, '🛒 SHOP', CONFIG.PASTEL.accent,
             () => SmooshGame.goto('ShopScene'));
         // v3.0 Task 10: MAP nav button, alongside SHOP/BATTLE (map-pin emoji -
         // no dedicated procedural texture exists, matching this row's existing
         // emoji-prefixed-label convention rather than adding a new icon asset).
-        makeUiButton(this, W / 2, H * 0.58 + 140, 220, 96, '📍 ' + I18n.t('map.navButton'), 0xffa94a,
+        makeUiButton(this, W / 2, H * 0.58 + 140, 220, 96, '📍 ' + I18n.t('map.navButton'), CONFIG.PASTEL.accent,
             () => SmooshGame.goto('StageMapScene'));
-        makeUiButton(this, W / 2 + 235, H * 0.58 + 140, 220, 96, '⚔ BATTLE', 0x5aa9ff,
+        makeUiButton(this, W / 2 + 235, H * 0.58 + 140, 220, 96, '⚔ BATTLE', CONFIG.PASTEL.accent,
             () => SmooshGame.goto('PvpScene'));
         // v3.0 Task 11: DEX nav button, own row below SHOP/MAP/BATTLE (no
         // room left in that row - all 720px of width is already spoken for).
         // v3.5 Task 4: NEST joins DEX on this row (egg emoji - no dedicated
         // procedural texture, matching this row's emoji-prefixed convention).
-        makeUiButton(this, W / 2 - 160, H * 0.58 + 252, 280, 84, '📖 ' + I18n.t('dex.title'), 0xb06fff,
+        makeUiButton(this, W / 2 - 160, H * 0.58 + 252, 280, 84, '📖 ' + I18n.t('dex.title'), CONFIG.PASTEL.accent,
             () => SmooshGame.goto('DexScene'));
-        makeUiButton(this, W / 2 + 160, H * 0.58 + 252, 280, 84, '🥚 ' + I18n.t('nest.title'), 0xff9ad5,
+        makeUiButton(this, W / 2 + 160, H * 0.58 + 252, 280, 84, '🥚 ' + I18n.t('nest.title'), CONFIG.PASTEL.accent,
             () => SmooshGame.goto('NestScene'));
         // v3.5 Task 5: FRIENDS nav button, own row below DEX/NEST - players
         // list + friend requests + gift inbox (offline-first, degrades to a
         // single "offline" card + retry until Social.ready flips true).
-        makeUiButton(this, W / 2, H * 0.58 + 364, 320, 84, '👥 ' + I18n.t('social.title'), 0x4ac9ff,
+        makeUiButton(this, W / 2, H * 0.58 + 364, 320, 84, '👥 ' + I18n.t('social.title'), CONFIG.PASTEL.accent,
             () => SmooshGame.goto('FriendsScene'));
 
         // wallet
         this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26);
         this.add.text(W / 2 - 90, H * 0.53, Balance.fmt(st.gold), {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: '#ffd54a'
+            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0, 0.5);
         this.add.image(W / 2 + 40, H * 0.53, 'gem-tex').setDisplaySize(24, 24);
+        // gems are the premium currency - accent (violet) keeps them visually
+        // distinct from gold at a glance.
         this.add.text(W / 2 + 60, H * 0.53, Balance.fmt(st.gems), {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: '#7fd2ff'
+            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.accent)
         }).setOrigin(0, 0.5);
 
         // sound toggle
         const soundLabel = () => st.muted ? 'SOUND OFF' : 'SOUND ON';
         const toggle = this.add.text(W - 36, 52, soundLabel(), {
             fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-            color: st.muted ? '#5a5570' : '#7dffb2'
+            color: Balance.hex(st.muted ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.goodText)
         }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
         toggle.on('pointerdown', () => {
             st.muted = !st.muted;
             SaveManager.persist();
             Sfx.setMuted(st.muted);
             toggle.setText(soundLabel());
-            toggle.setColor(st.muted ? '#5a5570' : '#7dffb2');
+            toggle.setColor(Balance.hex(st.muted ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.goodText));
         });
 
         // reset progress (tap twice to confirm)
         let armed = false;
         const reset = this.add.text(W / 2, H - 100, 'RESET PROGRESS', {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', color: '#5a5570'
+            fontFamily: 'Arial, sans-serif', fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         reset.on('pointerdown', () => {
             if (!armed) {
                 armed = true;
-                reset.setText('TAP AGAIN TO CONFIRM RESET').setColor('#ff6b6b');
+                reset.setText('TAP AGAIN TO CONFIRM RESET').setColor(Balance.hex(CONFIG.PASTEL.danger));
                 this.time.delayedCall(2500, () => {
                     armed = false;
-                    if (reset.active) reset.setText('RESET PROGRESS').setColor('#5a5570');
+                    if (reset.active) reset.setText('RESET PROGRESS').setColor(Balance.hex(CONFIG.PASTEL.inkSoft));
                 });
             } else {
                 SaveManager.reset();

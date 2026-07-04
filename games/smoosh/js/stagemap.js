@@ -69,15 +69,18 @@ if (typeof Phaser !== 'undefined') {
             // --- fixed header (always covers scrolled-past nodes) ---
             this.add.rectangle(W / 2, 72, W, 144, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
+            // v4.0 Phase C Task 3: title is on-bg (not on-panel) but still a
+            // gold/good hue text - goodText reads even better here since bg
+            // (0xf6f1fb) is lighter than the panel goodText was tuned against.
             this.add.text(W / 2, 56, I18n.t('map.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: '#7dffb2'
+                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
             this.add.text(W / 2, 100, I18n.t('map.replayReward'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '20px', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10);
 
             // --- scroll bounds + initial position centered on the frontier node ---
@@ -99,7 +102,7 @@ if (typeof Phaser !== 'undefined') {
         drawPath() {
             const g = this.pathGfx;
             g.clear();
-            g.fillStyle(0x342a52, 0.55);
+            g.fillStyle(CONFIG.PASTEL.inkSoft, 0.55);
             const DOTS_PER_SEGMENT = 8;
             for (let i = 0; i < this.nodes.length - 1; i++) {
                 const a = this.nodes[i], b = this.nodes[i + 1];
@@ -119,15 +122,21 @@ if (typeof Phaser !== 'undefined') {
             const c = this.add.container(n.x, n.y);
             this.mapContainer.add(c);
 
-            const fill = isFuture ? 0x241f3d : (isFrontier ? 0xff5ec4 : 0x342a52);
+            // v4.0 Phase C Task 3: cleared = element-neutral pastel panel fill
+            // + ink number; future = dimmed inkSoft; frontier (next playable)
+            // keeps a vivid accent highlight so it still pops as the "next
+            // step". Boss nodes get a gold ring on top of whichever of the
+            // three states they're in (a boss can be cleared/future/frontier).
+            const fill = isFuture ? CONFIG.PASTEL.inkSoft : (isFrontier ? CONFIG.PASTEL.accent : CONFIG.PASTEL.panel);
+            const strokeColor = n.boss ? CONFIG.PASTEL.gold : (isFuture ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.white);
             const circle = this.add.circle(0, 0, r, fill, isFuture ? 0.45 : 1)
-                .setStrokeStyle(3, isFuture ? 0x2a2244 : 0xffffff, isFuture ? 0.35 : 0.9);
+                .setStrokeStyle(n.boss ? 5 : 3, strokeColor, isFuture ? 0.35 : 0.9);
             c.add(circle);
 
-            const numColor = isFuture ? '#5a5570' : (isFrontier ? '#141020' : '#e8e6f5');
+            const numColor = isFuture ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.ink;
             const num = this.add.text(0, 0, String(n.stage), {
                 fontFamily: 'Arial, sans-serif', fontSize: (isFrontier ? '24px' : '20px'),
-                fontStyle: 'bold', color: numColor
+                fontStyle: 'bold', color: Balance.hex(numColor)
             }).setOrigin(0.5);
             c.add(num);
 
@@ -220,14 +229,14 @@ if (typeof Phaser !== 'undefined') {
             const y = H - 100;
 
             const bg = this.add.nineslice(W / 2, y, 'btn-tex', 0, W - 40, 140, 24, 24, 24, 24)
-                .setTint(0x201a33).setDepth(20);
+                .setTint(CONFIG.PASTEL.panel).setDepth(20);
             const label = this.add.text(W / 2, y - 32, I18n.t('map.stageN', { n: stageNum }), {
-                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: '#e8e6f5'
+                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5).setDepth(21);
             this._confirmParts = [bg, label];
 
             this._confirmBtn = makeUiButton(this, W / 2, y + 28, 380, 68,
-                I18n.t('map.replay'), 0xff5ec4, () => {
+                I18n.t('map.replay'), CONFIG.PASTEL.accent, () => {
                     this.hideReplayConfirm();
                     this.scene.start('GameScene', { replayStage: stageNum });
                 });

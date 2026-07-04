@@ -89,11 +89,13 @@ if (typeof Phaser !== 'undefined') {
             // uses for its play field (game.js create()), reused here so the
             // nest reads as a cozy corner of the same world.
             this.add.rectangle(NEST_ROAM.x + NEST_ROAM.w / 2, NEST_ROAM.y + NEST_ROAM.h / 2,
-                NEST_ROAM.w, NEST_ROAM.h, 0x1a1530)
-                .setStrokeStyle(2, 0x2a2244).setDepth(0);
-            for (const [bx, by, br, c] of [[90, 260, 90, 0x201a33], [630, 320, 70, 0x1c1631],
-                [110, 800, 80, 0x1c1631], [610, 840, 100, 0x201a33]]) {
-                this.add.circle(bx, by, br, c).setDepth(0);
+                NEST_ROAM.w, NEST_ROAM.h, CONFIG.PASTEL.bgField)
+                .setStrokeStyle(2, CONFIG.PASTEL.ink).setDepth(0);
+            // soft decorative blobs - one notch deeper than the page bg, same
+            // convention as MenuScene's blobs (ui.js).
+            for (const [bx, by, br] of [[90, 260, 90], [630, 320, 70],
+                [110, 800, 80], [610, 840, 100]]) {
+                this.add.circle(bx, by, br, CONFIG.PASTEL.bgField).setDepth(0);
             }
 
             this.decorViews = [];
@@ -118,17 +120,17 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             this.add.rectangle(W / 2, 76, W, 152, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
             this.add.text(W / 2, 56, I18n.t('nest.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: '#7dffb2'
+                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
 
             if (this.visit) {
                 this.add.text(W / 2, 104, I18n.t('nest.visiting', { name: this.visit.nickname || '???' }), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#ffd54a'
+                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
                 }).setOrigin(0.5).setDepth(10);
             }
         }
@@ -292,7 +294,7 @@ if (typeof Phaser !== 'undefined') {
                 targets: a.sprite, y: a.sprite.y - 20, duration: 110, yoyo: true, ease: 'Quad.easeOut'
             });
             if (typeof Effects !== 'undefined') {
-                Effects.burst(this, a.sprite.x, a.sprite.y - a.size * 0.4, 0xff6b8a, 8, 0.7);
+                Effects.burst(this, a.sprite.x, a.sprite.y - a.size * 0.4, CONFIG.PASTEL.fever, 8, 0.7);
             }
             Sfx.petYelp(a.def.element);
             Haptic.tick(1);
@@ -304,7 +306,7 @@ if (typeof Phaser !== 'undefined') {
         buildEditToggle() {
             const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
             this.editBtn = makeUiButton(this, W / 2, H - 70, 260, 76,
-                I18n.t('nest.edit'), 0x2f89ff, () => this.enterEdit());
+                I18n.t('nest.edit'), CONFIG.PASTEL.accent, () => this.enterEdit());
         }
 
         enterEdit() {
@@ -341,8 +343,8 @@ if (typeof Phaser !== 'undefined') {
             for (let gy = 0; gy < Decor.GRID.rows; gy++) {
                 for (let gx = 0; gx < Decor.GRID.cols; gx++) {
                     const c = this.cellCenter(gx, gy);
-                    const rect = this.add.rectangle(c.x, c.y, NEST_CELL_W - 8, NEST_CELL_H - 8, 0xffffff, 0.05)
-                        .setStrokeStyle(2, 0x342a52, 0.7).setDepth(2).setInteractive({ useHandCursor: true });
+                    const rect = this.add.rectangle(c.x, c.y, NEST_CELL_W - 8, NEST_CELL_H - 8, CONFIG.PASTEL.white, 0.05)
+                        .setStrokeStyle(2, CONFIG.PASTEL.inkSoft, 0.7).setDepth(2).setInteractive({ useHandCursor: true });
                     rect.on('pointerdown', () => this.tapCell(gx, gy));
                     this.gridCells.push({ gx, gy, rect });
                 }
@@ -402,9 +404,9 @@ if (typeof Phaser !== 'undefined') {
             const trayY = H - 210, cols = 4, cellW = 86, cellH = 96;
             const startX = W / 2 - (cols - 1) * cellW / 2;
 
-            this.trayParts.push(this.add.rectangle(W / 2, H - 160, W, 220, 0x141020, 0.92).setDepth(9));
+            this.trayParts.push(this.add.rectangle(W / 2, H - 160, W, 220, CONFIG.PASTEL.panel, 0.92).setDepth(9));
             this.trayParts.push(this.add.text(W / 2, H - 258, I18n.t('nest.tray'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10));
 
             pageItems.forEach((def, i) => {
@@ -412,14 +414,16 @@ if (typeof Phaser !== 'undefined') {
                 const x = startX + col * cellW, y = trayY + row * cellH;
                 const owned = SaveManager.state.decorOwned[def.id] || 0;
                 const placedCount = this.workingPlaced.filter(p => p.id === def.id).length;
-                const heldTint = this.editHeldId === def.id ? 0x342a52 : 0x201a33;
+                // v4.0 Phase C Task 3: held/selected item pops with panelLight,
+                // same "affordable/selected" convention as the upgrade bar.
+                const heldTint = this.editHeldId === def.id ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel;
 
                 const bg = this.add.nineslice(x, y, 'btn-tex', 0, cellW - 8, cellH - 8, 14, 14, 14, 14)
                     .setTint(heldTint).setDepth(10).setInteractive({ useHandCursor: true });
                 const icon = this.add.image(x, y - 12, 'decor-' + def.id).setDisplaySize(44, 44).setDepth(11);
                 const count = this.add.text(x, y + 28, (placedCount) + '/' + owned, {
                     fontFamily: 'Arial, sans-serif', fontSize: '14px', fontStyle: 'bold',
-                    color: owned > placedCount ? '#7dffb2' : '#5a5570'
+                    color: Balance.hex(owned > placedCount ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(11);
                 bg.on('pointerdown', () => {
                     this.editHeldId = this.editHeldId === def.id ? null : def.id;
@@ -430,20 +434,20 @@ if (typeof Phaser !== 'undefined') {
 
             if (!list.length) {
                 this.trayParts.push(this.add.text(W / 2, trayY + 20, I18n.t('nest.trayEmpty'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#5a5570'
+                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(10));
             }
 
             if (pages > 1) {
                 const py = H - 100;
-                const prev = makeUiButton(this, W / 2 - 150, py, 90, 48, '◀', 0x39424f, () => {
+                const prev = makeUiButton(this, W / 2 - 150, py, 90, 48, '◀', CONFIG.PASTEL.accent, () => {
                     this.trayPage = (this.trayPage - 1 + pages) % pages;
                     this.refreshTray();
                 });
                 const label = this.add.text(W / 2, py, (this.trayPage + 1) + ' / ' + pages, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#8d86a8'
+                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(10);
-                const next = makeUiButton(this, W / 2 + 150, py, 90, 48, '▶', 0x39424f, () => {
+                const next = makeUiButton(this, W / 2 + 150, py, 90, 48, '▶', CONFIG.PASTEL.accent, () => {
                     this.trayPage = (this.trayPage + 1) % pages;
                     this.refreshTray();
                 });
@@ -454,7 +458,7 @@ if (typeof Phaser !== 'undefined') {
         buildSaveButton() {
             const W = CONFIG.WIDTH;
             this.saveBtn = makeUiButton(this, W / 2, 168, 220, 64,
-                I18n.t('nest.save'), 0x2fa86b, () => this.commitSave());
+                I18n.t('nest.save'), CONFIG.PASTEL.accent, () => this.commitSave());
         }
 
         commitSave() {
@@ -472,9 +476,12 @@ if (typeof Phaser !== 'undefined') {
         // -------------------------------------------------------------------
         showToast(msg) {
             this.hideToast(true);
+            // v4.0 Phase C Task 3: toast chip stays a dark ink pill with white
+            // text regardless of theme - same "always-dark floating chip"
+            // exception as makeUiButton's drop shadow / modal scrims.
             this._toast = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 300, msg, {
                 fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-                color: '#ffffff', backgroundColor: '#342a52', padding: { x: 18, y: 10 }
+                color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.ink), padding: { x: 18, y: 10 }
             }).setOrigin(0.5).setDepth(40);
             this._toastTween = this.tweens.add({
                 targets: this._toast, alpha: 0, delay: 1400, duration: 300,

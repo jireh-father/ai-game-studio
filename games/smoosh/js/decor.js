@@ -3,10 +3,35 @@
 // v3.5: nest decor - cosmetic props players buy/earn to place around the
 // nest. Parametric pastel-prop painter (same spirit as catalog.js's
 // paintJelly/paintAnimal) + a pure catalog/placement/grant API.
+// v4.0 Phase C Task 6: paintDecor's own internal literals (the shared ink
+// default + the white sparkle/highlight accents used across several shapes)
+// now resolve through CONFIG.PASTEL where an exact-value token exists, via
+// the same typeof-CONFIG guard + literal-fallback pattern catalog.js's
+// elemRamp() uses - so decor.js still loads standalone in Node tests
+// (tests/decor.test.js requires it with no CONFIG global set at all).
+// The per-item c1/c2/c3 args below (DECOR_ITEMS) are NOT touched: they are
+// intentionally representational "baked" prop colors (a rainbow rug must
+// look rainbow, a starry backdrop must look night-dark) - see
+// phase-c-task-6-report.md for the literal-by-literal justification table.
 // =============================================================================
+function pastelHex(key, fallback) {
+    if (typeof CONFIG !== 'undefined' && CONFIG.PASTEL && CONFIG.PASTEL[key] !== undefined) {
+        return '#' + (CONFIG.PASTEL[key] & 0xffffff).toString(16).padStart(6, '0');
+    }
+    return fallback;
+}
+// Pure highlight white (sparkle/gloss accents) - exact value match with
+// CONFIG.PASTEL.white (0xffffff), so this is a no-visual-change alignment.
+const DECOR_WHITE = pastelHex('white', '#ffffff');
 
 // Paint one decor prop SVG (64x64 canvas). shape picks the archetype;
 // o = { pattern, c1, c2, c3 } - c3 defaults to the shared ink outline color.
+// That default ('#221a38') is kept as a literal on purpose: it's the same
+// "character line-art ink" catalog.js's paintJelly/paintAnimal (and
+// NEST_SVG below) still hardcode post-Task-4/5 - CONFIG.PASTEL.ink
+// (0x453a56) is a much lighter UI-text plum, and swapping it in would
+// visibly wash out every decor item's outline relative to the pets/monsters
+// it sits next to in the nest.
 function paintDecor(shape, o) {
     const c1 = o.c1, c2 = o.c2 || o.c1, c3 = o.c3 || '#221a38';
     let body = '';
@@ -14,7 +39,7 @@ function paintDecor(shape, o) {
     if (shape === 'mat') {
         body = `<rect x="6" y="18" width="52" height="30" rx="10" fill="${c1}" stroke="${c3}" stroke-width="2.5"/>`;
         if (o.pattern === 'rainbow') {
-            body += `<path d="M10 33 Q32 20 58 33" stroke="${c2}" stroke-width="4" fill="none"/><path d="M10 40 Q32 28 58 40" stroke="#fff" stroke-width="3" fill="none" opacity=".6"/>`;
+            body += `<path d="M10 33 Q32 20 58 33" stroke="${c2}" stroke-width="4" fill="none"/><path d="M10 40 Q32 28 58 40" stroke="${DECOR_WHITE}" stroke-width="3" fill="none" opacity=".6"/>`;
         } else if (o.pattern === 'stripe') {
             body += `<rect x="14" y="18" width="6" height="30" fill="${c2}"/><rect x="28" y="18" width="6" height="30" fill="${c2}"/><rect x="42" y="18" width="6" height="30" fill="${c2}"/>`;
         } else if (o.pattern === 'checker') {
@@ -24,8 +49,8 @@ function paintDecor(shape, o) {
         }
     } else if (shape === 'pond') {
         body = `<ellipse cx="32" cy="36" rx="26" ry="16" fill="${c1}" stroke="${c3}" stroke-width="2.5"/>
-  <path d="M14 32 Q32 26 50 32" stroke="#fff" stroke-width="2.5" fill="none" opacity=".55"/>
-  <path d="M18 40 Q32 35 46 40" stroke="#fff" stroke-width="2" fill="none" opacity=".4"/>`;
+  <path d="M14 32 Q32 26 50 32" stroke="${DECOR_WHITE}" stroke-width="2.5" fill="none" opacity=".55"/>
+  <path d="M18 40 Q32 35 46 40" stroke="${DECOR_WHITE}" stroke-width="2" fill="none" opacity=".4"/>`;
     } else if (shape === 'panel') {
         if (o.pattern === 'fence') {
             body = `<rect x="4" y="30" width="4" height="26" fill="${c1}"/><rect x="14" y="24" width="4" height="32" fill="${c1}"/><rect x="24" y="30" width="4" height="26" fill="${c1}"/><rect x="34" y="24" width="4" height="32" fill="${c1}"/><rect x="44" y="30" width="4" height="26" fill="${c1}"/><rect x="54" y="24" width="4" height="32" fill="${c1}"/><rect x="2" y="34" width="60" height="5" fill="${c2}"/>`;
@@ -38,7 +63,7 @@ function paintDecor(shape, o) {
         } else if (o.pattern === 'rainbow') {
             body = `<rect x="2" y="2" width="60" height="60" rx="8" fill="${c1}"/>
   <path d="M8 52 A24 24 0 0 1 56 52" stroke="${c2}" stroke-width="6" fill="none"/>
-  <path d="M8 52 A24 24 0 0 1 56 52" stroke="#fff" stroke-width="2" fill="none" opacity=".5" transform="translate(0,7)"/>`;
+  <path d="M8 52 A24 24 0 0 1 56 52" stroke="${DECOR_WHITE}" stroke-width="2" fill="none" opacity=".5" transform="translate(0,7)"/>`;
         } else { // cloud
             body = `<rect x="2" y="2" width="60" height="60" rx="8" fill="${c1}"/>
   <ellipse cx="32" cy="34" rx="18" ry="10" fill="${c2}"/><circle cx="20" cy="30" r="9" fill="${c2}"/><circle cx="44" cy="30" r="9" fill="${c2}"/>`;
@@ -52,13 +77,13 @@ function paintDecor(shape, o) {
             bench:    `<rect x="10" y="28" width="44" height="6" rx="2" fill="${c1}" stroke="${c3}" stroke-width="2"/><rect x="10" y="34" width="6" height="18" fill="${c2}"/><rect x="48" y="34" width="6" height="18" fill="${c2}"/><rect x="10" y="14" width="44" height="6" rx="2" fill="${c1}"/>`,
             ball:     `<circle cx="32" cy="34" r="20" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><path d="M14 30 Q32 40 50 30 M32 14 Q26 34 32 54" stroke="${c2}" stroke-width="2.5" fill="none"/>`,
             swing:    `<path d="M10 10 L10 54 M54 10 L54 54" stroke="${c3}" stroke-width="3"/><path d="M6 10 L58 10" stroke="${c3}" stroke-width="4"/><path d="M18 12 L26 40 M46 12 L38 40" stroke="${c2}" stroke-width="2"/><rect x="22" y="40" width="20" height="6" rx="2" fill="${c1}"/>`,
-            mushroom: `<path d="M16 32 Q32 6 48 32 Z" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><circle cx="26" cy="22" r="2.4" fill="#fff" opacity=".8"/><circle cx="38" cy="18" r="2" fill="#fff" opacity=".8"/><rect x="26" y="32" width="12" height="20" rx="4" fill="${c2}" stroke="${c3}" stroke-width="2"/>`,
+            mushroom: `<path d="M16 32 Q32 6 48 32 Z" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><circle cx="26" cy="22" r="2.4" fill="${DECOR_WHITE}" opacity=".8"/><circle cx="38" cy="18" r="2" fill="${DECOR_WHITE}" opacity=".8"/><rect x="26" y="32" width="12" height="20" rx="4" fill="${c2}" stroke="${c3}" stroke-width="2"/>`,
             kite:     `<path d="M32 8 L50 26 L32 56 L14 26 Z" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><path d="M32 8 L32 56 M14 26 L50 26" stroke="${c3}" stroke-width="1.5"/><path d="M32 56 q-4 6 0 10 q4 -4 0 4 q-4 -4 0 6" stroke="${c2}" stroke-width="2" fill="none"/>`,
             drum:     `<ellipse cx="32" cy="20" rx="18" ry="8" fill="${c2}" stroke="${c3}" stroke-width="2.5"/><path d="M14 20 L14 44 A18 8 0 0 0 50 44 L50 20" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><ellipse cx="32" cy="44" rx="18" ry="8" fill="none" stroke="${c3}" stroke-width="2"/>`,
             statue:   `<rect x="18" y="46" width="28" height="10" fill="${c3}" opacity=".4"/><rect x="22" y="34" width="20" height="14" fill="${c1}" stroke="${c3}" stroke-width="2"/><circle cx="32" cy="22" r="10" fill="${c2}" stroke="${c3}" stroke-width="2"/>`,
-            fountain: `<ellipse cx="32" cy="50" rx="24" ry="8" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><rect x="28" y="20" width="8" height="26" fill="${c2}"/><ellipse cx="32" cy="20" rx="10" ry="4" fill="${c2}"/><path d="M32 14 q-6 4 0 10 q6 -6 0 -10" fill="#fff" opacity=".6"/>`,
+            fountain: `<ellipse cx="32" cy="50" rx="24" ry="8" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><rect x="28" y="20" width="8" height="26" fill="${c2}"/><ellipse cx="32" cy="20" rx="10" ry="4" fill="${c2}"/><path d="M32 14 q-6 4 0 10 q6 -6 0 -10" fill="${DECOR_WHITE}" opacity=".6"/>`,
             crystal:  `<path d="M32 6 L48 24 L38 58 L26 58 L16 24 Z" fill="${c1}" stroke="${c3}" stroke-width="2.5"/><path d="M32 6 L32 58 M16 24 L48 24" stroke="${c2}" stroke-width="1.5" opacity=".7"/>`,
-            arch:     `<path d="M8 56 A24 24 0 0 1 56 56" stroke="${c1}" stroke-width="8" fill="none"/><path d="M8 56 A24 24 0 0 1 56 56" stroke="${c2}" stroke-width="3" fill="none" opacity=".7" transform="translate(0,-6)"/><path d="M8 56 A24 24 0 0 1 56 56" stroke="#fff" stroke-width="2" fill="none" opacity=".5" transform="translate(0,-11)"/>`
+            arch:     `<path d="M8 56 A24 24 0 0 1 56 56" stroke="${c1}" stroke-width="8" fill="none"/><path d="M8 56 A24 24 0 0 1 56 56" stroke="${c2}" stroke-width="3" fill="none" opacity=".7" transform="translate(0,-6)"/><path d="M8 56 A24 24 0 0 1 56 56" stroke="${DECOR_WHITE}" stroke-width="2" fill="none" opacity=".5" transform="translate(0,-11)"/>`
         };
         body = P[o.pattern] || '';
     }

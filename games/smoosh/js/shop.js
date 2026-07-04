@@ -5,7 +5,25 @@
 // All prices are progress-indexed (Balance.*Cost with bestStage).
 // =============================================================================
 
+// v4.0 Phase C Task 3: RARITY_COLORS itself is left UNCHANGED (game.js reads
+// this same table by reference for FX shown over dark surfaces - screenFlash/
+// particle bursts/the gacha reveal's dark-scrim ceremony - where these bright
+// values already read fine and Effects.damageText's ink stroke makes floating
+// combat numbers safe regardless of fill color). The problem is narrower:
+// this file also renders rarity as flat, unstroked TEXT directly on light
+// panels (pet/gear list rows), where these same bright values wash out
+// (contrast ~1-2.3, all fail WCAG). RARITY_TEXT_COLORS is the on-panel-safe
+// counterpart, reusing existing dark tokens where the hue family already
+// has one (common->inkSoft, epic->elements.dark.deep, legendary->goldText)
+// and CONFIG.PASTEL.gemText (added this task) for "rare" (same blue family
+// as the gems currency text) - see tests/pastel.test.js for the contrast floor.
 const RARITY_COLORS = { common: 0x9aa5c0, rare: 0x5aa9ff, epic: 0xb06fff, legendary: 0xffd54a };
+const RARITY_TEXT_COLORS = {
+    common: CONFIG.PASTEL.inkSoft,
+    rare: CONFIG.PASTEL.gemText,
+    epic: CONFIG.PASTEL.elements.dark.deep,
+    legendary: CONFIG.PASTEL.goldText
+};
 const RARITY_STARS = { common: '★', rare: '★★', epic: '★★★', legendary: '★★★★' };
 
 class ShopScene extends Phaser.Scene {
@@ -22,13 +40,13 @@ class ShopScene extends Phaser.Scene {
         this.items = [];   // current tab display objects
 
         // opaque backdrop (covers the paused game when opened mid-fight)
-        this.add.rectangle(W / 2, CONFIG.HEIGHT / 2, W, CONFIG.HEIGHT, 0x141020,
+        this.add.rectangle(W / 2, CONFIG.HEIGHT / 2, W, CONFIG.HEIGHT, CONFIG.PASTEL.bg,
             this.fromGame ? 0.97 : 1);
 
         // header
         const back = this.add.text(44, 56, this.fromGame ? '▶' : '‹', {
             fontFamily: 'Arial, sans-serif', fontSize: this.fromGame ? '36px' : '48px',
-            fontStyle: 'bold', color: this.fromGame ? '#7dffb2' : '#8d86a8'
+            fontStyle: 'bold', color: Balance.hex(this.fromGame ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
         back.on('pointerdown', () => {
             if (this.fromGame) {
@@ -39,15 +57,15 @@ class ShopScene extends Phaser.Scene {
             }
         });
         this.add.text(W / 2, 56, 'SHOP', {
-            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: '#7dffb2'
+            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
         }).setOrigin(0.5);
 
         // wallet: real texture icons (emoji coins render as globes on some fonts)
         this.goldText = this.add.text(W - 44, 44, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: '#ffd54a'
+            fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(1, 0.5).setDepth(10);
         this.gemText = this.add.text(W - 44, 78, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: '#7fd2ff'
+            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.gemText)
         }).setOrigin(1, 0.5).setDepth(10);
         this.goldIcon = this.add.image(0, 44, 'coin-tex').setDepth(10).setDisplaySize(26, 26);
         this.gemIcon = this.add.image(0, 78, 'gem-tex').setDepth(10).setDisplaySize(24, 24);
@@ -60,9 +78,9 @@ class ShopScene extends Phaser.Scene {
         this.tabs.forEach((name, i) => {
             const x = 20 + i * tw + tw / 2;
             const bg = this.add.nineslice(x, 128, 'pill-tex', 0, tw - 8, 52, 16, 16, 14, 14)
-                .setTint(0x241f3d).setDepth(5).setInteractive({ useHandCursor: true });
+                .setTint(CONFIG.PASTEL.panel).setDepth(5).setInteractive({ useHandCursor: true });
             const label = this.add.text(x, 128, name, {
-                fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(6);
             bg.on('pointerdown', () => this.showTab(name));
             this.tabButtons.push({ name, bg, label });
@@ -86,8 +104,8 @@ class ShopScene extends Phaser.Scene {
     showTab(name) {
         this.clearTab();
         for (const t of this.tabButtons) {
-            t.bg.setTint(t.name === name ? 0x342a52 : 0x241f3d);
-            t.label.setColor(t.name === name ? '#e8e6f5' : '#8d86a8');
+            t.bg.setTint(t.name === name ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel);
+            t.label.setColor(Balance.hex(t.name === name ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft));
         }
         this['tab' + name]();
     }
@@ -95,14 +113,14 @@ class ShopScene extends Phaser.Scene {
     _text(x, y, str, size, color, origin) {
         const t = this.add.text(x, y, str, {
             fontFamily: 'Arial, sans-serif', fontSize: size + 'px', fontStyle: 'bold',
-            color: color || '#e8e6f5'
+            color: color || Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(origin !== undefined ? origin : 0.5);
         this.items.push(t);
         return t;
     }
 
     _card(x, y, w, h) {
-        const c = this.add.nineslice(x, y, 'btn-tex', 0, w, h, 24, 24, 24, 24).setTint(0x201a33);
+        const c = this.add.nineslice(x, y, 'btn-tex', 0, w, h, 24, 24, 24, 24).setTint(CONFIG.PASTEL.panel);
         this.items.push(c);
         return c;
     }
@@ -123,29 +141,33 @@ class ShopScene extends Phaser.Scene {
         this._card(W / 2, 320, 640, 300);
         const egg1 = this.add.image(W / 2 - 220, 300, 'egg-tex').setDisplaySize(120, 150);
         this.items.push(egg1);
-        this._text(W / 2 + 60, 240, 'GOLD EGG', 34, '#ffd54a');
-        this._text(W / 2 + 60, 282, 'Hatch a random pet!', 20, '#8d86a8');
-        this._btn(W / 2 - 60, 380, 240, 76, '1× ' + Balance.fmt(goldCost), 0x2fa86b,
+        this._text(W / 2 + 60, 240, 'GOLD EGG', 34, Balance.hex(CONFIG.PASTEL.goldText));
+        this._text(W / 2 + 60, 282, 'Hatch a random pet!', 20, Balance.hex(CONFIG.PASTEL.inkSoft));
+        this._btn(W / 2 - 60, 380, 240, 76, '1× ' + Balance.fmt(goldCost), CONFIG.PASTEL.accent,
             () => this.doGacha(false, 1), 'coin-tex');
-        this._btn(W / 2 + 210, 380, 240, 76, '10+1 ' + Balance.fmt(goldCost * 10), 0x2f89ff,
+        this._btn(W / 2 + 210, 380, 240, 76, '10+1 ' + Balance.fmt(goldCost * 10), CONFIG.PASTEL.accent,
             () => this.doGacha(false, 11), 'coin-tex');
 
         this._card(W / 2, 660, 640, 300);
-        const egg2 = this.add.image(W / 2 - 220, 640, 'egg-tex').setDisplaySize(120, 150).setTint(0xbfe8ff);
+        // v4.0 Phase C Task 3: elements.ice.deep (not the pale raw 0xbfe8ff) so
+        // the "premium" egg still reads as a distinct blue silhouette against
+        // the light panel instead of washing out near-white-on-near-white.
+        const egg2 = this.add.image(W / 2 - 220, 640, 'egg-tex').setDisplaySize(120, 150)
+            .setTint(CONFIG.PASTEL.elements.ice.deep);
         this.items.push(egg2);
-        this._text(W / 2 + 60, 580, 'GEM EGG', 34, '#7fd2ff');
-        this._text(W / 2 + 60, 622, 'Premium odds! Epic 20% / Leg 10%', 20, '#8d86a8');
-        this._btn(W / 2 - 60, 720, 240, 76, '1× ' + CONFIG.GEMS.eggCost, 0x2fa86b,
+        this._text(W / 2 + 60, 580, 'GEM EGG', 34, Balance.hex(CONFIG.PASTEL.gemText));
+        this._text(W / 2 + 60, 622, 'Premium odds! Epic 20% / Leg 10%', 20, Balance.hex(CONFIG.PASTEL.inkSoft));
+        this._btn(W / 2 - 60, 720, 240, 76, '1× ' + CONFIG.GEMS.eggCost, CONFIG.PASTEL.accent,
             () => this.doGacha(true, 1), 'gem-tex');
-        this._btn(W / 2 + 210, 720, 240, 76, '10+1 ' + CONFIG.GEMS.eggCost * 10, 0x2f89ff,
+        this._btn(W / 2 + 210, 720, 240, 76, '10+1 ' + CONFIG.GEMS.eggCost * 10, CONFIG.PASTEL.accent,
             () => this.doGacha(true, 11), 'gem-tex');
 
         this._text(W / 2, 860, 'PITY: epic+ guaranteed within ' +
-            (CONFIG.GACHA.pityAt - st.gachaPity) + ' rolls', 22, '#b06fff');
+            (CONFIG.GACHA.pityAt - st.gachaPity) + ' rolls', 22, Balance.hex(RARITY_TEXT_COLORS.epic));
         this._text(W / 2, 920,
-            'Dupes → shards (level pets) · Better rarity dupes UPGRADE your pet!', 19, '#8d86a8');
+            'Dupes → shards (level pets) · Better rarity dupes UPGRADE your pet!', 19, Balance.hex(CONFIG.PASTEL.inkSoft));
         this._text(W / 2, 1080,
-            'rates GOLD: C60 R25 E12 L3 (%)   GEM: C40 R30 E20 L10 (%)', 18, '#5a5570');
+            'rates GOLD: C60 R25 E12 L3 (%)   GEM: C40 R30 E20 L10 (%)', 18, Balance.hex(CONFIG.PASTEL.inkSoft));
     }
 
     doGacha(useGems, count) {
@@ -170,6 +192,11 @@ class ShopScene extends Phaser.Scene {
     playReveal(results) {
         const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
         const overlay = [];
+        // modal dim-scrim - same near-black exception as ui.js's showSettlement.
+        // Everything in `overlay` below renders directly on this dark scrim
+        // (no light panel on top of it, unlike showSettlement), so its text
+        // colors stay BRIGHT (white/good/gold/etc, not the *Text deep
+        // variants) - same convention as game.js's "THE NEST BROKE!" panel.
         const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.85)
             .setDepth(30).setInteractive();
         overlay.push(dim);
@@ -213,7 +240,7 @@ class ShopScene extends Phaser.Scene {
                     overlay.push(this.add.text(W / 2, H * 0.64,
                         r.kind === 'new' ? 'NEW PET!' :
                             r.kind === 'upgrade' ? 'RARITY UPGRADED!' : '+' + r.shards + ' shards', {
-                        fontFamily: 'Arial, sans-serif', fontSize: '28px', color: '#e8e6f5'
+                        fontFamily: 'Arial, sans-serif', fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.white)
                     }).setOrigin(0.5).setDepth(32));
                 } else {
                     // multi: result grid
@@ -228,7 +255,7 @@ class ShopScene extends Phaser.Scene {
                         const tag = this.add.text(gx, gy + 44,
                             r.kind === 'shards' ? '+' + r.shards + '🧩' : r.kind.toUpperCase(), {
                             fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold',
-                            color: '#e8e6f5'
+                            color: Balance.hex(CONFIG.PASTEL.white)
                         }).setOrigin(0.5).setDepth(32);
                         overlay.push(cell, spr, tag);
                         this.tweens.add({
@@ -240,7 +267,7 @@ class ShopScene extends Phaser.Scene {
                 }
 
                 overlay.push(this.add.text(W / 2, H * 0.88, 'TAP TO CLOSE', {
-                    fontFamily: 'Arial, sans-serif', fontSize: '26px', color: '#8d86a8'
+                    fontFamily: 'Arial, sans-serif', fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(32));
                 dim.once('pointerdown', () => {
                     overlay.forEach(o => o.destroy());
@@ -256,11 +283,11 @@ class ShopScene extends Phaser.Scene {
     tabPETS() {
         const W = CONFIG.WIDTH, st = SaveManager.state;
         if (!st.pets.length) {
-            this._text(W / 2, 460, 'No pets yet!\nHatch an egg first 🥚', 32, '#8d86a8');
+            this._text(W / 2, 460, 'No pets yet!\nHatch an egg first 🥚', 32, Balance.hex(CONFIG.PASTEL.inkSoft));
             return;
         }
         this._text(W / 2, 180, 'ALL ' + st.pets.length + ' pets fight for you!  ·  collection ' +
-            st.pets.length + '/50  ·  🧩' + Balance.fmt(st.shards), 20, '#8d86a8');
+            st.pets.length + '/50  ·  🧩' + Balance.fmt(st.shards), 20, Balance.hex(CONFIG.PASTEL.inkSoft));
 
         // pagination: up to 50 pets
         const PER_PAGE = 4;
@@ -278,14 +305,14 @@ class ShopScene extends Phaser.Scene {
             this.items.push(spr);
             this._text(200, y - 56, (def ? def.name : pet.species) + '  ' + RARITY_STARS[pet.rarity] +
                 '  ⚔', 25,
-                '#' + RARITY_COLORS[pet.rarity].toString(16).padStart(6, '0'), 0);
+                Balance.hex(RARITY_TEXT_COLORS[pet.rarity]), 0);
             this._text(200, y - 22, 'Lv.' + pet.level + ' · ' + (def ? def.element : '?') +
-                (pet.necklace ? ' · 📿' + pet.necklace : ''), 21, '#e8e6f5', 0);
+                (pet.necklace ? ' · 📿' + pet.necklace : ''), 21, Balance.hex(CONFIG.PASTEL.ink), 0);
             this._text(200, y + 8, 'DPS ' + Balance.fmt(
-                Balance.petDamage(pet.level, st.upgrades.tap, pet.rarity, pet.necklace)), 19, '#8d86a8', 0);
+                Balance.petDamage(pet.level, st.upgrades.tap, pet.rarity, pet.necklace)), 19, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
 
             const feedCost = Balance.petFeedCost(this.stageRef, pet.level);
-            this._btn(300, y + 56, 240, 56, 'FEED ' + Balance.fmt(feedCost), 0x2fa86b, () => {
+            this._btn(300, y + 56, 240, 56, 'FEED ' + Balance.fmt(feedCost), CONFIG.PASTEL.accent, () => {
                 if (!SaveManager.spendGold(feedCost)) return this.toast('골드가 부족해요!');
                 pet.level++;
                 SaveManager.persist();
@@ -293,7 +320,7 @@ class ShopScene extends Phaser.Scene {
                 Sfx.coin();
                 this.showTab('PETS');
             });
-            this._btn(560, y + 56, 220, 56, '🧩8 → LV UP', 0xb06fff, () => {
+            this._btn(560, y + 56, 220, 56, '🧩8 → LV UP', CONFIG.PASTEL.accent, () => {
                 if (!Gacha.levelWithShards(st, pet.species)) return this.toast('조각이 부족해요!');
                 SaveManager.persist();
                 Sfx.coin();
@@ -303,12 +330,12 @@ class ShopScene extends Phaser.Scene {
 
         if (pages > 1) {
             const py = 290 + PER_PAGE * 200 - 60;
-            this._btn(W / 2 - 180, py, 150, 60, '◀', 0x39424f, () => {
+            this._btn(W / 2 - 180, py, 150, 60, '◀', CONFIG.PASTEL.accent, () => {
                 this.petPage = (this.petPage - 1 + pages) % pages;
                 this.showTab('PETS');
             });
-            this._text(W / 2, py, (this.petPage + 1) + ' / ' + pages, 24, '#8d86a8');
-            this._btn(W / 2 + 180, py, 150, 60, '▶', 0x39424f, () => {
+            this._text(W / 2, py, (this.petPage + 1) + ' / ' + pages, 24, Balance.hex(CONFIG.PASTEL.inkSoft));
+            this._btn(W / 2 + 180, py, 150, 60, '▶', CONFIG.PASTEL.accent, () => {
                 this.petPage = (this.petPage + 1) % pages;
                 this.showTab('PETS');
             });
@@ -353,7 +380,7 @@ class ShopScene extends Phaser.Scene {
         const W = CONFIG.WIDTH, st = SaveManager.state;
         const chestCost = Balance.chestCost(this.stageRef);
 
-        this._btn(W / 2 - 170, 210, 320, 76, 'CHEST ' + Balance.fmt(chestCost), 0xe8953a, () => {
+        this._btn(W / 2 - 170, 210, 320, 76, 'CHEST ' + Balance.fmt(chestCost), CONFIG.PASTEL.accent, () => {
             if (!SaveManager.spendGold(chestCost)) return this.toast('골드가 부족해요!');
             const r = this._openChest(false);
             SaveManager.persist(); this.refreshWallet();
@@ -364,7 +391,7 @@ class ShopScene extends Phaser.Scene {
             this.toast(r.msg);
             this.time.delayedCall(700, () => this.showTab('GEAR'));
         }, 'coin-tex');
-        this._btn(W / 2 + 180, 210, 320, 76, 'GEM CHEST ' + CONFIG.GEMS.chestCost, 0x7fd2ff, () => {
+        this._btn(W / 2 + 180, 210, 320, 76, 'GEM CHEST ' + CONFIG.GEMS.chestCost, CONFIG.PASTEL.accent, () => {
             if (st.gems < CONFIG.GEMS.chestCost) return this.toast('젬이 부족해요!');
             st.gems -= CONFIG.GEMS.chestCost;
             const r = this._openChest(true);
@@ -373,7 +400,7 @@ class ShopScene extends Phaser.Scene {
             this.toast(r.msg);
             this.time.delayedCall(700, () => this.showTab('GEAR'));
         }, 'gem-tex');
-        this._text(W / 2, 270, 'Chests drop: glove / ring / charm / pet necklace', 19, '#8d86a8');
+        this._text(W / 2, 270, 'Chests drop: glove / ring / charm / pet necklace', 19, Balance.hex(CONFIG.PASTEL.inkSoft));
 
         const slotInfo = {
             glove: { name: 'GLOVE', desc: 'tap damage', icon: 'up-tap' },
@@ -385,22 +412,25 @@ class ShopScene extends Phaser.Scene {
             const it = st.items[slot];
             const info = slotInfo[slot];
             this._card(W / 2, y, 660, 210);
+            // v4.0 Phase C Task 3: on-panel icon tint uses the text-safe deep
+            // rarity variant (not the bright RARITY_COLORS) so it stays
+            // visible against the light card instead of washing out.
             const icon = this.add.image(96, y, info.icon).setDisplaySize(60, 60)
-                .setTint(it ? RARITY_COLORS[it.rarity] : 0x5a5570);
+                .setTint(it ? RARITY_TEXT_COLORS[it.rarity] : CONFIG.PASTEL.inkSoft);
             this.items.push(icon);
             if (!it) {
-                this._text(200, y - 20, info.name + ' — empty', 28, '#5a5570', 0);
-                this._text(200, y + 20, 'Open chests to find one (' + info.desc + ')', 20, '#8d86a8', 0);
+                this._text(200, y - 20, info.name + ' — empty', 28, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
+                this._text(200, y + 20, 'Open chests to find one (' + info.desc + ')', 20, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
                 return;
             }
             const bonus = Balance.itemBonus(slot, it.rarity, it.level);
             this._text(200, y - 52, info.name + '  ' + RARITY_STARS[it.rarity], 27,
-                '#' + RARITY_COLORS[it.rarity].toString(16).padStart(6, '0'), 0);
+                Balance.hex(RARITY_TEXT_COLORS[it.rarity]), 0);
             this._text(200, y - 14, '+Lv.' + it.level + ' · +' +
                 (slot === 'ring' ? (bonus * 100).toFixed(1) + '%p crit'
-                    : Math.round(bonus * 100) + '% ' + info.desc), 22, '#e8e6f5', 0);
+                    : Math.round(bonus * 100) + '% ' + info.desc), 22, Balance.hex(CONFIG.PASTEL.ink), 0);
             const cost = Balance.itemEnhanceCost(this.stageRef, it.level);
-            this._btn(430, y + 56, 380, 64, 'ENHANCE ' + Balance.fmt(cost), 0x2f89ff, () => {
+            this._btn(430, y + 56, 380, 64, 'ENHANCE ' + Balance.fmt(cost), CONFIG.PASTEL.accent, () => {
                 if (!SaveManager.spendGold(cost)) return this.toast('골드가 부족해요!');
                 it.level++;
                 SaveManager.persist(); this.refreshWallet();
@@ -418,7 +448,7 @@ class ShopScene extends Phaser.Scene {
         const L = st.nestLevel;
         const nest = this.add.image(W / 2, 330, 'nest-tex').setDisplaySize(300, 204);
         this.items.push(nest);
-        this._text(W / 2, 470, '🥚 NEST  Lv.' + L, 40, '#7dffb2');
+        this._text(W / 2, 470, '🥚 NEST  Lv.' + L, 40, Balance.hex(CONFIG.PASTEL.goodText));
 
         const rows = [
             ['HP', Balance.nestMaxHp(L), Balance.nestMaxHp(L + 1)],
@@ -428,12 +458,12 @@ class ShopScene extends Phaser.Scene {
             ['Pets', 'ALL fight!', 'ALL fight!']
         ];
         rows.forEach((r, i) => {
-            this._text(W / 2 - 240, 560 + i * 52, r[0], 24, '#8d86a8', 0);
-            this._text(W / 2 + 60, 560 + i * 52, r[1] + '  →  ' + r[2], 24, '#e8e6f5', 0);
+            this._text(W / 2 - 240, 560 + i * 52, r[0], 24, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
+            this._text(W / 2 + 60, 560 + i * 52, r[1] + '  →  ' + r[2], 24, Balance.hex(CONFIG.PASTEL.ink), 0);
         });
 
         const cost = Balance.nestUpCost(this.stageRef, L);
-        this._btn(W / 2, 850, 480, 96, 'LEVEL UP ' + Balance.fmt(cost), 0x2fa86b, () => {
+        this._btn(W / 2, 850, 480, 96, 'LEVEL UP ' + Balance.fmt(cost), CONFIG.PASTEL.accent, () => {
             if (!SaveManager.spendGold(cost)) return this.toast('골드가 부족해요!');
             st.nestLevel++;
             SaveManager.persist(); this.refreshWallet();
@@ -441,7 +471,7 @@ class ShopScene extends Phaser.Scene {
             if (typeof Effects !== 'undefined') Effects.confetti(this, W / 2, 330);
             this.showTab('NEST');
         });
-        this._text(W / 2, 940, 'Raiders bite the nest — if it breaks, the stage is lost!', 20, '#ff6b6b');
+        this._text(W / 2, 940, 'Raiders bite the nest — if it breaks, the stage is lost!', 20, Balance.hex(CONFIG.PASTEL.dangerText));
     }
 
     // =========================================================================
@@ -449,21 +479,21 @@ class ShopScene extends Phaser.Scene {
     // =========================================================================
     tabGEMS() {
         const W = CONFIG.WIDTH, st = SaveManager.state;
-        this._text(W / 2, 210, '💎 GET GEMS', 36, '#7fd2ff');
+        this._text(W / 2, 210, '💎 GET GEMS', 36, Balance.hex(CONFIG.PASTEL.gemText));
         this._text(W / 2, 260,
-            'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 20, '#8d86a8');
+            'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 20, Balance.hex(CONFIG.PASTEL.inkSoft));
 
         IapManager.PRODUCTS.forEach((p, i) => {
             const y = 370 + i * 165;
             this._card(W / 2, y, 660, 160);
-            this._text(150, y, p.type === 'noads' ? I18n.t('shop.removeAdsLabel') : p.label, 40, '#7fd2ff');
+            this._text(150, y, p.type === 'noads' ? I18n.t('shop.removeAdsLabel') : p.label, 40, Balance.hex(CONFIG.PASTEL.gemText));
 
             // v3.0 Task 12: remove-ads is a flag grant, not gems - own row logic.
             if (p.type === 'noads') {
                 if (st.adsRemoved) {
-                    this._text(W / 2 + 130, y, I18n.t('shop.adsRemoved'), 26, '#7dffb2');
+                    this._text(W / 2 + 130, y, I18n.t('shop.adsRemoved'), 26, Balance.hex(CONFIG.PASTEL.goodText));
                 } else {
-                    this._btn(W / 2 + 130, y, 300, 84, I18n.t('shop.removeAds') + ' $0.99', 0x2fa86b,
+                    this._btn(W / 2 + 130, y, 300, 84, I18n.t('shop.removeAds') + ' $0.99', CONFIG.PASTEL.accent,
                         async () => {
                             const r = await IapManager.purchase(p.id);
                             if (r.ok) {
@@ -479,7 +509,7 @@ class ShopScene extends Phaser.Scene {
                 return;
             }
 
-            this._btn(W / 2 + 130, y, 300, 84, p.priceLabel, 0x2fa86b, async () => {
+            this._btn(W / 2 + 130, y, 300, 84, p.priceLabel, CONFIG.PASTEL.accent, async () => {
                 const r = await IapManager.purchase(p.id);
                 if (r.ok) {
                     this.refreshWallet();
@@ -492,7 +522,7 @@ class ShopScene extends Phaser.Scene {
             });
         });
         this._text(W / 2, 1055, IapManager.storeConnected
-            ? '' : '(billing goes live with the store release)', 18, '#5a5570');
+            ? '' : '(billing goes live with the store release)', 18, Balance.hex(CONFIG.PASTEL.inkSoft));
     }
 
     // =========================================================================
@@ -503,7 +533,7 @@ class ShopScene extends Phaser.Scene {
     tabDECOR() {
         const W = CONFIG.WIDTH, st = SaveManager.state;
         if (!st.decorOwned) st.decorOwned = {};
-        this._text(W / 2, 178, I18n.t('decor.title'), 30, '#7dffb2');
+        this._text(W / 2, 178, I18n.t('decor.title'), 30, Balance.hex(CONFIG.PASTEL.goodText));
 
         const COLS = 3, ROWS = 3, PER_PAGE = COLS * ROWS;
         const pages = Math.ceil(DECOR_ITEMS.length / PER_PAGE);
@@ -521,25 +551,25 @@ class ShopScene extends Phaser.Scene {
             this._card(x, y, cellW - 16, cellH - 20);
             const icon = this.add.image(x, y - 68, 'decor-' + def.id).setDisplaySize(84, 84);
             this.items.push(icon);
-            this._text(x, y - 8, def.name[I18n.locale] || def.name.en, 17, '#e8e6f5');
-            this._text(x, y + 16, I18n.t('decor.cat.' + def.cat), 13, '#8d86a8');
+            this._text(x, y - 8, def.name[I18n.locale] || def.name.en, 17, Balance.hex(CONFIG.PASTEL.ink));
+            this._text(x, y + 16, I18n.t('decor.cat.' + def.cat), 13, Balance.hex(CONFIG.PASTEL.inkSoft));
             if (owned > 0) {
-                this._text(x + cellW / 2 - 44, y - cellH / 2 + 20, I18n.t('decor.owned', { n: owned }), 13, '#7dffb2');
+                this._text(x + cellW / 2 - 44, y - cellH / 2 + 20, I18n.t('decor.owned', { n: owned }), 13, Balance.hex(CONFIG.PASTEL.goodText));
             }
 
             const gems = def.price.kind === 'gems';
             this._btn(x, y + 66, cellW - 44, 52, (gems ? '💎' : '') + Balance.fmt(def.price.amount),
-                gems ? 0x7fd2ff : 0x2fa86b, () => this.buyDecor(def), gems ? 'gem-tex' : 'coin-tex');
+                CONFIG.PASTEL.accent, () => this.buyDecor(def), gems ? 'gem-tex' : 'coin-tex');
         });
 
         if (pages > 1) {
             const py = startY + (ROWS - 1) * cellH + 130;
-            this._btn(W / 2 - 180, py, 120, 56, '◀', 0x39424f, () => {
+            this._btn(W / 2 - 180, py, 120, 56, '◀', CONFIG.PASTEL.accent, () => {
                 this.decorPage = (this.decorPage - 1 + pages) % pages;
                 this.showTab('DECOR');
             });
-            this._text(W / 2, py, (this.decorPage + 1) + ' / ' + pages, 22, '#8d86a8');
-            this._btn(W / 2 + 180, py, 120, 56, '▶', 0x39424f, () => {
+            this._text(W / 2, py, (this.decorPage + 1) + ' / ' + pages, 22, Balance.hex(CONFIG.PASTEL.inkSoft));
+            this._btn(W / 2 + 180, py, 120, 56, '▶', CONFIG.PASTEL.accent, () => {
                 this.decorPage = (this.decorPage + 1) % pages;
                 this.showTab('DECOR');
             });
@@ -581,9 +611,12 @@ class ShopScene extends Phaser.Scene {
 
     toast(msg) {
         if (this._toast) this._toast.destroy();
+        // v4.0 Phase C Task 3: toast chip stays a dark ink pill with white
+        // text regardless of theme - same "always-dark floating chip"
+        // exception as makeUiButton's drop shadow / modal scrims.
         this._toast = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 140, msg, {
             fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-            color: '#ffffff', backgroundColor: '#342a52', padding: { x: 18, y: 10 }
+            color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.ink), padding: { x: 18, y: 10 }
         }).setOrigin(0.5).setDepth(40);
         this.tweens.add({
             targets: this._toast, alpha: 0, delay: 1400, duration: 300,

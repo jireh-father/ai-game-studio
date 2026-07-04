@@ -14,16 +14,65 @@ const CONFIG = {
     // Monster play field (below the top HUD, above the fever/upgrade bar)
     FIELD: { x: 20, y: 210, w: 680, h: 780 },
 
+    // =========================================================================
+    // v4.0 - pastel token system. CONFIG.PASTEL is the source of truth (design
+    // tokens: soft cream/lavender surfaces, deep-plum ink, 8 per-element 3-step
+    // ramps). CONFIG.COLORS keeps its original keys for existing consumers but
+    // every value now points at a PASTEL equivalent - see tests/pastel.test.js
+    // for the contrast/distinctness invariants this palette must hold.
+    // =========================================================================
+    PASTEL: {
+        bg: 0xf6f1fb,          // page/canvas background - soft lavender-cream
+        bgField: 0xefe6f9,     // monster play-field backdrop, one notch deeper
+        panel: 0xe3d6f2,       // card/panel surface
+        panelLight: 0xf0e6fa,  // lighter nested panel / highlight surface
+        ink: 0x453a56,         // primary text - deep plum, NOT black
+        inkSoft: 0x6f6485,     // secondary/dim text on panel surfaces
+        accent: 0x9b7fd4,      // pastel violet UI accent
+        gold: 0xe8b74a,        // currency accent
+        danger: 0xf2727e,      // damage/danger accent
+        // v4.0 Phase C Task 2: nudged off elements.leaf.base (manhattan was 19,
+        // needed >=48 so heal/positive pop-text never blends into leaf-element
+        // monsters) - deeper/more teal-leaning green, see tests/pastel.test.js.
+        good: 0x62cd90,        // heal/positive accent
+        fever: 0xff8fcf,       // fever-mode accent
+        // v4.0 Phase C Task 2: nudged off elements.electric.base (manhattan was
+        // 15, needed >=48 so crit pop-text never blends into electric-element
+        // monsters) - deeper/more muted gold, see tests/pastel.test.js.
+        crit: 0xe9cf77,        // critical-hit accent
+        white: 0xffffff,
+        // v4.0 Phase C Task 2: readable text on panel/panelLight surfaces
+        goldText: 0x6d5318,    // deep amber for cost/currency text (WCAG >=4.5:1 on panel)
+        goodText: 0x1a5c3f,    // deep forest green for heal/positive text (WCAG >=4.5:1 on panel)
+        // v4.0 Phase C Task 3: same on-panel-text problem, two more hue
+        // families needed by the shop/friends/pvp sweep (danger warnings +
+        // decline actions; gems currency + "rare" rarity tier) that Task 2's
+        // goldText/goodText didn't cover. Same >=4.5:1 vs panel/panelLight
+        // floor, see tests/pastel.test.js.
+        dangerText: 0x8a2430,  // deep brick red for warning/decline text (WCAG >=4.5:1 on panel)
+        gemText: 0x0d5a73,     // deep teal for gem-currency/rare-rarity text (WCAG >=4.5:1 on panel)
+        elements: {
+            fire:     { base: 0xff8a65, soft: 0xffc2ab, deep: 0xc85a38 },  // coral
+            water:    { base: 0x82c3ea, soft: 0xc3e6f7, deep: 0x4f88b3 },  // baby blue
+            leaf:     { base: 0x74e0a3, soft: 0xbdf3d4, deep: 0x45a86e },  // mint
+            wind:     { base: 0x93b3c4, soft: 0xc6dae4, deep: 0x607e92 },  // sage-sky
+            electric: { base: 0xffe066, soft: 0xfff0b0, deep: 0xd1a921 },  // butter yellow
+            ice:      { base: 0xb2e8f0, soft: 0xdcf6fa, deep: 0x74b9c4 },  // powder cyan
+            light:    { base: 0xfff0c4, soft: 0xfff8e2, deep: 0xd9bd7e },  // vanilla
+            dark:     { base: 0xb49bc8, soft: 0xd9cbe6, deep: 0x7f6693 }   // dusty lilac
+        }
+    },
+
     COLORS: {
-        bg: 0x141020,
-        hud: 0xe8e6f5,
-        gold: 0xffd54a,
-        fever: 0xff5ec4,
-        crit: 0xfff06a,
-        dim: 0x5a5570,
-        panel: 0x201a33,
-        good: 0x7dffb2,
-        danger: 0xff6b6b
+        bg: 0xf6f1fb,
+        hud: 0x453a56,
+        gold: 0xe8b74a,
+        fever: 0xff8fcf,
+        crit: 0xe9cf77,
+        dim: 0x6f6485,
+        panel: 0xe3d6f2,
+        good: 0x62cd90,
+        danger: 0xf2727e
     },
 
     // UI order matters: this is the upgrade bar layout order.

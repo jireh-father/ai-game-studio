@@ -346,10 +346,13 @@ let DexScene; // eslint-disable-line no-unused-vars
 
 if (typeof Phaser !== 'undefined') {
 
-    const DEX_ELEMENT_COLORS = {
-        fire: 0xff7d5c, water: 0x5aa9ff, leaf: 0x7dffb2, wind: 0xc7a4ff,
-        electric: 0xffe066, ice: 0xbfe8ff, light: 0xffe9a8, dark: 0x8a7aa8
-    };
+    // v4.0 Phase C Task 3: element-scoped FX use CONFIG.PASTEL.elements[e].base
+    // directly (same convention as Task 2's game.js/effects.js sweep) instead
+    // of this file keeping its own parallel element->color table.
+    function dexElementColor(elem, fallback) {
+        const ramp = CONFIG.PASTEL.elements[elem];
+        return ramp ? ramp.base : fallback;
+    }
     const DEX_COLS = 4, DEX_CARD = 148, DEX_GAP = 16, DEX_ROW_H = DEX_CARD + DEX_GAP;
 
     DexScene = class DexScene extends Phaser.Scene {
@@ -389,9 +392,12 @@ if (typeof Phaser !== 'undefined') {
             this.buildGrid();
 
             this.add.rectangle(W / 2, 88, W, 176, CONFIG.COLORS.bg).setDepth(5);
+            // v4.0 Phase C Task 3: header text sits on-bg (not on-panel), and
+            // bg (0xf6f1fb) is lighter than panel - goodText reads even
+            // better here than it does on panel, so it's safe for this hue.
             const back = this.add.text(44, 56, this.fromGame ? '▶' : '‹', {
                 fontFamily: 'Arial, sans-serif', fontSize: this.fromGame ? '36px' : '48px',
-                fontStyle: 'bold', color: this.fromGame ? '#7dffb2' : '#8d86a8'
+                fontStyle: 'bold', color: this.fromGame ? Balance.hex(CONFIG.PASTEL.goodText) : Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => {
                 if (this.detailParts) { this.hideDetail(); return; }
@@ -400,7 +406,7 @@ if (typeof Phaser !== 'undefined') {
             });
 
             this.add.text(W / 2, 56, I18n.t('dex.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: '#7dffb2'
+                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
 
             this.tabButtons = [];
@@ -408,18 +414,18 @@ if (typeof Phaser !== 'undefined') {
             this.tabDefs.forEach((t, i) => {
                 const x = W / 2 + (i - 0.5) * (tw + 12);
                 const bg = this.add.nineslice(x, 132, 'pill-tex', 0, tw, 54, 16, 16, 14, 14)
-                    .setTint(t.key === this.tab ? 0x342a52 : 0x241f3d).setDepth(10)
+                    .setTint(t.key === this.tab ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel).setDepth(10)
                     .setInteractive({ useHandCursor: true });
                 const label = this.add.text(x, 132, t.label, {
                     fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold',
-                    color: t.key === this.tab ? '#e8e6f5' : '#8d86a8'
+                    color: Balance.hex(t.key === this.tab ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(11);
                 bg.on('pointerdown', () => {
                     if (this.detailParts || this.tab === t.key) return;
                     this.tab = t.key;
                     this.tabButtons.forEach(b => {
-                        b.bg.setTint(b.key === this.tab ? 0x342a52 : 0x241f3d);
-                        b.label.setColor(b.key === this.tab ? '#e8e6f5' : '#8d86a8');
+                        b.bg.setTint(b.key === this.tab ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel);
+                        b.label.setColor(Balance.hex(b.key === this.tab ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft));
                     });
                     this.buildGrid();
                 });
@@ -445,13 +451,20 @@ if (typeof Phaser !== 'undefined') {
                 const y = DEX_CARD / 2 + row * DEX_ROW_H;
                 const unlocked = def.unlocked(sp.id);
 
+                // v4.0 Phase C Task 3: unlocked cards pop with panelLight
+                // (same "available" convention as the upgrade bar's afford
+                // state); locked cards use plain panel dimmed slightly (same
+                // convention as the upgrade bar's "MAX" card).
                 const card = this.add.nineslice(x, y, 'btn-tex', 0, DEX_CARD, DEX_CARD, 20, 20, 20, 20)
-                    .setTint(unlocked ? 0x201a33 : 0x18142a);
+                    .setTint(unlocked ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel)
+                    .setAlpha(unlocked ? 1 : 0.85);
                 const spr = this.add.image(x, y - 16, def.tex(sp.id)).setDisplaySize(80, 80);
-                if (!unlocked) spr.setTint(0x221a38);
+                // Locked silhouette: deep ink tint so it still reads as a
+                // "shadow" of the creature on the light card underneath.
+                if (!unlocked) spr.setTint(CONFIG.PASTEL.ink);
                 const label = this.add.text(x, y + 50, unlocked ? sp.name : I18n.t('dex.locked'), {
                     fontFamily: 'Arial, sans-serif', fontSize: '17px', fontStyle: 'bold',
-                    color: unlocked ? '#e8e6f5' : '#5a5570'
+                    color: Balance.hex(unlocked ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5);
                 this.gridContainer.add([card, spr, label]);
 
@@ -519,13 +532,16 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
             const parts = [];
 
+            // v4.0 Phase C Task 3: modal dim-scrim - stays near-black on
+            // purpose regardless of theme (same exception class as
+            // ui.js's showSettlement scrim).
             const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.9).setDepth(20).setInteractive();
             parts.push(dim);
             dim.on('pointerdown', () => this.hideDetail());
 
             const panelH = H * 0.66;
             const panel = this.add.nineslice(W / 2, H / 2, 'btn-tex', 0, W - 60, panelH, 28, 28, 28, 28)
-                .setTint(0x1c1730).setDepth(21);
+                .setTint(CONFIG.PASTEL.panel).setDepth(21);
             parts.push(panel);
 
             const top = H / 2 - panelH / 2 + 74;
@@ -535,12 +551,12 @@ if (typeof Phaser !== 'undefined') {
 
             const nameY = top + 104;
             parts.push(this.add.text(W / 2, nameY, sp.name, {
-                fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold', color: '#e8e6f5'
+                fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5).setDepth(22));
 
             const elem = sp.elem || sp.element;
             const chip = makeChip(this, W / 2, nameY + 42, 150, 40,
-                DEX_ELEMENT_COLORS[elem] || 0x5a5570, null, (elem || '').toUpperCase(), '#141020');
+                dexElementColor(elem, CONFIG.PASTEL.inkSoft), null, (elem || '').toUpperCase(), Balance.hex(CONFIG.PASTEL.ink));
             chip.parts.forEach(p => p.setDepth(22));
             parts.push(...chip.parts);
 
@@ -548,14 +564,14 @@ if (typeof Phaser !== 'undefined') {
             const arche = (typeof Skills !== 'undefined' && Skills.ARCHETYPES[skillId]) || null;
             const skillY = nameY + 88;
             parts.push(this.add.image(W / 2 - 128, skillY, 'spark-tex')
-                .setDisplaySize(26, 26).setTint(DEX_ELEMENT_COLORS[elem] || 0xffffff).setDepth(22));
+                .setDisplaySize(26, 26).setTint(dexElementColor(elem, CONFIG.PASTEL.white)).setDepth(22));
             parts.push(this.add.text(W / 2 - 100, skillY, I18n.t('dex.skill') + ': ' +
                 (skillId ? skillId.toUpperCase() : '-'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold', color: '#ffd54a'
+                fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
             }).setOrigin(0, 0.5).setDepth(22));
             parts.push(this.add.text(W / 2, skillY + 32,
                 arche ? (arche.desc[I18n.locale] || arche.desc.en) : '', {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#8d86a8',
+                fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5, 0).setDepth(22));
 
@@ -563,7 +579,7 @@ if (typeof Phaser !== 'undefined') {
             const lore = loreEntry ? (loreEntry[I18n.locale] || loreEntry.en) : '';
             const loreY = skillY + 88;
             parts.push(this.add.text(W / 2, loreY, lore, {
-                fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'italic', color: '#e8e6f5',
+                fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'italic', color: Balance.hex(CONFIG.PASTEL.ink),
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5, 0).setDepth(22));
 
@@ -578,12 +594,12 @@ if (typeof Phaser !== 'undefined') {
                         : [(elem || '').toUpperCase(), (skillId || '').toUpperCase()];
                 })();
             parts.push(this.add.text(W / 2, H / 2 + panelH / 2 - 128, statLines.join('   ·   '), {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px', fontStyle: 'bold', color: '#7dffb2',
+                fontFamily: 'Arial, sans-serif', fontSize: '18px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText),
                 align: 'center', wordWrap: { width: W - 100 }
             }).setOrigin(0.5).setDepth(22));
 
             const closeBtn = makeUiButton(this, W / 2, H / 2 + panelH / 2 - 60, 200, 68,
-                '✕', 0xff5ec4, () => this.hideDetail());
+                '✕', CONFIG.PASTEL.accent, () => this.hideDetail());
 
             this.detailParts = { parts, closeBtn };
         }
