@@ -129,6 +129,34 @@ const Balance = {
     petFeedCost(stage, petLv)   { return Math.round(this.goldPerMob(stage) * 10 * petLv); },
     itemEnhanceCost(stage, lv)  { return Math.round(this.goldPerMob(stage) * 12 * (lv + 1)); },
 
+    // =========================================================================
+    // v4.0 - WCAG relative luminance, for the pastel palette's contrast tests
+    // (tests/pastel.test.js). Pure math: linearize sRGB channels then weight
+    // per the WCAG 2.x formula. Contrast ratio itself = (L1+0.05)/(L2+0.05)
+    // with the lighter color on top - callers compute that directly.
+    // =========================================================================
+    relLuminance(hex) {
+        const channel = (c) => {
+            const s = c / 255;
+            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        };
+        const r = channel((hex >> 16) & 0xff);
+        const g = channel((hex >> 8) & 0xff);
+        const b = channel(hex & 0xff);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    },
+
+    // =========================================================================
+    // v4.0 Phase C Task 2 - Phaser text styles want '#rrggbb' strings while
+    // fills/tints want 0xRRGGBB ints; CONFIG.PASTEL tokens are ints (so the
+    // contrast/distinctness math in pastel.test.js stays simple), so every
+    // pastel sweep call site that sets a text `color`/`stroke` funnels through
+    // this one converter instead of hand-rolling '#' + toString(16) per site.
+    // =========================================================================
+    hex(int) {
+        return '#' + (int & 0xffffff).toString(16).padStart(6, '0');
+    },
+
     // Short number formatting so UI values never overflow: 1.2k, 34m, 5.6b...
     fmt(n) {
         n = Math.round(n);

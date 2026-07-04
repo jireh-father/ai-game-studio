@@ -7,7 +7,11 @@
 
 const Effects = {
 
-    CONFETTI_COLORS: [0x7dffb2, 0xff9ad5, 0x6fa8ff, 0xffe066, 0xc7a4ff, 0xffffff],
+    // v4.0 Phase C Task 2: role-mapped from the old hardcoded rainbow
+    // (mint/pink/blue/yellow/purple/white) onto the closest pastel token per
+    // swatch, keeping the same 6-color celebratory spread.
+    CONFETTI_COLORS: [CONFIG.PASTEL.good, CONFIG.PASTEL.fever, CONFIG.PASTEL.elements.water.base,
+        CONFIG.PASTEL.elements.electric.base, CONFIG.PASTEL.accent, CONFIG.PASTEL.white],
 
     _pools(scene) {
         if (!scene._fxPools || scene._fxPoolsScene !== scene.scene.key + scene.time.startTime) {
@@ -35,7 +39,7 @@ const Effects = {
                 scene.add.image(0, 0, 'pop-tex').setDepth(6));
             spr.setPosition(x, y).setVisible(true).setActive(true)
                 .setAlpha(1).setScale(Phaser.Math.FloatBetween(0.5, 1.2) * k)
-                .setTint(tint || 0xffffff);
+                .setTint(tint || CONFIG.PASTEL.white);
             const ang = Math.random() * Math.PI * 2;
             const dist = Phaser.Math.Between(40, 130) * k;
             scene.tweens.add({
@@ -53,7 +57,7 @@ const Effects = {
     // Expanding shockwave ring.
     ring(scene, x, y, tint, radius) {
         const spr = scene.add.image(x, y, 'ring-tex').setDepth(7)
-            .setTint(tint || 0xffffff).setAlpha(0.9).setScale(0.3);
+            .setTint(tint || CONFIG.PASTEL.white).setAlpha(0.9).setScale(0.3);
         scene.tweens.add({
             targets: spr, scale: (radius || 100) / 32, alpha: 0,
             duration: 380, ease: 'Quad.easeOut',
@@ -64,7 +68,7 @@ const Effects = {
     // Soft additive flash at a point.
     flash(scene, x, y, tint, size) {
         const spr = scene.add.image(x, y, 'pop-tex').setDepth(8)
-            .setTint(tint || 0xffffff).setAlpha(0.85)
+            .setTint(tint || CONFIG.PASTEL.white).setAlpha(0.85)
             .setBlendMode(Phaser.BlendModes.ADD)
             .setDisplaySize(size || 80, size || 80);
         scene.tweens.add({
@@ -77,7 +81,7 @@ const Effects = {
     // Full-screen color flash (kept subtle-able via alpha).
     screenFlash(scene, color, alpha, ms) {
         const r = scene.add.rectangle(CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2,
-            CONFIG.WIDTH, CONFIG.HEIGHT, color || 0xffffff, alpha || 0.25)
+            CONFIG.WIDTH, CONFIG.HEIGHT, color || CONFIG.PASTEL.white, alpha || 0.25)
             .setDepth(19);
         scene.tweens.add({
             targets: r, alpha: 0, duration: ms || 260, ease: 'Quad.easeOut',
@@ -89,10 +93,10 @@ const Effects = {
     // Small jelly = a pop; chunky = a blast; boss handled separately.
     killFx(scene, m, feverBoost) {
         const k = Math.min(3, m.r / 40) * (feverBoost ? 1.4 : 1);
-        const tint = m.def.color || 0xffffff;
+        const tint = m.def.color || CONFIG.PASTEL.white;
         this.burst(scene, m.x, m.y, tint, Math.round(8 + k * 8), 0.7 + k * 0.5);
         this.ring(scene, m.x, m.y, tint, 60 + m.r * 1.6);
-        this.flash(scene, m.x, m.y, 0xffffff, 50 + m.r * 1.2);
+        this.flash(scene, m.x, m.y, CONFIG.PASTEL.white, 50 + m.r * 1.2);
         this.goo(scene, m.x, m.y, tint, 0.7 + k * 0.55);
         if (m.r >= 50) {
             scene.cameras.main.shake(70 + m.r, 0.0015 + m.r * 0.00002);
@@ -109,7 +113,7 @@ const Effects = {
         spr.setPosition(x, y).setVisible(true).setActive(true)
             .setAlpha(0.5).setScale(Phaser.Math.FloatBetween(0.8, 1.5) * (scale || 1))
             .setAngle(Phaser.Math.Between(0, 360))
-            .setTint(tint || 0xffffff);
+            .setTint(tint || CONFIG.PASTEL.white);
         scene.tweens.add({
             targets: spr, alpha: 0, duration: 4000, ease: 'Quad.easeIn',
             onComplete: () => spr.setVisible(false).setActive(false)
@@ -125,13 +129,13 @@ const Effects = {
         const t = this._acquire(scene, pools.texts, () =>
             scene.add.text(0, 0, '', {
                 fontFamily: 'Arial, sans-serif', fontStyle: 'bold',
-                stroke: '#141020', strokeThickness: 6
+                stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 6
             }).setOrigin(0.5).setDepth(12));
 
         const size = o.crit ? 46 : o.big ? 38 : 27;
         const drift = Phaser.Math.Between(-30, 30);
         t.setPosition(x + Phaser.Math.Between(-8, 8), y)
-            .setText(str).setColor(color || '#e8e6f5')
+            .setText(str).setColor(color || Balance.hex(CONFIG.PASTEL.ink))
             .setFontSize(size)
             .setAngle(Phaser.Math.Between(-9, 9))
             .setVisible(true).setActive(true).setAlpha(1).setScale(0.3);
@@ -293,9 +297,9 @@ const Effects = {
         if (!this._skillTargetAlive(side, t)) return;
         t.hp = Math.min(t.maxHp, t.hp + eff.amount);
         if (t.redraw) t.redraw(); // the Nest draws its own HP bar
-        this.ring(scene, t.sprite.x, t.sprite.y, 0x7dffb2, (t.r || (t.size || 120) / 2) * 1.3);
+        this.ring(scene, t.sprite.x, t.sprite.y, CONFIG.PASTEL.good, (t.r || (t.size || 120) / 2) * 1.3);
         this.damageText(scene, t.sprite.x, t.sprite.y - (t.r || (t.size || 120) / 2) - 10,
-            '+' + Balance.fmt(eff.amount), '#7dffb2');
+            '+' + Balance.fmt(eff.amount), Balance.hex(CONFIG.PASTEL.good));
     },
 
     // tank/shieldy/panda/hedgehog/turtle: a damage-absorbing pool, consumed
@@ -308,7 +312,9 @@ const Effects = {
         t.status = t.status || {};
         const prev = t.status.shield ? t.status.shield.amount : 0;
         t.status.shield = { amount: Math.round(prev + eff.amount) };
-        this.ring(scene, t.sprite.x, t.sprite.y, 0x8fb8d0, (t.r || (t.size || 120) / 2) * 1.5);
+        // generic mechanic FX (not element-tied) - matches game.js's shield
+        // crack burst (shieldAllowsDamage) - neutral inkSoft.
+        this.ring(scene, t.sprite.x, t.sprite.y, CONFIG.PASTEL.inkSoft, (t.r || (t.size || 120) / 2) * 1.5);
     },
 
     // buffaura/goldaura/critaura. Monster side (unchanged): applies to every

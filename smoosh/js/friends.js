@@ -81,12 +81,12 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             this.add.rectangle(W / 2, 88, W, 176, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
             this.add.text(W / 2, 56, I18n.t('social.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: '#7dffb2'
+                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
         }
 
@@ -102,9 +102,9 @@ if (typeof Phaser !== 'undefined') {
             this.tabDefs.forEach((t, i) => {
                 const x = 20 + i * tw + tw / 2;
                 const bg = this.add.nineslice(x, 132, 'pill-tex', 0, tw - 8, 52, 16, 16, 14, 14)
-                    .setTint(0x241f3d).setDepth(6).setInteractive({ useHandCursor: true });
+                    .setTint(CONFIG.PASTEL.panel).setDepth(6).setInteractive({ useHandCursor: true });
                 const label = this.add.text(x, 132, t.label, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'bold', color: '#8d86a8'
+                    fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(7);
                 bg.on('pointerdown', () => { if (this.tab !== t.key) this.showTab(t.key); });
                 this.tabButtons.push({ key: t.key, bg, label });
@@ -118,8 +118,8 @@ if (typeof Phaser !== 'undefined') {
             this.tab = name;
             this.page = 0;
             this.tabButtons.forEach(t => {
-                t.bg.setTint(t.key === name ? 0x342a52 : 0x241f3d);
-                t.label.setColor(t.key === name ? '#e8e6f5' : '#8d86a8');
+                t.bg.setTint(t.key === name ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel);
+                t.label.setColor(Balance.hex(t.key === name ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft));
             });
             this.clearTab();
             if (!Social.ready) { this.renderOffline(); return; }
@@ -167,10 +167,10 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
             this._card(W / 2, H / 2, 600, 280);
             this.items.push(this.add.text(W / 2, H / 2 - 30, I18n.t('social.offline'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#8d86a8',
+                fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                 align: 'center', wordWrap: { width: 520 }
             }).setOrigin(0.5));
-            this._btn(W / 2, H / 2 + 80, 240, 72, I18n.t('social.retry'), 0x2f89ff, async () => {
+            this._btn(W / 2, H / 2 + 80, 240, 72, I18n.t('social.retry'), CONFIG.PASTEL.accent, async () => {
                 await Social.init();
                 this.showTab(this.tab);
             });
@@ -183,7 +183,7 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             if (!list.length) {
                 this.items.push(this.add.text(W / 2, 460, I18n.t('social.noPlayers'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#8d86a8',
+                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: 560 }
                 }).setOrigin(0.5));
                 return;
@@ -194,11 +194,11 @@ if (typeof Phaser !== 'undefined') {
         renderPlayerRow(p, y) {
             const W = CONFIG.WIDTH;
             this._card(W / 2, y, 660, 170);
-            this._text(70, y - 34, p.nickname || '???', 24, '#e8e6f5', 0);
+            this._text(70, y - 34, p.nickname || '???', 24, Balance.hex(CONFIG.PASTEL.ink), 0);
             const stage = (p.stats && p.stats.stage) || 1;
-            this._text(70, y + 12, I18n.t('map.stageN', { n: stage }), 18, '#8d86a8', 0);
-            this._btn(500, y, 140, 64, I18n.t('social.visit'), 0x2f89ff, () => this.doVisit(p.uid));
-            this._btn(635, y, 100, 64, I18n.t('social.add'), 0x2fa86b, () => this.doAdd(p.uid));
+            this._text(70, y + 12, I18n.t('map.stageN', { n: stage }), 18, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
+            this._btn(500, y, 140, 64, I18n.t('social.visit'), CONFIG.PASTEL.accent, () => this.doVisit(p.uid));
+            this._btn(635, y, 100, 64, I18n.t('social.add'), CONFIG.PASTEL.accent, () => this.doAdd(p.uid));
         }
 
         // -------------------------------------------------------------------
@@ -208,7 +208,7 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             let y = 210;
             if (requests.length) {
-                this._text(W / 2, y, I18n.t('social.requests') + ' (' + requests.length + ')', 19, '#ffd54a');
+                this._text(W / 2, y, I18n.t('social.requests') + ' (' + requests.length + ')', 19, Balance.hex(CONFIG.PASTEL.goldText));
                 y += 42;
                 // Cap rendered requests so a burst of pending requests can't
                 // push the friends list (and its pagination) off-screen.
@@ -216,20 +216,23 @@ if (typeof Phaser !== 'undefined') {
                 const shown = requests.slice(0, REQ_CAP);
                 shown.forEach(r => {
                     this._card(W / 2, y, 660, 110);
-                    this._text(70, y, r.nickname || '???', 21, '#e8e6f5', 0);
-                    this._btn(500, y, 130, 56, I18n.t('social.accept'), 0x2fa86b, () => this.doRespond(r.id, true));
-                    this._btn(635, y, 100, 56, I18n.t('social.decline'), 0x8a4a4a, () => this.doRespond(r.id, false));
+                    this._text(70, y, r.nickname || '???', 21, Balance.hex(CONFIG.PASTEL.ink), 0);
+                    this._btn(500, y, 130, 56, I18n.t('social.accept'), CONFIG.PASTEL.accent, () => this.doRespond(r.id, true));
+                    // v4.0 Phase C Task 3: decline stays visually distinct
+                    // (dangerText, not the generic accent) so accept/decline
+                    // never look like the same button.
+                    this._btn(635, y, 100, 56, I18n.t('social.decline'), CONFIG.PASTEL.dangerText, () => this.doRespond(r.id, false));
                     y += 126;
                 });
                 if (requests.length > shown.length) {
-                    this._text(W / 2, y, I18n.t('social.moreRequests', { n: requests.length - shown.length }), 17, '#8d86a8');
+                    this._text(W / 2, y, I18n.t('social.moreRequests', { n: requests.length - shown.length }), 17, Balance.hex(CONFIG.PASTEL.inkSoft));
                     y += 36;
                 }
                 y += 20;
             }
             if (!friendsList.length) {
                 this.items.push(this.add.text(W / 2, y + 60, I18n.t('social.noFriends'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#8d86a8',
+                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: 560 }
                 }).setOrigin(0.5));
                 return;
@@ -240,9 +243,9 @@ if (typeof Phaser !== 'undefined') {
         renderFriendRow(f, y) {
             const W = CONFIG.WIDTH;
             this._card(W / 2, y, 660, 170);
-            this._text(70, y, f.nickname || '???', 24, '#e8e6f5', 0);
-            this._btn(500, y, 140, 64, I18n.t('social.visit'), 0x2f89ff, () => this.doVisit(f.uid));
-            this._btn(635, y, 100, 64, I18n.t('social.gift'), 0xff9ad5, () => this.openGiftModal(f));
+            this._text(70, y, f.nickname || '???', 24, Balance.hex(CONFIG.PASTEL.ink), 0);
+            this._btn(500, y, 140, 64, I18n.t('social.visit'), CONFIG.PASTEL.accent, () => this.doVisit(f.uid));
+            this._btn(635, y, 100, 64, I18n.t('social.gift'), CONFIG.PASTEL.accent, () => this.openGiftModal(f));
         }
 
         // -------------------------------------------------------------------
@@ -252,7 +255,7 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             if (!list.length) {
                 this.items.push(this.add.text(W / 2, 460, I18n.t('social.noInbox'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#8d86a8',
+                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: 560 }
                 }).setOrigin(0.5));
                 return;
@@ -263,9 +266,9 @@ if (typeof Phaser !== 'undefined') {
         renderInboxRow(g, y) {
             const W = CONFIG.WIDTH;
             this._card(W / 2, y, 660, 170);
-            this._text(70, y - 30, g.fromNickname || '???', 22, '#e8e6f5', 0);
-            this._text(70, y + 16, this.giftDesc(g), 19, '#ffd54a', 0);
-            this._btn(600, y, 150, 64, I18n.t('social.claim'), 0x2fa86b, () => this.doClaim(g));
+            this._text(70, y - 30, g.fromNickname || '???', 22, Balance.hex(CONFIG.PASTEL.ink), 0);
+            this._text(70, y + 16, this.giftDesc(g), 19, Balance.hex(CONFIG.PASTEL.goldText), 0);
+            this._btn(600, y, 150, 64, I18n.t('social.claim'), CONFIG.PASTEL.accent, () => this.doClaim(g));
         }
 
         giftDesc(g) {
@@ -289,12 +292,12 @@ if (typeof Phaser !== 'undefined') {
             items.forEach((it, i) => rowRenderer(it, startY + i * FR_ROW_SPACING));
             if (pages > 1) {
                 const py = startY + perPage * FR_ROW_SPACING - 60;
-                this._btn(W / 2 - 180, py, 130, 56, '◀', 0x39424f, () => {
+                this._btn(W / 2 - 180, py, 130, 56, '◀', CONFIG.PASTEL.accent, () => {
                     this.page = (this.page - 1 + pages) % pages;
                     this.renderTab(this.tab, this._cache[this.tab]);
                 });
-                this._text(W / 2, py, (this.page + 1) + ' / ' + pages, 22, '#8d86a8');
-                this._btn(W / 2 + 180, py, 130, 56, '▶', 0x39424f, () => {
+                this._text(W / 2, py, (this.page + 1) + ' / ' + pages, 22, Balance.hex(CONFIG.PASTEL.inkSoft));
+                this._btn(W / 2 + 180, py, 130, 56, '▶', CONFIG.PASTEL.accent, () => {
                     this.page = (this.page + 1) % pages;
                     this.renderTab(this.tab, this._cache[this.tab]);
                 });
@@ -380,16 +383,17 @@ if (typeof Phaser !== 'undefined') {
             const top = H / 2 - 360, panelH = 720;
             const parts = [];
 
+            // modal dim-scrim - same near-black exception as ui.js's showSettlement.
             const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.88).setDepth(15).setInteractive();
             parts.push(dim);
             parts.push(this.add.nineslice(W / 2, H / 2, 'btn-tex', 0, W - 70, panelH, 28, 28, 28, 28)
-                .setTint(0x1c1730).setDepth(16));
+                .setTint(CONFIG.PASTEL.panel).setDepth(16));
             parts.push(this.add.text(W / 2, top + 55, I18n.t('social.giftTitle', { name: target.nickname || '???' }), {
-                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: '#7dffb2',
+                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText),
                 align: 'center', wordWrap: { width: W - 140 }
             }).setOrigin(0.5).setDepth(17));
 
-            const closeBtn = makeUiButton(this, W / 2, top + 640, 200, 68, '✕', 0xff5ec4, () => this.closeGiftModal());
+            const closeBtn = makeUiButton(this, W / 2, top + 640, 200, 68, '✕', CONFIG.PASTEL.accent, () => this.closeGiftModal());
 
             this.giftModal = {
                 parts, closeBtn, target, top, panelH,
@@ -425,9 +429,9 @@ if (typeof Phaser !== 'undefined') {
             kinds.forEach((k, i) => {
                 const x = W / 2 + (i - 1) * (tw + 10);
                 const bg = this.add.nineslice(x, y, 'pill-tex', 0, tw, 52, 16, 16, 14, 14)
-                    .setTint(0x241f3d).setDepth(17).setInteractive({ useHandCursor: true });
+                    .setTint(CONFIG.PASTEL.panel).setDepth(17).setInteractive({ useHandCursor: true });
                 const label = this.add.text(x, y, k.label, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'bold', color: '#8d86a8'
+                    fontFamily: 'Arial, sans-serif', fontSize: '19px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(18);
                 bg.on('pointerdown', () => this.setGiftKind(k.key));
                 gm.kindTabs.push({ key: k.key, bg, label });
@@ -440,8 +444,8 @@ if (typeof Phaser !== 'undefined') {
             gm.decorId = null;
             gm.decorPage = 0;
             gm.kindTabs.forEach(t => {
-                t.bg.setTint(t.key === kind ? 0x342a52 : 0x241f3d);
-                t.label.setColor(t.key === kind ? '#e8e6f5' : '#8d86a8');
+                t.bg.setTint(t.key === kind ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel);
+                t.label.setColor(Balance.hex(t.key === kind ? CONFIG.PASTEL.ink : CONFIG.PASTEL.inkSoft));
             });
             if (kind !== 'decor') {
                 const st = SaveManager.state;
@@ -472,12 +476,12 @@ if (typeof Phaser !== 'undefined') {
 
             parts.push(this.add.text(W / 2, gm.top + 170, I18n.t('social.giftDaily',
                 { sent, max: CONFIG.GIFT.dailySendLimit }), {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(17));
 
             if (sent >= CONFIG.GIFT.dailySendLimit) {
                 parts.push(this.add.text(W / 2, gm.top + 320, I18n.t('social.giftCapReached'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#ff6b6b',
+                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.dangerText),
                     align: 'center', wordWrap: { width: W - 160 }
                 }).setOrigin(0.5).setDepth(17));
                 return; // daily gate closed - no stepper/picker/send button
@@ -487,7 +491,7 @@ if (typeof Phaser !== 'undefined') {
             else this.renderAmountStepper(gm.top + 230, parts);
 
             const sendBtn = makeUiButton(this, W / 2, gm.top + 560, 260, 76,
-                I18n.t('social.giftSend'), 0x2fa86b, () => this.sendGiftFlow());
+                I18n.t('social.giftSend'), CONFIG.PASTEL.accent, () => this.sendGiftFlow());
             if (!this.giftReady()) sendBtn.disable();
             parts.push(sendBtn);
         }
@@ -497,15 +501,15 @@ if (typeof Phaser !== 'undefined') {
             const icon = gm.kind === 'gold' ? 'coin-tex' : 'gem-tex';
             parts.push(this.add.image(W / 2 - 90, y, icon).setDisplaySize(30, 30).setDepth(17));
             parts.push(this.add.text(W / 2, y, gm.max > 0 ? Balance.fmt(gm.amount) : '—', {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: '#e8e6f5'
+                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5).setDepth(17));
 
             const step = gm.kind === 'gold' ? Math.max(1, Math.round(gm.max * 0.1)) : 1;
-            const minus = makeUiButton(this, W / 2 - 200, y, 90, 76, '−', 0x39424f, () => {
+            const minus = makeUiButton(this, W / 2 - 200, y, 90, 76, '−', CONFIG.PASTEL.accent, () => {
                 gm.amount = Math.max(1, gm.amount - step);
                 this.renderGiftBody();
             });
-            const plus = makeUiButton(this, W / 2 + 200, y, 90, 76, '+', 0x39424f, () => {
+            const plus = makeUiButton(this, W / 2 + 200, y, 90, 76, '+', CONFIG.PASTEL.accent, () => {
                 gm.amount = Math.min(gm.max, gm.amount + step);
                 this.renderGiftBody();
             });
@@ -514,7 +518,7 @@ if (typeof Phaser !== 'undefined') {
 
             if (gm.max <= 0) {
                 parts.push(this.add.text(W / 2, y + 70, I18n.t('social.giftInsufficient'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#ff6b6b'
+                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.dangerText)
                 }).setOrigin(0.5).setDepth(17));
             }
         }
@@ -525,7 +529,7 @@ if (typeof Phaser !== 'undefined') {
             const owned = DECOR_ITEMS.filter(d => (st.decorOwned[d.id] || 0) > 0);
             if (!owned.length) {
                 parts.push(this.add.text(W / 2, y + 40, I18n.t('social.giftNoDecor'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '20px', color: '#8d86a8',
+                    fontFamily: 'Arial, sans-serif', fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
                     align: 'center', wordWrap: { width: W - 160 }
                 }).setOrigin(0.5).setDepth(17));
                 return;
@@ -540,11 +544,11 @@ if (typeof Phaser !== 'undefined') {
                 const col = i % cols, row = Math.floor(i / cols);
                 const x = startX + col * cellW, yy = y + row * cellH;
                 const bg = this.add.nineslice(x, yy, 'btn-tex', 0, cellW - 14, cellH - 14, 16, 16, 16, 16)
-                    .setTint(gm.decorId === def.id ? 0x342a52 : 0x201a33).setDepth(17)
+                    .setTint(gm.decorId === def.id ? CONFIG.PASTEL.panelLight : CONFIG.PASTEL.panel).setDepth(17)
                     .setInteractive({ useHandCursor: true });
                 const icon = this.add.image(x, yy - 14, 'decor-' + def.id).setDisplaySize(56, 56).setDepth(18);
                 const label = this.add.text(x, yy + 42, def.name[I18n.locale] || def.name.en, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '13px', fontStyle: 'bold', color: '#e8e6f5'
+                    fontFamily: 'Arial, sans-serif', fontSize: '13px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
                 }).setOrigin(0.5).setDepth(18);
                 bg.on('pointerdown', () => {
                     gm.decorId = gm.decorId === def.id ? null : def.id;
@@ -555,14 +559,14 @@ if (typeof Phaser !== 'undefined') {
 
             if (pages > 1) {
                 const py = y + 240;
-                parts.push(makeUiButton(this, W / 2 - 140, py, 90, 48, '◀', 0x39424f, () => {
+                parts.push(makeUiButton(this, W / 2 - 140, py, 90, 48, '◀', CONFIG.PASTEL.accent, () => {
                     gm.decorPage = (gm.decorPage - 1 + pages) % pages;
                     this.renderGiftBody();
                 }));
                 parts.push(this.add.text(W / 2, py, (gm.decorPage + 1) + ' / ' + pages, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: '#8d86a8'
+                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(17));
-                parts.push(makeUiButton(this, W / 2 + 140, py, 90, 48, '▶', 0x39424f, () => {
+                parts.push(makeUiButton(this, W / 2 + 140, py, 90, 48, '▶', CONFIG.PASTEL.accent, () => {
                     gm.decorPage = (gm.decorPage + 1) % pages;
                     this.renderGiftBody();
                 }));
@@ -626,14 +630,14 @@ if (typeof Phaser !== 'undefined') {
         _text(x, y, str, size, color, origin) {
             const t = this.add.text(x, y, str, {
                 fontFamily: 'Arial, sans-serif', fontSize: size + 'px', fontStyle: 'bold',
-                color: color || '#e8e6f5'
+                color: color || Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(origin !== undefined ? origin : 0.5);
             this.items.push(t);
             return t;
         }
 
         _card(x, y, w, h) {
-            const c = this.add.nineslice(x, y, 'btn-tex', 0, w, h, 24, 24, 24, 24).setTint(0x201a33);
+            const c = this.add.nineslice(x, y, 'btn-tex', 0, w, h, 24, 24, 24, 24).setTint(CONFIG.PASTEL.panel);
             this.items.push(c);
             return c;
         }
@@ -654,9 +658,12 @@ if (typeof Phaser !== 'undefined') {
         // -------------------------------------------------------------------
         toast(msg) {
             if (this._toast) this._toast.destroy();
+            // v4.0 Phase C Task 3: toast chip stays a dark ink pill with white
+            // text regardless of theme - same "always-dark floating chip"
+            // exception as makeUiButton's drop shadow / modal scrims.
             this._toast = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 140, msg, {
                 fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-                color: '#ffffff', backgroundColor: '#342a52', padding: { x: 18, y: 10 }
+                color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.ink), padding: { x: 18, y: 10 }
             }).setOrigin(0.5).setDepth(60);
             this.tweens.add({
                 targets: this._toast, alpha: 0, delay: 1400, duration: 300,

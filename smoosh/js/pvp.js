@@ -21,24 +21,27 @@ class PvpScene extends Phaser.Scene {
         const st = SaveManager.state;
 
         const back = this.add.text(44, 56, '‹', {
-            fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: '#8d86a8'
+            fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
         back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
+        // v4.0 Phase C Task 3: unified with the other scenes' header-title
+        // treatment (goodText on-bg) instead of inventing a one-off deep
+        // "fever pink" text token for this single title.
         this.add.text(W / 2, 56, 'PET BATTLE', {
-            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: '#ff5ec4'
+            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
         }).setOrigin(0.5);
         this.add.text(W / 2, 108, '🏆 ' + st.pvp.rating + '  ·  ' +
             st.pvp.wins + 'W ' + st.pvp.losses + 'L', {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: '#8d86a8'
+            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5);
 
         if (!st.pets.length) {
             this.add.text(W / 2, H * 0.42, 'You need pets to battle!\nHatch an egg in the shop 🥚', {
                 fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold',
-                color: '#8d86a8', align: 'center'
+                color: Balance.hex(CONFIG.PASTEL.inkSoft), align: 'center'
             }).setOrigin(0.5);
-            makeUiButton(this, W / 2, H * 0.58, 420, 96, 'GO TO SHOP', 0x2fa86b,
+            makeUiButton(this, W / 2, H * 0.58, 420, 96, 'GO TO SHOP', CONFIG.PASTEL.accent,
                 () => SmooshGame.goto('ShopScene'));
             return;
         }
@@ -69,10 +72,10 @@ class PvpScene extends Phaser.Scene {
         // default depth 0) so they stay visible above the picker backdrop.
         parts.push(this.add.rectangle(W / 2, H / 2, W, H, CONFIG.COLORS.bg).setDepth(-1));
         parts.push(this.add.text(W / 2, 158, I18n.t('pvp.pickTeam'), {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: '#ffd54a'
+            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0.5).setDepth(2));
         this.pickCountText = this.add.text(W / 2, 188, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#8d86a8'
+            fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(2);
         parts.push(this.pickCountText);
 
@@ -80,12 +83,12 @@ class PvpScene extends Phaser.Scene {
         parts.push(this.pickGridContainer);
         this._buildPickerGrid();
 
-        const autoBtn = makeUiButton(this, W / 2 - 190, H - 90, 280, 88, I18n.t('pvp.auto'), 0x2f89ff, () => {
+        const autoBtn = makeUiButton(this, W / 2 - 190, H - 90, 280, 88, I18n.t('pvp.auto'), CONFIG.PASTEL.accent, () => {
             this.pickSelected = Balance.pvpAutoTeam(st.pets, st.upgrades.tap);
             Sfx.coin();
             this._refreshPickerSelection();
         });
-        const fightBtn = makeUiButton(this, W / 2 + 190, H - 90, 280, 88, I18n.t('pvp.fight'), 0xff5ec4, () => {
+        const fightBtn = makeUiButton(this, W / 2 + 190, H - 90, 280, 88, I18n.t('pvp.fight'), CONFIG.PASTEL.accent, () => {
             if (!this.pickSelected.length) return;
             st.pvpTeam = this.pickSelected.slice();
             SaveManager.persist();
@@ -118,15 +121,15 @@ class PvpScene extends Phaser.Scene {
             const def = PET_SPECIES.find(p => p.id === pet.species);
 
             const ring = this.add.nineslice(x, y, 'btn-tex', 0, PICK_CARD + 14, PICK_CARD + 14, 22, 22, 22, 22)
-                .setTint(0xffd54a).setAlpha(0);
+                .setTint(CONFIG.PASTEL.gold).setAlpha(0);
             const card = this.add.nineslice(x, y, 'btn-tex', 0, PICK_CARD, PICK_CARD, 20, 20, 20, 20)
-                .setTint(0x201a33);
+                .setTint(CONFIG.PASTEL.panel);
             const spr = this.add.image(x, y - 20, 'pet-' + pet.species).setDisplaySize(76, 76);
             const label = this.add.text(x, y + 38, def ? def.name : pet.species, {
-                fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold', color: '#e8e6f5'
+                fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5);
             const lvl = this.add.text(x, y + 58, 'Lv.' + pet.level, {
-                fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#8d86a8'
+                fontFamily: 'Arial, sans-serif', fontSize: '14px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5);
             this.pickGridContainer.add([ring, card, spr, label, lvl]);
 
@@ -209,13 +212,14 @@ class PvpScene extends Phaser.Scene {
     _startMatch(teamIds) {
         const st = SaveManager.state;
         const F = CONFIG.FIELD;
-        this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, 0x1a1530)
-            .setStrokeStyle(2, 0x2a2244).setDepth(0);
+        // same field-boundary convention as game.js's GameScene/nestscene.js.
+        this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, CONFIG.PASTEL.bgField)
+            .setStrokeStyle(2, CONFIG.PASTEL.ink).setDepth(0);
         this.add.text(F.x + 20, F.y + 18, 'RIVAL', {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#ff6b6b'
+            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.dangerText)
         }).setOrigin(0, 0.5).setDepth(1);
         this.add.text(F.x + 20, F.y + F.h - 18, 'YOU', {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: '#7dffb2'
+            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
         }).setOrigin(0, 0.5).setDepth(1);
 
         // armies - the player's team is EXACTLY the picked pets (not the full
@@ -246,16 +250,19 @@ class PvpScene extends Phaser.Scene {
             const spr = this.add.image(x, y, 'pet-' + pet.species)
                 .setDepth(3).setDisplaySize(size, size).setFlipX(side === 'B');
             const barW = size + 8;
+            // dark ink track (same meter-frame convention as the fever gauge
+            // in ui.js) + a bright colored fill - a thin HP bar, not text,
+            // so WCAG text contrast doesn't apply to the fill hue itself.
             const hpBg = this.add.image(x, y - size * 0.62, 'white-tex')
-                .setDepth(4).setTint(0x0a0714).setAlpha(0.85).setDisplaySize(barW + 4, 8);
+                .setDepth(4).setTint(CONFIG.PASTEL.ink).setAlpha(0.85).setDisplaySize(barW + 4, 8);
             const hpFill = this.add.image(x, y - size * 0.62, 'white-tex')
                 .setDepth(5).setDisplaySize(barW, 4)
-                .setTint(side === 'A' ? 0x7dffb2 : 0xff6b6b);
+                .setTint(side === 'A' ? CONFIG.PASTEL.good : CONFIG.PASTEL.danger);
             const maxHp = Balance.petHP(pet.level, tapLevel, pet.rarity);
             this.agents.push({
                 side, pet,
                 element: def ? def.element : 'fire',
-                color: def ? def.color : 0xffffff,
+                color: def ? def.color : CONFIG.PASTEL.white,
                 spr, hpBg, hpFill, size, barW,
                 hp: maxHp, maxHp,
                 atk: Balance.petDamage(pet.level, tapLevel, pet.rarity, pet.necklace),
@@ -275,8 +282,8 @@ class PvpScene extends Phaser.Scene {
         a.hpBg.setPosition(a.spr.x, a.spr.y - a.size * 0.62);
         a.hpFill.setDisplaySize(Math.max(2, a.barW * frac), 4);
         a.hpFill.setPosition(a.spr.x - a.barW / 2 + (a.barW * frac) / 2, a.spr.y - a.size * 0.62);
-        a.hpFill.setTint(frac > 0.5 ? (a.side === 'A' ? 0x7dffb2 : 0xff9a9a)
-            : frac > 0.25 ? 0xffe066 : 0xff6b6b);
+        a.hpFill.setTint(frac > 0.5 ? (a.side === 'A' ? CONFIG.PASTEL.good : CONFIG.PASTEL.elements.fire.soft)
+            : frac > 0.25 ? CONFIG.PASTEL.elements.electric.base : CONFIG.PASTEL.danger);
     }
 
     _hurt(victim, dmg, attacker) {
@@ -285,9 +292,12 @@ class PvpScene extends Phaser.Scene {
         const final = dmg * mult;
         victim.hp -= final;
         if (typeof Effects !== 'undefined') {
+            // Effects.damageText always applies an ink stroke outline (see
+            // effects.js), so these bright fill colors stay readable
+            // regardless of the light field behind them.
             Effects.burst(this, victim.spr.x, victim.spr.y, attacker.color, 5, 0.6);
             Effects.damageText(this, victim.spr.x, victim.spr.y - 44,
-                Balance.fmt(final), mult > 1 ? '#fff06a' : '#ff9a9a', { crit: mult > 1 });
+                Balance.fmt(final), Balance.hex(mult > 1 ? CONFIG.PASTEL.crit : CONFIG.PASTEL.danger), { crit: mult > 1 });
         }
         Sfx.pop(4);
         this.tweens.add({ targets: victim.spr, angle: victim.side === 'A' ? -14 : 14, duration: 70, yoyo: true });
@@ -296,7 +306,7 @@ class PvpScene extends Phaser.Scene {
             Sfx.monsterDeath(50); // a little farewell cry
             victim.hpBg.setVisible(false);
             victim.hpFill.setVisible(false);
-            victim.spr.setTint(0x555060).setAlpha(0.45);
+            victim.spr.setTint(CONFIG.PASTEL.inkSoft).setAlpha(0.45);
             this.tweens.add({ targets: victim.spr, angle: 90, y: victim.spr.y + 14, duration: 300 });
             if (typeof Effects !== 'undefined') {
                 Effects.ring(this, victim.spr.x, victim.spr.y, victim.color, 70);
@@ -335,9 +345,9 @@ class PvpScene extends Phaser.Scene {
                     const heal = a.atk * 0.45;
                     hurt.hp = Math.min(hurt.maxHp, hurt.hp + heal);
                     if (typeof Effects !== 'undefined') {
-                        Effects.ring(this, hurt.spr.x, hurt.spr.y, 0xa8e05f, 70);
+                        Effects.ring(this, hurt.spr.x, hurt.spr.y, CONFIG.PASTEL.good, 70);
                         Effects.damageText(this, hurt.spr.x, hurt.spr.y - 44,
-                            '+' + Balance.fmt(heal), '#a8e05f');
+                            '+' + Balance.fmt(heal), Balance.hex(CONFIG.PASTEL.good));
                     }
                     Sfx.coin();
                     continue;
@@ -418,10 +428,14 @@ class PvpScene extends Phaser.Scene {
         }
         SaveManager.persist();
 
+        // modal dim-scrim - same near-black exception as ui.js's showSettlement.
+        // Everything below renders directly on it (no light panel on top),
+        // so text stays BRIGHT (good/danger/gold, not the *Text deep
+        // variants) - same convention as game.js's "THE NEST BROKE!" panel.
         this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.7).setDepth(20);
         this.add.text(W / 2, H * 0.34, won ? '🏆 VICTORY!' : '💀 DEFEAT...', {
             fontFamily: 'Arial, sans-serif', fontSize: '72px', fontStyle: 'bold',
-            color: won ? '#7dffb2' : '#ff6b6b'
+            color: Balance.hex(won ? CONFIG.PASTEL.good : CONFIG.PASTEL.danger)
         }).setOrigin(0.5).setDepth(21);
 
         // rewards line with real currency icons
@@ -429,25 +443,30 @@ class PvpScene extends Phaser.Scene {
         const ry = H * 0.44;
         const coin = this.add.image(W / 2 - 150, ry, 'coin-tex').setDepth(21).setDisplaySize(30, 30);
         const goldT = this.add.text(W / 2 - 128, ry, '+' + Balance.fmt(gold), {
-            fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: '#ffd54a'
+            fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.gold)
         }).setOrigin(0, 0.5).setDepth(21);
         if (won) {
             this.add.image(W / 2 + 30, ry, 'gem-tex').setDepth(21).setDisplaySize(28, 28);
             this.add.text(W / 2 + 52, ry, '+' + CONFIG.GEMS.pvpWin, {
-                fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: '#7fd2ff'
+                fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.elements.water.base)
             }).setOrigin(0, 0.5).setDepth(21);
         }
+        // v4.0 Phase C final-review: sits directly on the near-black dim
+        // scrim (no panel under it) - inkSoft is a panel-surface secondary
+        // token and reads too dim there; panelLight is the documented
+        // light-text-on-dark-scrim choice (same fix as game.js's nest-broken
+        // subtitle).
         this.add.text(W / 2, ry + 46, 'rating ' + st.pvp.rating, {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: '#8d86a8'
+            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.panelLight)
         }).setOrigin(0.5).setDepth(21);
 
         if (won && typeof Effects !== 'undefined') {
             Effects.confetti(this, W / 2, H * 0.3);
             Sfx.jackpot();
         }
-        makeUiButton(this, W / 2, H * 0.6, 420, 96, 'REMATCH', 0xff5ec4,
+        makeUiButton(this, W / 2, H * 0.6, 420, 96, 'REMATCH', CONFIG.PASTEL.accent,
             () => this.scene.restart());
-        makeUiButton(this, W / 2, H * 0.6 + 124, 420, 96, 'MENU', 0x39424f,
+        makeUiButton(this, W / 2, H * 0.6 + 124, 420, 96, 'MENU', CONFIG.PASTEL.accent,
             () => SmooshGame.goto('MenuScene'));
     }
 }

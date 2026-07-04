@@ -62,8 +62,8 @@ class GameScene extends Phaser.Scene {
 
         // subtle field boundary
         const F = CONFIG.FIELD;
-        this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, 0x1a1530)
-            .setStrokeStyle(2, 0x2a2244).setDepth(0);
+        this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, CONFIG.PASTEL.bgField)
+            .setStrokeStyle(2, CONFIG.PASTEL.ink).setDepth(0);
 
         this.buildHud();
         buildUpgradeBar(this);
@@ -92,31 +92,35 @@ class GameScene extends Phaser.Scene {
     buildHud() {
         // stage pill (center)
         this.add.nineslice(CONFIG.WIDTH / 2, 60, 'pill-tex', 0, 240, 62, 18, 18, 16, 16)
-            .setTint(0x201a33).setDepth(10);
+            .setTint(CONFIG.PASTEL.panel).setDepth(10);
         this.stageText = this.add.text(CONFIG.WIDTH / 2, 60,
             'S.' + SaveManager.state.stage + ' · Lv.' + SaveManager.state.level, {
-            fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: '#e8e6f5'
+            fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(11);
 
         // gold chip (right) - initialized FROM STATE, never a literal
         this.add.nineslice(CONFIG.WIDTH - 120, 60, 'pill-tex', 0, 190, 56, 18, 18, 16, 16)
-            .setTint(0x201a33).setDepth(10);
+            .setTint(CONFIG.PASTEL.panel).setDepth(10);
         this.add.image(CONFIG.WIDTH - 186, 60, 'coin-tex').setDepth(11).setDisplaySize(30, 30);
         this.goldText = this.add.text(CONFIG.WIDTH - 162, 60, Balance.fmt(SaveManager.state.gold), {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: '#ffd54a'
+            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0, 0.5).setDepth(11);
 
         // --- live stats readout: attack, crit, splash, fever rate, gold gain ---
         this.add.nineslice(CONFIG.WIDTH / 2, 110, 'pill-tex', 0, CONFIG.WIDTH - 48, 44, 16, 16, 14, 14)
-            .setTint(0x1c1631).setAlpha(0.9).setDepth(10);
+            .setTint(CONFIG.PASTEL.panel).setAlpha(0.9).setDepth(10);
         this._statEls = [];
+        // v4.0 Phase C Task 2: these 5 icon tints intentionally mirror
+        // CONFIG.UPGRADES[].color (config.js, out of scope for this sweep) so
+        // each stat stays keyed to its upgrade-card color; only the 6th
+        // (gem, a plain "no tint" white) is a themed pastel token.
         const statDefs = [
             { icon: 'up-tap',    color: 0x5aa9ff, get: () => Balance.fmt(Balance.effective(SaveManager.state).tapDmg) },
             { icon: 'up-crit',   color: 0xffe066, get: () => Math.round(Balance.effective(SaveManager.state).crit * 100) + '%' },
             { icon: 'up-splash', color: 0xff9a5a, get: (u) => Balance.splashRadius(u.splash) + '' },
             { icon: 'up-fever',  color: 0xff5ec4, get: (u) => '×' + Balance.feverMult(u.fever).toFixed(1) },
             { icon: 'up-gold',   color: 0xffd54a, get: () => '×' + Balance.effective(SaveManager.state).goldMult.toFixed(1) },
-            { icon: 'gem-tex',   color: 0xffffff, get: () => Balance.fmt(SaveManager.state.gems) }
+            { icon: 'gem-tex',   color: CONFIG.PASTEL.white, get: () => Balance.fmt(SaveManager.state.gems) }
         ];
         const slotW = (CONFIG.WIDTH - 64) / statDefs.length;
         statDefs.forEach((sd, i) => {
@@ -125,7 +129,7 @@ class GameScene extends Phaser.Scene {
                 .setTint(sd.color).setDisplaySize(24, 24);
             const val = this.add.text(x + 18, 110, '', {
                 fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold',
-                color: '#e8e6f5'
+                color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0, 0.5).setDepth(11);
             this._statEls.push({ val, get: sd.get });
         });
@@ -134,20 +138,20 @@ class GameScene extends Phaser.Scene {
 
         this.comboText = this.add.text(CONFIG.WIDTH / 2, 148, '', {
             fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold',
-            color: '#ff5ec4', stroke: '#141020', strokeThickness: 5
+            color: Balance.hex(CONFIG.PASTEL.accent), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 5
         }).setOrigin(0.5).setDepth(10);
 
         // round back button (left)
         this.add.nineslice(56, 60, 'pill-tex', 0, 64, 56, 18, 18, 16, 16)
-            .setTint(0x201a33).setDepth(10);
+            .setTint(CONFIG.PASTEL.panel).setDepth(10);
         const back = this.add.text(56, 58, '‹', {
-            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: '#8d86a8'
+            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
         back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
         // v2.3: in-game SHOP - pauses the fight, opens the shop as an overlay
         this.add.nineslice(136, 60, 'pill-tex', 0, 80, 56, 18, 18, 16, 16)
-            .setTint(0x2fa86b).setDepth(10);
+            .setTint(CONFIG.PASTEL.accent).setDepth(10);
         const shopBtn = this.add.text(136, 60, '🛒', {
             fontFamily: 'Arial, sans-serif', fontSize: '28px'
         }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
@@ -298,7 +302,7 @@ class GameScene extends Phaser.Scene {
             this.bossName = this.add.text(CONFIG.WIDTH / 2, 181,
                 'GIANT ' + this.boss.def.name.toUpperCase(), {
                 fontFamily: 'Arial, sans-serif', fontSize: '17px', fontStyle: 'bold',
-                color: '#ffffff', stroke: '#141020', strokeThickness: 4
+                color: Balance.hex(CONFIG.PASTEL.white), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 4
             }).setOrigin(0.5).setDepth(12);
             // every boss wears the crown - it IS the promoted king of its kind
             this.bossCrown = this.add.image(this.boss.x, this.boss.y, 'crown-tex')
@@ -314,12 +318,14 @@ class GameScene extends Phaser.Scene {
         const x = (CONFIG.WIDTH - w) / 2, y = 168;
         const frac = Math.max(0, this.boss.hp / this.boss.maxHp);
         this.bossBar.clear();
-        this.bossBar.fillStyle(0x0a0714, 0.8).fillRoundedRect(x - 3, y - 3, w + 6, h + 6, 15);
-        this.bossBar.fillStyle(0x2a2244, 1).fillRoundedRect(x, y, w, h, 12);
+        // v4.0 Phase C Task 2: same meter-rail convention as buildFeverGauge
+        // (ui.js) - ink frame + panel track so the accent fill still pops.
+        this.bossBar.fillStyle(CONFIG.PASTEL.ink, 0.8).fillRoundedRect(x - 3, y - 3, w + 6, h + 6, 15);
+        this.bossBar.fillStyle(CONFIG.PASTEL.panel, 1).fillRoundedRect(x, y, w, h, 12);
         if (frac > 0) {
             const fw = Math.max(10, (w - 6) * frac);
-            this.bossBar.fillStyle(0x8a4fd0, 1).fillRoundedRect(x + 3, y + 3, fw, h - 6, 9);
-            this.bossBar.fillStyle(0xc990ff, 0.9)
+            this.bossBar.fillStyle(CONFIG.PASTEL.accent, 1).fillRoundedRect(x + 3, y + 3, fw, h - 6, 9);
+            this.bossBar.fillStyle(CONFIG.PASTEL.white, 0.9)
                 .fillRoundedRect(x + 3, y + 3, fw, (h - 6) * 0.45, { tl: 9, tr: 9, bl: 0, br: 0 });
         }
     }
@@ -368,7 +374,7 @@ class GameScene extends Phaser.Scene {
             SaveManager.state.gems += CONFIG.GEMS.stageMilestoneGems;
             if (typeof Effects !== 'undefined') {
                 Effects.damageText(this, CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.5,
-                    '+' + CONFIG.GEMS.stageMilestoneGems + ' 💎 MILESTONE!', '#7fd2ff');
+                    '+' + CONFIG.GEMS.stageMilestoneGems + ' 💎 MILESTONE!', Balance.hex(CONFIG.PASTEL.accent));
             }
             this.events.emit('goldChanged');
         }
@@ -376,7 +382,7 @@ class GameScene extends Phaser.Scene {
 
         const banner = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.42, 'STAGE CLEAR!', {
             fontFamily: 'Arial, sans-serif', fontSize: '72px', fontStyle: 'bold',
-            color: '#7dffb2', stroke: '#141020', strokeThickness: 10
+            color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 10
         }).setOrigin(0.5).setDepth(20).setScale(0.3);
         this.tweens.add({ targets: banner, scale: 1, duration: 240, ease: 'Back.easeOut' });
         this.tweens.add({
@@ -482,7 +488,7 @@ class GameScene extends Phaser.Scene {
 
         if (isCrit) {
             Feel.crit();
-            if (typeof Effects !== 'undefined') Effects.damageText(this, x, y - 40, 'CRIT!', '#fff06a');
+            if (typeof Effects !== 'undefined') Effects.damageText(this, x, y - 40, 'CRIT!', Balance.hex(CONFIG.PASTEL.crit));
         }
 
         this.damageMonster(m, dmg, isCrit, x, y);
@@ -506,14 +512,15 @@ class GameScene extends Phaser.Scene {
     damageMonster(m, dmg, isCrit, x, y, source) {
         if (!m.alive || m.tappable === false) return;
 
-        // Freezy: the first hit only shatters the ice shell.
+        // Freezy: the first hit only shatters the ice shell (an ICE-element
+        // mechanic - color follows PASTEL.elements.ice.base).
         if (m.iceOn) {
             m.iceOn = false;
             m.sprite.clearTint();
             Feel.shieldBlock();
             if (typeof Effects !== 'undefined') {
-                Effects.burst(this, m.x, m.y - m.radius * 0.5, 0xbfe8ff, 8);
-                Effects.damageText(this, m.x, m.y - m.radius - 8, 'CRACK!', '#bfe8ff');
+                Effects.burst(this, m.x, m.y - m.radius * 0.5, CONFIG.PASTEL.elements.ice.base, 8);
+                Effects.damageText(this, m.x, m.y - m.radius - 8, 'CRACK!', Balance.hex(CONFIG.PASTEL.elements.ice.base));
             }
             return;
         }
@@ -526,7 +533,7 @@ class GameScene extends Phaser.Scene {
         if (source !== 'thorns' && typeof Effects !== 'undefined') {
             Effects.damageText(this, m.x, m.y - m.radius - 8,
                 (isCrit ? '💥' : '') + Balance.fmt(dmg),
-                isCrit ? '#fff06a' : '#e8e6f5', { crit: isCrit });
+                Balance.hex(isCrit ? CONFIG.PASTEL.crit : CONFIG.PASTEL.ink), { crit: isCrit });
         }
         const died = m.hit(dmg);
         if (m === this.boss) this.drawBossBar();
@@ -538,7 +545,7 @@ class GameScene extends Phaser.Scene {
                 // hit sparks scale with the monster - boss taps throw big sparks
                 const k = m.isBoss ? 1.6 : Math.min(1.2, m.r / 46);
                 Effects.burst(this, x, y, m.def.color, m.isBoss ? 7 : 3, 0.5 * k + 0.3);
-                if (isCrit) Effects.ring(this, x, y, 0xfff06a, 40 + m.r);
+                if (isCrit) Effects.ring(this, x, y, CONFIG.PASTEL.crit, 40 + m.r);
             }
             if (m.quirk === 'blink' && !source) m.blinkAway();
         }
@@ -554,7 +561,8 @@ class GameScene extends Phaser.Scene {
         m.recentHits = m.recentHits.filter(t => now - t <= 1500);
         if (m.recentHits.length >= 6) {
             m.shieldBroken = true;
-            if (typeof Effects !== 'undefined') Effects.burst(this, m.x, m.y - m.radius, 0x8fb8d0);
+            // generic mechanic FX (not element-tied) - neutral inkSoft.
+            if (typeof Effects !== 'undefined') Effects.burst(this, m.x, m.y - m.radius, CONFIG.PASTEL.inkSoft);
             return true;
         }
         // blocked: wobble feedback
@@ -610,11 +618,12 @@ class GameScene extends Phaser.Scene {
         }
         Feel.coin();
 
-        // combo milestones: the screen celebrates with you
+        // combo milestones: the screen celebrates with you (same accent as
+        // the live COMBO x N readout - not literally "fever", just excitement)
         if (CONFIG.COMBO.milestones.indexOf(this.combo) !== -1 &&
             typeof Effects !== 'undefined') {
-            Effects.screenFlash(this, 0xff5ec4, 0.18, 300);
-            Effects.ring(this, CONFIG.WIDTH / 2, 148, 0xff5ec4, 220);
+            Effects.screenFlash(this, CONFIG.PASTEL.accent, 0.18, 300);
+            Effects.ring(this, CONFIG.WIDTH / 2, 148, CONFIG.PASTEL.accent, 220);
             Effects.confetti(this, CONFIG.WIDTH / 2, 200);
             Sfx.crit();
         }
@@ -625,7 +634,7 @@ class GameScene extends Phaser.Scene {
         // death FX - scaled to the jelly's size
         if (typeof Effects !== 'undefined') {
             Effects.killFx(this, m, this.feverLeft > 0);
-            Effects.damageText(this, m.x, m.y, '+' + Balance.fmt(gold), '#ffd54a');
+            Effects.damageText(this, m.x, m.y, '+' + Balance.fmt(gold), Balance.hex(CONFIG.PASTEL.gold));
         }
 
         // v3 review fix: a drop that spawns then despawns in the very same
@@ -676,15 +685,19 @@ class GameScene extends Phaser.Scene {
             gold: 'coin-tex', bomb: 'bomb-tex', heal: 'heart-tex', fever: 'up-fever',
             gear: 'up-tap', necklace: 'necklace-tex', gem: 'gem-tex', decor: 'decor-tex'
         }[type];
+        // v4.0 Phase C Task 2: 'gear'/'necklace' always roll a rarity above
+        // (RARITY_COLORS branch), so the 'gear' entry here is unreachable in
+        // practice - kept (as CONFIG.PASTEL.accent) only so the fallback map
+        // has no missing key.
         const tint = rarity ? RARITY_COLORS[rarity]
-            : { fever: 0xff5ec4, gear: 0x5aa9ff, decor: 0xff9ad5 }[type] || 0xffffff;
+            : { fever: CONFIG.PASTEL.fever, gear: CONFIG.PASTEL.accent, decor: CONFIG.PASTEL.accent }[type] || CONFIG.PASTEL.white;
 
         // depth 9 keeps drops rendered above every monster part (sprite=3,
         // shadow=7, face=8) so a drop is always visibly - and tap-priority -
         // on top of whatever it landed on.
         const spr = this.add.image(x, y - 26, tex)
             .setDepth(9).setDisplaySize(44, 44);
-        if (tint !== 0xffffff) spr.setTint(tint);
+        if (tint !== CONFIG.PASTEL.white) spr.setTint(tint);
         if (typeof Effects !== 'undefined') Effects.ring(this, x, y, tint, 60);
 
         spr.dropType = type;
@@ -772,7 +785,7 @@ class GameScene extends Phaser.Scene {
             onComplete: () => spr.destroy()
         });
         if (typeof Effects !== 'undefined') {
-            Effects.damageText(this, x, y - 10, I18n.t('drop.despawned'), '#5a5570');
+            Effects.damageText(this, x, y - 10, I18n.t('drop.despawned'), Balance.hex(CONFIG.PASTEL.inkSoft));
         }
     }
 
@@ -791,7 +804,7 @@ class GameScene extends Phaser.Scene {
     applyDrop(type, rarity, x, y) {
         const st = SaveManager.state;
         const eff = Balance.effective(st);
-        let msg = '', color = '#e8e6f5';
+        let msg = '', color = Balance.hex(CONFIG.PASTEL.ink);
 
         switch (type) {
             case 'gold': {
@@ -802,22 +815,23 @@ class GameScene extends Phaser.Scene {
                     CONFIG.DROPS.goldMult * eff.goldMult * this.stageGoldMult());
                 SaveManager.addGold(gold);
                 this.refreshGold();
-                msg = '+' + Balance.fmt(gold) + ' GOLD!'; color = '#ffd54a';
+                msg = '+' + Balance.fmt(gold) + ' GOLD!'; color = Balance.hex(CONFIG.PASTEL.gold);
                 if (typeof Effects !== 'undefined') Effects.coinPop(this, x, y, 6, { x: CONFIG.WIDTH - 120, y: 60 });
                 break;
             }
             case 'bomb': {
                 const dmg = eff.tapDmg * CONFIG.DROPS.bombMult;
                 if (typeof Effects !== 'undefined') {
-                    Effects.screenFlash(this, 0xffffff, 0.4, 350);
-                    Effects.ring(this, CONFIG.WIDTH / 2, CONFIG.FIELD.y + CONFIG.FIELD.h / 2, 0xff9a5a, 700);
+                    Effects.screenFlash(this, CONFIG.PASTEL.white, 0.4, 350);
+                    // fire-element explosion tint (matches the fire ramp hue).
+                    Effects.ring(this, CONFIG.WIDTH / 2, CONFIG.FIELD.y + CONFIG.FIELD.h / 2, CONFIG.PASTEL.elements.fire.base, 700);
                 }
                 Sfx.bossBoom();
                 this.cameras.main.shake(200, 0.006);
                 for (const mo of this.active.slice()) {
                     if (mo.alive) this.damageMonster(mo, dmg, false, mo.x, mo.y, 'bomb');
                 }
-                msg = '💣 BOOM!'; color = '#ff9a5a';
+                msg = '💣 BOOM!'; color = Balance.hex(CONFIG.PASTEL.elements.fire.base);
                 break;
             }
             case 'heal': {
@@ -825,15 +839,15 @@ class GameScene extends Phaser.Scene {
                     this.nest.hp = Math.min(this.nest.maxHp,
                         this.nest.hp + this.nest.maxHp * CONFIG.DROPS.healPct);
                     this.nest.redraw();
-                    if (typeof Effects !== 'undefined') Effects.ring(this, CONFIG.NEST.x, CONFIG.NEST.y, 0xff6b8a, 140);
+                    if (typeof Effects !== 'undefined') Effects.ring(this, CONFIG.NEST.x, CONFIG.NEST.y, CONFIG.PASTEL.good, 140);
                 }
-                msg = '❤ NEST +' + Math.round(CONFIG.DROPS.healPct * 100) + '%'; color = '#ff6b8a';
+                msg = '❤ NEST +' + Math.round(CONFIG.DROPS.healPct * 100) + '%'; color = Balance.hex(CONFIG.PASTEL.good);
                 Sfx.coin();
                 break;
             }
             case 'fever':
                 this.addFeverCharge(CONFIG.DROPS.feverCharge);
-                msg = '🔥 FEVER +' + CONFIG.DROPS.feverCharge; color = '#ff5ec4';
+                msg = '🔥 FEVER +' + CONFIG.DROPS.feverCharge; color = Balance.hex(CONFIG.PASTEL.fever);
                 Sfx.coin();
                 break;
             case 'gem':
@@ -847,7 +861,7 @@ class GameScene extends Phaser.Scene {
                     st.gems += 1;
                     SaveManager.persist();
                     this.events.emit('goldChanged');
-                    msg = '+1 GEM!'; color = '#7fd2ff';
+                    msg = '+1 GEM!'; color = Balance.hex(CONFIG.PASTEL.accent);
                     Sfx.jackpot();
                 }
                 break;
@@ -866,7 +880,7 @@ class GameScene extends Phaser.Scene {
                     st.gold += refund;
                     msg = '⚔ dupe → +' + Balance.fmt(refund) + ' gold';
                 }
-                color = '#' + RARITY_COLORS[rarity].toString(16).padStart(6, '0');
+                color = Balance.hex(RARITY_COLORS[rarity]);
                 SaveManager.persist();
                 this.refreshGold();
                 Sfx.jackpot();
@@ -881,7 +895,7 @@ class GameScene extends Phaser.Scene {
                 const def = Decor.byId(id);
                 const name = def ? (def.name[I18n.locale] || def.name.en) : id;
                 msg = '🎀 ' + I18n.t('decor.dropped', { name });
-                color = '#ff9ad5';
+                color = Balance.hex(CONFIG.PASTEL.accent);
                 SaveManager.persist();
                 Sfx.coin();
                 break;
@@ -898,7 +912,7 @@ class GameScene extends Phaser.Scene {
                     st.shards += 5;
                     msg = '📿 → +5 shards';
                 }
-                color = '#' + RARITY_COLORS[rarity].toString(16).padStart(6, '0');
+                color = Balance.hex(RARITY_COLORS[rarity]);
                 SaveManager.persist();
                 if (this.fieldPets) this.fieldPets.rebuild();
                 Sfx.jackpot();
@@ -926,13 +940,13 @@ class GameScene extends Phaser.Scene {
                 SaveManager.persist();
                 this.events.emit('goldChanged'); // refresh gem readout
                 if (typeof Effects !== 'undefined') {
-                    Effects.damageText(this, m.x, m.y - 120, '+' + gems + ' 💎', '#7fd2ff');
+                    Effects.damageText(this, m.x, m.y - 120, '+' + gems + ' 💎', Balance.hex(CONFIG.PASTEL.accent));
                 }
             }
 
             // === THE mega boss death: multi-stage explosion ===
             const bx = m.x, by = m.y;
-            const tint = m.def.color || 0xb06fff;
+            const tint = m.def.color || CONFIG.PASTEL.accent;
             Feel.bossBoom();
             this.cameras.main.shake(420, 0.011);
             this.tweens.add({
@@ -942,23 +956,23 @@ class GameScene extends Phaser.Scene {
 
             if (typeof Effects !== 'undefined') {
                 // stage 0: white blast + first wave
-                Effects.screenFlash(this, 0xffffff, 0.5, 380);
+                Effects.screenFlash(this, CONFIG.PASTEL.white, 0.5, 380);
                 Effects.flash(this, bx, by, tint, 520);
                 Effects.burst(this, bx, by, tint, 34, 2.4);
-                Effects.ring(this, bx, by, 0xffffff, 460);
+                Effects.ring(this, bx, by, CONFIG.PASTEL.white, 460);
                 for (let i = 0; i < 5; i++) {
                     Effects.goo(this, bx + Phaser.Math.Between(-160, 160),
                         by + Phaser.Math.Between(-120, 120), tint, 1.6);
                 }
                 // stage 1 + 2: echo explosions rolling outward
                 this.time.delayedCall(150, () => {
-                    Effects.burst(this, bx, by, 0xffffff, 22, 1.8);
+                    Effects.burst(this, bx, by, CONFIG.PASTEL.white, 22, 1.8);
                     Effects.ring(this, bx, by, tint, 620);
                     Effects.confetti(this, bx, by);
                     Sfx.bossBoom();
                 });
                 this.time.delayedCall(320, () => {
-                    Effects.ring(this, bx, by, 0xffd54a, 760);
+                    Effects.ring(this, bx, by, CONFIG.PASTEL.gold, 760);
                     Effects.confetti(this, bx - 140, by - 60);
                     Effects.confetti(this, bx + 140, by - 60);
                     Effects.coinPop(this, bx, by, 16, { x: CONFIG.WIDTH - 120, y: 60 });
@@ -1028,13 +1042,13 @@ class GameScene extends Phaser.Scene {
             this.events.emit('goldChanged'); // stats readout refresh
             Sfx.jackpot();
             if (typeof Effects !== 'undefined') {
-                Effects.screenFlash(this, 0x7dffb2, 0.2, 350);
+                Effects.screenFlash(this, CONFIG.PASTEL.good, 0.2, 350);
                 Effects.confetti(this, CONFIG.WIDTH / 2, 200);
             }
             const t = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.35,
                 'LEVEL UP!  Lv.' + st.level, {
                 fontFamily: 'Arial, sans-serif', fontSize: '56px', fontStyle: 'bold',
-                color: '#7dffb2', stroke: '#141020', strokeThickness: 9
+                color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 9
             }).setOrigin(0.5).setDepth(20).setScale(0.3);
             this.tweens.add({ targets: t, scale: 1, duration: 260, ease: 'Back.easeOut' });
             this.tweens.add({
@@ -1063,15 +1077,20 @@ class GameScene extends Phaser.Scene {
 
         const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
         const items = [];
+        // modal dim-scrim - same near-black exception as showSettlement (ui.js).
         items.push(this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.8).setDepth(20).setInteractive());
         items.push(this.add.text(W / 2, H * 0.34, '💔 THE NEST BROKE!', {
             fontFamily: 'Arial, sans-serif', fontSize: '56px', fontStyle: 'bold',
-            color: '#ff6b6b'
+            color: Balance.hex(CONFIG.PASTEL.danger)
         }).setOrigin(0.5).setDepth(21));
         items.push(this.add.text(W / 2, H * 0.42, 'The babies are safe... but the stage is lost.', {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: '#8d86a8'
+            // v4.0 Phase C final-review: this text sits directly on the
+            // near-black dim scrim (no panel under it) - inkSoft is a
+            // panel-surface secondary token and reads too dim there;
+            // panelLight is the documented light-text-on-dark-scrim choice.
+            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.panelLight)
         }).setOrigin(0.5).setDepth(21));
-        const btn = makeUiButton(this, W / 2, H * 0.56, 480, 100, 'RETRY STAGE', 0xff5ec4, () => {
+        const btn = makeUiButton(this, W / 2, H * 0.56, 480, 100, 'RETRY STAGE', CONFIG.PASTEL.accent, () => {
             items.forEach(o => o.destroy());
             btn.destroyAll();
             this.nest.repair();
@@ -1095,13 +1114,13 @@ class GameScene extends Phaser.Scene {
         this.feverLeft = CONFIG.FEVER.durationMs / 1000;
         Feel.feverStart();
         if (typeof Effects !== 'undefined') {
-            Effects.screenFlash(this, 0xff5ec4, 0.3, 420);
-            Effects.ring(this, CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, 0xff5ec4, 900);
+            Effects.screenFlash(this, CONFIG.PASTEL.fever, 0.3, 420);
+            Effects.ring(this, CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, CONFIG.PASTEL.fever, 900);
         }
 
         const banner = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT * 0.3, 'FEVER!!', {
             fontFamily: 'Arial, sans-serif', fontSize: '96px', fontStyle: 'bold',
-            color: '#ff5ec4', stroke: '#141020', strokeThickness: 12
+            color: Balance.hex(CONFIG.PASTEL.fever), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
         }).setOrigin(0.5).setDepth(20).setScale(0.2);
         this.tweens.add({ targets: banner, scale: 1, duration: 260, ease: 'Back.easeOut' });
         this.tweens.add({
@@ -1176,7 +1195,7 @@ class GameScene extends Phaser.Scene {
         this._ultReadyToasted = false;
         this.events.emit('ultChanged');
 
-        Effects.screenFlash(this, 0xffffff, 0.7, 120);
+        Effects.screenFlash(this, CONFIG.PASTEL.white, 0.7, 120);
         Sfx.jackpot();
         Haptic.heavy();
         if (eff) {
@@ -1265,7 +1284,8 @@ class GameScene extends Phaser.Scene {
         const { dmg: edmg, mult } = Balance.applyElement(dmg, m.def.elem, a.def.element);
         if (mult !== 1 && typeof Effects !== 'undefined') {
             Effects.damageText(this, a.sprite.x, a.sprite.y - 68,
-                mult > 1 ? 'Super!' : 'Resisted', mult > 1 ? '#fff06a' : '#8d86a8');
+                mult > 1 ? 'Super!' : 'Resisted',
+                Balance.hex(mult > 1 ? CONFIG.PASTEL.gold : CONFIG.PASTEL.inkSoft));
         }
         return edmg;
     }
@@ -1293,11 +1313,12 @@ class GameScene extends Phaser.Scene {
         this.nest.hp -= flat;
         this.nest.redraw();
         if (typeof Effects !== 'undefined') {
-            Effects.burst(this, CONFIG.NEST.x, CONFIG.NEST.y - 30, 0xff6b6b, 5, 0.6);
+            Effects.burst(this, CONFIG.NEST.x, CONFIG.NEST.y - 30, CONFIG.PASTEL.danger, 5, 0.6);
         }
         if (this.nest.hp <= 0 && !this.nest.broken) {
             this.nest.broken = true;
-            this.nest.sprite.setTint(0x555060).setAlpha(0.7);
+            // grayed-out/disabled look, not a danger flash - inkSoft.
+            this.nest.sprite.setTint(CONFIG.PASTEL.inkSoft).setAlpha(0.7);
             this.onNestBroken();
         }
     }
@@ -1321,10 +1342,12 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // Instant crackling bolt to the target.
+    // Instant crackling bolt to the target - an ELECTRIC attack, colored off
+    // PASTEL.elements.electric.base (was a hardcoded ice-cyan reuse before
+    // the v4.0 pastel sweep).
     monsterZap(m, tx, ty, dmg, isNest) {
         const g = this.add.graphics().setDepth(8);
-        g.lineStyle(4, 0xbfe8ff, 1);
+        g.lineStyle(4, CONFIG.PASTEL.elements.electric.base, 1);
         g.beginPath();
         g.moveTo(m.x, m.y);
         const steps = 4;
@@ -1339,7 +1362,7 @@ class GameScene extends Phaser.Scene {
             targets: g, alpha: 0, duration: 180,
             onComplete: () => g.destroy()
         });
-        if (typeof Effects !== 'undefined') Effects.flash(this, tx, ty, 0xbfe8ff, 60);
+        if (typeof Effects !== 'undefined') Effects.flash(this, tx, ty, CONFIG.PASTEL.elements.electric.base, 60);
         this.monsterStrikeArea(m, tx, ty, 50, dmg, true);
     }
 

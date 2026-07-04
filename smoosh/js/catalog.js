@@ -1,13 +1,149 @@
 // =============================================================================
 // SMOOSH! - catalog.js
-// The 14 jelly species. Art is built by a parametric jelly painter so every
-// species shares the same cute flat style while keeping a unique color,
-// face and accessory. Two states per species: idle and squash.
+// The 24 jelly species (20 mobs + splitter/shield/jackpot/boss). Art is built
+// by a parametric jelly painter so every species shares the same cute flat
+// style while wearing its own signature parts (ears/horns/tail/pattern/hat/
+// aura) and a pastel body pulled from its element's 3-step ramp. Two states
+// per species: idle and squash.
+// v4.0 Phase C Task 4: signature-part system replaces the old single
+// `accessory` slot (crown/shell/coin/splitline/zzz/horns/ears/ring/heart/
+// bubble/leaf/ice/sparkle/flame) - see paintJelly() doc comment below for the
+// migration table. Nothing outside catalog.js ever read `def.accessory`
+// (grepped: only svgIdle/svgSquash/def.color cross the file boundary), so
+// this migration needed no other-file changes.
 // =============================================================================
 
+// --- color helpers: element ramps + per-species tint --------------------
+function hex6(n) {
+    return '#' + (n & 0xffffff).toString(16).padStart(6, '0');
+}
+// Blend two hex colors; t=0 -> a, t=1 -> b.
+function mixHex(a, b, t) {
+    const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16);
+    const ar = (A >> 16) & 255, ag = (A >> 8) & 255, ab = A & 255;
+    const br = (B >> 16) & 255, bg = (B >> 8) & 255, bb = B & 255;
+    const m = (x, y) => Math.max(0, Math.min(255, Math.round(x + (y - x) * t)));
+    const c = v => v.toString(16).padStart(2, '0');
+    return '#' + c(m(ar, br)) + c(m(ag, bg)) + c(m(ab, bb));
+}
+// Lighten (amt>0) or darken (amt<0) a hex color; used only as a fallback
+// when no PASTEL ramp is available (opts.deep unset AND CONFIG missing).
+function shadeHex(hex, amt) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    if (amt < 0) { r *= (1 + amt); g *= (1 + amt); b *= (1 + amt); }
+    else { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+    const c = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+    return '#' + c(r) + c(g) + c(b);
+}
+// element -> pastel 3-step ramp (hex strings). Guarded: Node tests must set
+// globalThis.CONFIG = require('config.js').CONFIG before requiring this file
+// (see tests/catalog.test.js); the browser always has it since config.js
+// loads before catalog.js in index.html.
+function elemRamp(elem) {
+    if (typeof CONFIG !== 'undefined' && CONFIG.PASTEL && CONFIG.PASTEL.elements[elem]) {
+        const e = CONFIG.PASTEL.elements[elem];
+        return { base: hex6(e.base), soft: hex6(e.soft), deep: hex6(e.deep) };
+    }
+    return null;
+}
+
+// --- signature-part fragments --------------------------------------------
+// Each fragment is wrapped in <g data-part="kind-value"> (a cheap structural
+// hook tests/catalog.test.js greps for) and is geometry-budgeted to stay
+// inside the r*2 viewBox: idle head-room above the body top is only ~0.26r
+// and squash body width comes within ~0.02r of the side edges, so every
+// part keeps its protrusion modest (checked by hand + the scratch SVG dump
+// in tmp/smoosh-art-*.svg - see phase-c-task-4-report.md).
+function partTag(kind, value, svg) {
+    return (!value || value === 'none' || !svg) ? '' : `<g data-part="${kind}-${value}">${svg}</g>`;
+}
+
+function earsFrag(v, x) {
+    const { r, cx, topY, bw, stroke, sw, body } = x;
+    const ex = bw * 0.42, ey = topY + r * 0.02;
+    if (v === 'round') return `<circle cx="${cx - ex}" cy="${ey - r * 0.12}" r="${r * 0.15}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.45}"/><circle cx="${cx + ex}" cy="${ey - r * 0.12}" r="${r * 0.15}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.45}"/>`;
+    if (v === 'pointy') return `<path d="M${cx - ex - r * 0.12} ${ey} L${cx - ex} ${ey - r * 0.20} L${cx - ex + r * 0.14} ${ey - r * 0.02} Z" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.4}"/><path d="M${cx + ex + r * 0.12} ${ey} L${cx + ex} ${ey - r * 0.20} L${cx + ex - r * 0.14} ${ey - r * 0.02} Z" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'long') return `<ellipse cx="${cx - ex}" cy="${ey - r * 0.04}" rx="${r * 0.10}" ry="${r * 0.18}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.35}" transform="rotate(-10 ${cx - ex} ${ey - r * 0.04})"/><ellipse cx="${cx + ex}" cy="${ey - r * 0.04}" rx="${r * 0.10}" ry="${r * 0.18}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.35}" transform="rotate(10 ${cx + ex} ${ey - r * 0.04})"/>`;
+    if (v === 'stub') return `<circle cx="${cx - ex * 0.85}" cy="${ey}" r="${r * 0.08}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.35}"/><circle cx="${cx + ex * 0.85}" cy="${ey}" r="${r * 0.08}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.35}"/>`;
+    return '';
+}
+
+function hornsFrag(v, x) {
+    const { r, cx, topY, bw, stroke, sw } = x;
+    const hx = bw * 0.4, hy = topY + r * 0.10;
+    const ivory = '#fff7e0';
+    if (v === 'nub') return `<circle cx="${cx - hx}" cy="${hy}" r="${r * 0.065}" fill="${ivory}" stroke="${stroke}" stroke-width="${sw * 0.4}"/><circle cx="${cx + hx}" cy="${hy}" r="${r * 0.065}" fill="${ivory}" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'curved') return `<path d="M${cx - hx} ${hy} q${-r * 0.10} ${-r * 0.16} ${r * 0.02} ${-r * 0.20}" stroke="${ivory}" stroke-width="${sw * 0.5}" fill="none" stroke-linecap="round"/><path d="M${cx + hx} ${hy} q${r * 0.10} ${-r * 0.16} ${-r * 0.02} ${-r * 0.20}" stroke="${ivory}" stroke-width="${sw * 0.5}" fill="none" stroke-linecap="round"/>`;
+    if (v === 'spike') return `<path d="M${cx - hx} ${hy} l${-r * 0.09} ${-r * 0.18} l${r * 0.18} ${r * 0.05} Z" fill="${ivory}" stroke="${stroke}" stroke-width="${sw * 0.35}"/><path d="M${cx + hx} ${hy} l${r * 0.09} ${-r * 0.18} l${-r * 0.18} ${r * 0.05} Z" fill="${ivory}" stroke="${stroke}" stroke-width="${sw * 0.35}"/>`;
+    return '';
+}
+
+function tailFrag(v, x) {
+    const { r, cx, cy, bw, bh, stroke, sw, body } = x;
+    const tx = cx + bw * 0.68, ty = cy + bh * 0.46;
+    if (v === 'nub') return `<circle cx="${tx}" cy="${ty}" r="${r * 0.11}" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'curly') return `<path d="M${tx} ${ty} q${r * 0.20} ${-r * 0.02} ${r * 0.16} ${-r * 0.20} q${-r * 0.12} ${r * 0.08} ${-r * 0.02} ${r * 0.20}" fill="none" stroke="${body}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    if (v === 'spike') return `<path d="M${tx} ${ty} l${r * 0.20} ${-r * 0.08} l${-r * 0.04} ${r * 0.16} Z" fill="${body}" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
+    return '';
+}
+
+function patternFrag(v, x) {
+    const { r, cx, cy, bw, bh, deep } = x;
+    if (v === 'spots') return `<circle cx="${cx - bw * 0.28}" cy="${cy - bh * 0.14}" r="${r * 0.065}" fill="${deep}" opacity=".5"/><circle cx="${cx + bw * 0.30}" cy="${cy - bh * 0.32}" r="${r * 0.05}" fill="${deep}" opacity=".5"/><circle cx="${cx + bw * 0.04}" cy="${cy - bh * 0.5}" r="${r * 0.04}" fill="${deep}" opacity=".5"/>`;
+    if (v === 'stripes') return `<path d="M${cx - bw * 0.5} ${cy - bh * 0.26} q${bw * 0.18} ${bh * 0.12} ${bw * 0.36} 0 M${cx - bw * 0.32} ${cy - bh * 0.52} q${bw * 0.14} ${bh * 0.09} ${bw * 0.28} 0" stroke="${deep}" stroke-width="${r * 0.045}" fill="none" opacity=".45" stroke-linecap="round"/>`;
+    if (v === 'belly-star') return `<path d="M${cx} ${cy + bh * 0.22} l${r * 0.045} ${r * 0.10} l${r * 0.11} ${r * 0.015} l${-r * 0.08} ${r * 0.075} l${r * 0.025} ${r * 0.11} l${-r * 0.10} ${-r * 0.065} l${-r * 0.10} ${r * 0.065} l${r * 0.025} ${-r * 0.11} l${-r * 0.08} ${-r * 0.075} l${r * 0.11} ${-r * 0.015} Z" fill="#ffffff" opacity=".85"/>`;
+    if (v === 'freckles') return `<circle cx="${cx - bw * 0.46}" cy="${cy + bh * 0.02}" r="${r * 0.022}" fill="${deep}" opacity=".55"/><circle cx="${cx - bw * 0.38}" cy="${cy + bh * 0.12}" r="${r * 0.02}" fill="${deep}" opacity=".55"/><circle cx="${cx + bw * 0.46}" cy="${cy + bh * 0.02}" r="${r * 0.022}" fill="${deep}" opacity=".55"/><circle cx="${cx + bw * 0.38}" cy="${cy + bh * 0.12}" r="${r * 0.02}" fill="${deep}" opacity=".55"/>`;
+    return '';
+}
+
+function hatFrag(v, x) {
+    const { r, cx, topY, bw, stroke, sw, boss } = x;
+    const s = boss ? 1.3 : 1;
+    if (v === 'crown') return `<path d="M${cx - r * 0.34 * s} ${topY + r * 0.05} l${r * 0.09 * s} ${-r * 0.20 * s} l${r * 0.14 * s} ${r * 0.11 * s} l${r * 0.09 * s} ${-r * 0.18 * s} l${r * 0.09 * s} ${r * 0.18 * s} l${r * 0.14 * s} ${-r * 0.11 * s} l${r * 0.09 * s} ${r * 0.20 * s} Z" fill="#ffd54a" stroke="${stroke}" stroke-width="${sw * 0.5}"/>`;
+    if (v === 'leaf') return `<path d="M${cx} ${topY + r * 0.05} q${r * 0.04} ${-r * 0.18 * s} ${r * 0.22 * s} ${-r * 0.20 * s} q${-r * 0.02} ${r * 0.16 * s} ${-r * 0.20 * s} ${r * 0.22 * s} Z" fill="#6fc46f" stroke="${stroke}" stroke-width="${sw * 0.35}"/>`;
+    if (v === 'bow') return `<path d="M${cx} ${topY + r * 0.07} l${-r * 0.20} ${-r * 0.11} q${-r * 0.03} ${r * 0.12} 0 ${r * 0.16} Z M${cx} ${topY + r * 0.07} l${r * 0.20} ${-r * 0.11} q${r * 0.03} ${r * 0.12} 0 ${r * 0.16} Z" fill="#ff8fcf" stroke="${stroke}" stroke-width="${sw * 0.35}"/><circle cx="${cx}" cy="${topY + r * 0.07}" r="${r * 0.045}" fill="#ff5ec4" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'helmet') return `<path d="M${cx - bw * 0.6} ${topY + r * 0.14} a${bw * 0.6} ${r * 0.32} 0 0 1 ${bw * 1.2} 0 Z" fill="#c7cbd6" stroke="${stroke}" stroke-width="${sw * 0.45}"/><rect x="${cx - r * 0.05}" y="${topY - r * 0.02}" width="${r * 0.10}" height="${r * 0.12}" fill="#e8b74a" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'halo') return `<ellipse cx="${cx}" cy="${topY - r * 0.14 * s}" rx="${r * 0.22 * s}" ry="${r * 0.06 * s}" fill="none" stroke="#ffe066" stroke-width="${sw * 0.45}" opacity=".95"/>`;
+    return '';
+}
+
+function auraFrag(v, x) {
+    const { r, cx, cy, bw, bh, boss } = x;
+    // Cap absolute radius (not just a body-relative factor) so the ring
+    // still fits inside the viewBox in squash state, where bw is already
+    // within ~0.02r of the canvas edge.
+    const R = Math.min(Math.max(bw, bh) * 1.08, r * 0.92);
+    const sw2 = boss ? r * 0.065 : r * 0.045;
+    if (v === 'frost') return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#bfe8ff" stroke-width="${sw2}" opacity="${boss ? .65 : .5}" stroke-dasharray="${r * 0.08} ${r * 0.12}"/>`;
+    if (v === 'spark') return `<path d="M${cx - R * 0.85} ${cy - bh * 0.1} l${r * 0.12} ${-r * 0.05} l${-r * 0.03} ${r * 0.12} M${cx + R * 0.7} ${cy - bh * 0.35} l${r * 0.12} ${-r * 0.05} l${-r * 0.03} ${r * 0.12}" stroke="#ffe066" stroke-width="${sw2}" fill="none" stroke-linecap="round" opacity="${boss ? .95 : .85}"/>`;
+    if (v === 'shadow') return `<ellipse cx="${cx}" cy="${cy + bh * 0.15}" rx="${R}" ry="${bh * (boss ? 0.5 : 0.4)}" fill="#3a2f52" opacity="${boss ? .32 : .25}"/>`;
+    if (v === 'gleam') return `<path d="M${cx + bw * 0.6} ${cy - bh * 0.6} l${r * 0.045} ${r * 0.10} l${r * 0.10} ${r * 0.045} l${-r * 0.10} ${r * 0.045} l${-r * 0.045} ${r * 0.10} l${-r * 0.045} ${-r * 0.10} l${-r * 0.10} ${-r * 0.045} l${r * 0.10} ${-r * 0.045} Z" fill="#ffffff" opacity="${boss ? 1 : .95}"/>`;
+    return '';
+}
+
 // Paint one jelly SVG. r = radius; state = 'idle' | 'squash'.
-// opts: { body, belly, face:'happy'|'grin'|'sleepy'|'angry'|'scared'|'greedy'|'king',
-//         accessory:'none'|'crown'|'shell'|'coin'|'splitline'|'zzz'|'horns' }
+// opts: { body, belly, deep, elem, alpha, boss,
+//         face:'happy'|'grin'|'sleepy'|'angry'|'scared'|'greedy'|'king'|'love'|'wink',
+//         ears:'none'|'round'|'pointy'|'long'|'stub',
+//         horns:'none'|'nub'|'curved'|'spike',
+//         tail:'none'|'nub'|'curly'|'spike',
+//         pattern:'none'|'spots'|'stripes'|'belly-star'|'freckles',
+//         hat:'none'|'crown'|'leaf'|'bow'|'helmet'|'halo',
+//         aura:'none'|'frost'|'spark'|'shadow'|'gleam' }
+// All six signature-part params default to 'none'; every rendered (non-none)
+// fragment is wrapped in <g data-part="kind-value"> as a structural test
+// hook. `boss` scales up hat/aura and is wired for the 'king' species only
+// (the sole persistent kind:'boss' species with its own baked texture) -
+// see phase-c-task-4-report.md "Boss variant" section for why rotation-
+// promoted giant mobs don't use this flag.
+//
+// Migration from the old single `opts.accessory` slot:
+//   crown->hat:crown, leaf->hat:leaf, horns->horns:spike, ears->ears:long,
+//   shell->hat:helmet, coin->(dropped, goldie now uses hat:halo+aura:gleam),
+//   splitline->pattern:stripes, zzz->(dropped, sleepy face already reads),
+//   ring->aura:gleam, heart->pattern:belly-star+hat:bow, ice->aura:frost,
+//   sparkle->aura:gleam, flame->(dropped), bubble->pattern:spots+aura:gleam.
 function paintJelly(r, state, opts) {
     const d = r * 2;
     const squash = state === 'squash';
@@ -59,111 +195,118 @@ function paintJelly(r, state, opts) {
         face = eyes + brows + mouth + blush;
     }
 
-    let accessory = '';
     const topY = cy - bh;
-    if (opts.accessory === 'crown') {
-        accessory = `<path d="M${cx - r * 0.36} ${topY + r * 0.06} l${r * 0.10} ${-r * 0.30} l${r * 0.16} ${r * 0.16} l${r * 0.10} ${-r * 0.26} l${r * 0.10} ${r * 0.26} l${r * 0.16} ${-r * 0.16} l${r * 0.10} ${r * 0.30} Z" fill="#ffd54a" stroke="${stroke}" stroke-width="${sw * 0.5}"/>`;
-    } else if (opts.accessory === 'shell') {
-        accessory = `<path d="M${cx - bw * 0.98} ${cy} a${bw * 0.98} ${bh * 0.98} 0 0 1 ${bw * 1.96} 0" fill="none" stroke="#e8f4ff" stroke-width="${sw * 1.4}" opacity="0.9"/>`;
-    } else if (opts.accessory === 'coin') {
-        accessory = `<circle cx="${cx + bw * 0.55}" cy="${topY + r * 0.18}" r="${r * 0.18}" fill="#fff06a" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
-    } else if (opts.accessory === 'splitline') {
-        accessory = `<path d="M${cx} ${topY + r * 0.10} q${r * 0.10} ${bh * 0.5} 0 ${bh * 1.1}" stroke="${stroke}" stroke-width="${sw * 0.5}" stroke-dasharray="${r * 0.12} ${r * 0.10}" fill="none"/>`;
-    } else if (opts.accessory === 'zzz') {
-        accessory = `<text x="${cx + bw * 0.5}" y="${topY + r * 0.1}" font-family="Arial" font-weight="bold" font-size="${r * 0.34}" fill="${stroke}">z</text>`;
-    } else if (opts.accessory === 'horns') {
-        accessory = `<path d="M${cx - bw * 0.5} ${topY + r * 0.14} l${-r * 0.10} ${-r * 0.22} l${r * 0.20} ${r * 0.06} Z M${cx + bw * 0.5} ${topY + r * 0.14} l${r * 0.10} ${-r * 0.22} l${-r * 0.20} ${r * 0.06} Z" fill="${opts.body}" stroke="${stroke}" stroke-width="${sw * 0.4}"/>`;
-    } else if (opts.accessory === 'ears') {
-        accessory = `<ellipse cx="${cx - bw * 0.4}" cy="${topY - r * 0.10}" rx="${r * 0.11}" ry="${r * 0.30}" fill="${opts.body}" stroke="${stroke}" stroke-width="${sw * 0.4}" transform="rotate(-12 ${cx - bw * 0.4} ${topY - r * 0.10})"/><ellipse cx="${cx + bw * 0.4}" cy="${topY - r * 0.10}" rx="${r * 0.11}" ry="${r * 0.30}" fill="${opts.body}" stroke="${stroke}" stroke-width="${sw * 0.4}" transform="rotate(12 ${cx + bw * 0.4} ${topY - r * 0.10})"/>`;
-    } else if (opts.accessory === 'ring') {
-        accessory = `<ellipse cx="${cx}" cy="${cy}" rx="${bw * 1.28}" ry="${bh * 0.34}" fill="none" stroke="#ffd57d" stroke-width="${sw * 0.9}" opacity="0.9"/>`;
-    } else if (opts.accessory === 'heart') {
-        accessory = `<path d="M${cx + bw * 0.62} ${topY + r * 0.16} c${-r * 0.14} ${-r * 0.18} ${-r * 0.34} ${r * 0.02} ${-r * 0.06} ${r * 0.22} c${r * 0.28} ${-r * 0.20} ${r * 0.10} ${-r * 0.40} ${-r * 0.06} ${-r * 0.22} Z" fill="#ff5e7d" transform="rotate(18 ${cx + bw * 0.6} ${topY + r * 0.14})"/>`;
-    } else if (opts.accessory === 'bubble') {
-        accessory = `<circle cx="${cx}" cy="${cy}" r="${Math.min(bw, bh) * 1.42}" fill="none" stroke="#cfeaff" stroke-width="${sw * 0.6}" opacity="0.75"/><circle cx="${cx - bw * 0.7}" cy="${cy - bh * 0.9}" r="${r * 0.07}" fill="#ffffff" opacity="0.8"/>`;
-    } else if (opts.accessory === 'leaf') {
-        accessory = `<path d="M${cx} ${topY + r * 0.06} q${r * 0.05} ${-r * 0.26} ${r * 0.30} ${-r * 0.30} q${-r * 0.02} ${r * 0.24} ${-r * 0.26} ${r * 0.32} Z" fill="#6fc46f" stroke="${stroke}" stroke-width="${sw * 0.35}"/>`;
-    } else if (opts.accessory === 'ice') {
-        accessory = `<path d="M${cx - r * 0.30} ${topY + r * 0.10} l${r * 0.10} ${-r * 0.26} l${r * 0.12} ${r * 0.20} l${r * 0.10} ${-r * 0.30} l${r * 0.12} ${r * 0.30} l${r * 0.10} ${-r * 0.20} l${r * 0.06} ${r * 0.26} Z" fill="#bfe8ff" stroke="${stroke}" stroke-width="${sw * 0.35}"/>`;
-    } else if (opts.accessory === 'sparkle') {
-        accessory = `<path d="M${cx + bw * 0.66} ${topY + r * 0.10} l${r * 0.05} ${r * 0.12} l${r * 0.12} ${r * 0.05} l${-r * 0.12} ${r * 0.05} l${-r * 0.05} ${r * 0.12} l${-r * 0.05} ${-r * 0.12} l${-r * 0.12} ${-r * 0.05} l${r * 0.12} ${-r * 0.05} Z" fill="#ffffff" opacity="0.95"/>`;
-    } else if (opts.accessory === 'flame') {
-        accessory = `<path d="M${cx - bw * 1.05} ${cy - bh * 0.2} h${r * 0.34} M${cx - bw * 1.15} ${cy} h${r * 0.44} M${cx - bw * 1.05} ${cy + bh * 0.2} h${r * 0.34}" stroke="#ffd57d" stroke-width="${sw * 0.5}" stroke-linecap="round"/>`;
-    }
+    const deep = opts.deep || shadeHex(opts.body, -0.35);
+    const partCtx = { r, cx, cy, topY, bw, bh, stroke, sw, body: opts.body, deep, boss: !!opts.boss };
+
+    const aura = partTag('aura', opts.aura, auraFrag(opts.aura, partCtx));
+    const tail = partTag('tail', opts.tail, tailFrag(opts.tail, partCtx));
+    const pattern = partTag('pattern', opts.pattern, patternFrag(opts.pattern, partCtx));
+    const ears = partTag('ears', opts.ears, earsFrag(opts.ears, partCtx));
+    const horns = partTag('horns', opts.horns, hornsFrag(opts.horns, partCtx));
+    const hat = partTag('hat', opts.hat, hatFrag(opts.hat, partCtx));
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${d} ${d}">
+  ${aura}
+  ${tail}
   <g fill-opacity="${bodyAlpha}">
   <ellipse cx="${cx}" cy="${cy}" rx="${bw}" ry="${bh}" fill="${opts.body}" stroke="${stroke}" stroke-width="${sw}" stroke-opacity="${bodyAlpha}"/>
   <ellipse cx="${cx}" cy="${cy + bh * 0.38}" rx="${bw * 0.78}" ry="${bh * 0.42}" fill="${opts.belly}"/>
   <ellipse cx="${cx - bw * 0.42}" cy="${cy - bh * 0.42}" rx="${bw * 0.26}" ry="${bh * 0.18}" fill="#ffffff" opacity="0.55"/>
   </g>
-  ${accessory}
+  ${pattern}
+  ${ears}
+  ${horns}
   ${face}
+  ${hat}
 </svg>`;
 }
 
+// def carries elem/skill/attack (personality anchors); art carries the paint
+// recipe. body/belly default to the def.elem pastel ramp (base/soft) blended
+// toward deep by `art.tint` (0..1) so species sharing an element don't look
+// identical - explicit art.body/art.belly still win if ever supplied.
+// boss:true (currently only 'king') forces a deeper ramp (tint floor 0.75)
+// on top of whatever paintJelly does with its own boss scaling.
+// The recipe fields (ears/horns/tail/pattern/hat/aura/face/tint/boss/alpha)
+// are spread onto the returned species object too - not just baked into the
+// SVG strings - so tests (and any future tooling) can introspect the paint
+// recipe directly instead of re-parsing markup.
 function species(def, art) {
-    return Object.assign({}, def, {
-        color: parseInt(art.body.slice(1), 16), // body color for FX tinting
-        svgIdle: paintJelly(def.radius, 'idle', art),
-        svgSquash: paintJelly(def.radius, 'squash', art)
+    const ramp = elemRamp(def.elem);
+    const tint = art.tint !== undefined ? art.tint : 0.25;
+    const effTint = art.boss ? Math.max(tint, 0.75) : tint;
+    const body = art.body || (ramp ? mixHex(ramp.base, ramp.deep, effTint) : '#7dffb2');
+    const belly = art.belly || (ramp ? mixHex(ramp.soft, ramp.deep, effTint * 0.5) : '#5fdd94');
+    const deep = art.deep || (ramp ? ramp.deep : undefined);
+    const paintOpts = Object.assign({}, art, { body, belly, deep });
+    return Object.assign({}, def, art, {
+        body, belly,
+        color: parseInt(body.slice(1), 16), // body color for FX tinting
+        svgIdle: paintJelly(def.radius, 'idle', paintOpts),
+        svgSquash: paintJelly(def.radius, 'squash', paintOpts)
     });
 }
 
+// v4.0 Phase C Task 4: every recipe tuple (ears,horns,tail,pattern,hat,aura,
+// face) is pairwise distinct from every other species in >=2 fields, and
+// every species uses >=2 non-'none' signature parts (see tests/catalog.test.js
+// "monster painter signature parts" block + phase-c-task-4-report.md's full
+// 24-row table for the verified matrix).
 const SPECIES = [
     // --- 10 regular mobs ---
     species({ id: 'blob',    name: 'Blob',    kind: 'mob', radius: 46, hpMult: 1.0, speed: 70,  move: 'amble',   goldMult: 1.0, attack: 'melee', elem: 'leaf', skill: 'slow' },
-        { body: '#7dffb2', belly: '#5fdd94', face: 'happy',  accessory: 'none' }),
+        { tint: 0.15, face: 'happy',  tail: 'nub',    pattern: 'spots' }),
     species({ id: 'mini',    name: 'Mini',    kind: 'mob', radius: 26, hpMult: 0.5, speed: 150, move: 'zigzag',  goldMult: 0.8, attack: 'melee', elem: 'wind', skill: 'dash' },
-        { body: '#ff9ad5', belly: '#e878b8', face: 'grin',   accessory: 'none' }),
+        { tint: 0.10, face: 'grin',   ears: 'pointy', pattern: 'stripes' }),
     species({ id: 'tank',    name: 'Tank',    kind: 'mob', radius: 64, hpMult: 4.0, speed: 36,  move: 'amble',   goldMult: 2.2, attack: 'slam', elem: 'water', skill: 'shield' },
-        { body: '#6fa8ff', belly: '#5388e0', face: 'angry',  accessory: 'horns' }),
+        { tint: 0.80, face: 'angry',  tail: 'nub',    hat: 'helmet' }),
     species({ id: 'zippy',   name: 'Zippy',   kind: 'mob', radius: 34, hpMult: 0.8, speed: 120, move: 'dash',    goldMult: 1.2, attack: 'charge', elem: 'electric', skill: 'chain' },
-        { body: '#ffe066', belly: '#e8c44a', face: 'grin',   accessory: 'none' }),
+        { tint: 0.15, face: 'grin',   ears: 'pointy', aura: 'spark' }),
     species({ id: 'scaredy', name: 'Scaredy', kind: 'mob', radius: 38, hpMult: 1.0, speed: 95,  move: 'flee',    goldMult: 1.5, attack: 'none', elem: 'wind', skill: 'dash' },
-        { body: '#c7a4ff', belly: '#a984e8', face: 'scared', accessory: 'none' }),
+        { tint: 0.0,  face: 'scared', ears: 'long',   pattern: 'freckles' }),
     species({ id: 'pudding', name: 'Pudding', kind: 'mob', radius: 54, hpMult: 2.0, speed: 55,  move: 'amble',   goldMult: 1.6, attack: 'slam', elem: 'fire', skill: 'taunt' },
-        { body: '#ffb066', belly: '#e8944a', face: 'happy',  accessory: 'none' }),
+        { tint: 0.25, face: 'happy',  ears: 'stub',   tail: 'curly',  pattern: 'stripes' }),
     species({ id: 'drop',    name: 'Drop',    kind: 'mob', radius: 30, hpMult: 0.7, speed: 110, move: 'zigzag',  goldMult: 1.0, attack: 'spray', elem: 'water', skill: 'knockback' },
-        { body: '#66e0e0', belly: '#4ac4c4', face: 'happy',  accessory: 'none' }),
+        { tint: 0.10, face: 'happy',  ears: 'round',  tail: 'curly' }),
     species({ id: 'blinky',  name: 'Blinky',  kind: 'mob', radius: 40, hpMult: 1.2, speed: 80,  move: 'sleeper', goldMult: 1.3, attack: 'zap', elem: 'electric', skill: 'stun' },
-        { body: '#9aa5c0', belly: '#7e89a4', face: 'sleepy', accessory: 'zzz' }),
+        { tint: 0.50, face: 'sleepy', pattern: 'spots', aura: 'spark' }),
     species({ id: 'twins',   name: 'Twins',   kind: 'mob', radius: 36, hpMult: 0.9, speed: 85,  move: 'amble',   goldMult: 1.1, attack: 'melee', elem: 'wind', skill: 'clone' },
-        { body: '#a8e05f', belly: '#8cc443', face: 'grin',   accessory: 'none' }),
+        { tint: 0.35, face: 'grin',   ears: 'round',  pattern: 'freckles' }),
     species({ id: 'grumpy',  name: 'Grumpy',  kind: 'mob', radius: 50, hpMult: 1.6, speed: 60,  move: 'dash',    goldMult: 1.5, attack: 'charge', elem: 'fire', skill: 'burn' },
-        { body: '#ff7d7d', belly: '#e05e5e', face: 'angry',  accessory: 'none' }),
+        { tint: 0.65, face: 'angry',  horns: 'curved', tail: 'spike' }),
 
     // --- 10 v1.1 newcomers: cuter, weirder, trickier ---
     species({ id: 'ghosty',  name: 'Ghosty',  kind: 'mob', radius: 38, hpMult: 1.0, speed: 60,  move: 'amble',    goldMult: 1.8, attack: 'zap', quirk: 'phase', elem: 'dark', skill: 'stealth' },
-        { body: '#dfe6ff', belly: '#b9c4f0', face: 'sleepy', accessory: 'none', alpha: 0.8 }),
+        { tint: 0.05, face: 'sleepy', ears: 'none', tail: 'curly', aura: 'shadow', alpha: 0.8 }),
     species({ id: 'hoppy',   name: 'Hoppy',   kind: 'mob', radius: 34, hpMult: 0.9, speed: 115, move: 'hop',      goldMult: 1.2, attack: 'melee', elem: 'wind', skill: 'slow' },
-        { body: '#ffc7de', belly: '#eaa5c4', face: 'grin',   accessory: 'ears' }),
+        { tint: 0.50, face: 'grin',   ears: 'long',   tail: 'nub' }),
     species({ id: 'orbity',  name: 'Orbity',  kind: 'mob', radius: 36, hpMult: 1.1, speed: 85,  move: 'orbit',    goldMult: 1.3, attack: 'spit', elem: 'light', skill: 'buffaura' },
-        { body: '#9fd0ff', belly: '#7fb2e8', face: 'happy',  accessory: 'ring' }),
+        { tint: 0.20, face: 'happy',  ears: 'round',  aura: 'gleam' }),
     species({ id: 'lovey',   name: 'Lovey',   kind: 'mob', radius: 34, hpMult: 0.8, speed: 70,  move: 'chase',    goldMult: 1.4, attack: 'melee', elem: 'light', skill: 'heal' },
-        { body: '#ffa3b8', belly: '#e88399', face: 'love',   accessory: 'heart' }),
+        { tint: 0.35, face: 'love',   pattern: 'belly-star', hat: 'bow' }),
     species({ id: 'rocky',   name: 'Rocky',   kind: 'mob', radius: 30, hpMult: 0.7, speed: 220, move: 'ricochet', goldMult: 1.6, attack: 'charge', elem: 'leaf', skill: 'slam' },
-        { body: '#ffb84a', belly: '#e0982e', face: 'grin',   accessory: 'flame' }),
+        { tint: 0.55, face: 'grin',   horns: 'nub',   pattern: 'spots' }),
     species({ id: 'bubbly',  name: 'Bubbly',  kind: 'mob', radius: 40, hpMult: 0.8, speed: 55,  move: 'float',    goldMult: 1.2, attack: 'spit', elem: 'water', skill: 'poison' },
-        { body: '#a3ecff', belly: '#7fd2ea', face: 'happy',  accessory: 'bubble' }),
+        { tint: 0.30, face: 'happy',  pattern: 'spots', aura: 'gleam' }),
     species({ id: 'shysh',   name: 'Shysh',   kind: 'mob', radius: 38, hpMult: 1.0, speed: 90,  move: 'amble',    goldMult: 1.7, attack: 'none', quirk: 'shy', elem: 'leaf', skill: 'heal' },
-        { body: '#c9e89a', belly: '#a9cc78', face: 'scared', accessory: 'leaf' }),
+        { tint: 0.05, face: 'scared', ears: 'long',   hat: 'leaf' }),
     species({ id: 'cloney',  name: 'Cloney',  kind: 'mob', radius: 36, hpMult: 1.3, speed: 80,  move: 'amble',    goldMult: 1.8, attack: 'zap', quirk: 'blink', elem: 'dark', skill: 'clone' },
-        { body: '#e0b3ff', belly: '#c391ea', face: 'wink',   accessory: 'sparkle' }),
+        { tint: 0.40, face: 'wink',   tail: 'spike',  aura: 'gleam' }),
     species({ id: 'freezy',  name: 'Freezy',  kind: 'mob', radius: 42, hpMult: 1.4, speed: 45,  move: 'amble',    goldMult: 1.6, attack: 'spit', quirk: 'ice', elem: 'ice', skill: 'freeze' },
-        { body: '#bfe8ff', belly: '#98cdf0', face: 'sleepy', accessory: 'ice' }),
+        { tint: 0.30, face: 'sleepy', ears: 'long',   aura: 'frost' }),
     species({ id: 'chunky',  name: 'Chunky',  kind: 'mob', radius: 68, hpMult: 6.0, speed: 28,  move: 'amble',    goldMult: 3.0, attack: 'slam', elem: 'leaf', skill: 'knockback' },
-        { body: '#ffd08a', belly: '#e8b165', face: 'happy',  accessory: 'none' }),
+        { tint: 0.75, face: 'happy',  horns: 'spike', tail: 'nub' }),
 
     // --- 4 specials ---
     species({ id: 'splitter', name: 'Splitter', kind: 'splitter', radius: 44, hpMult: 1.2, speed: 75, move: 'amble', goldMult: 1.2, attack: 'melee', childId: 'mini', elem: 'water', skill: 'summon' },
-        { body: '#baff66', belly: '#9ce04a', face: 'grin',   accessory: 'splitline' }),
+        { tint: 0.50, face: 'grin',   ears: 'round',  tail: 'curly', pattern: 'stripes' }),
     species({ id: 'shieldy',  name: 'Shieldy',  kind: 'shield',   radius: 48, hpMult: 1.5, speed: 50, move: 'amble', goldMult: 2.0, attack: 'slam', elem: 'light', skill: 'shield' },
-        { body: '#8fb8d0', belly: '#739cb4', face: 'angry',  accessory: 'shell' }),
+        { tint: 0.55, face: 'angry',  horns: 'curved', hat: 'helmet' }),
     species({ id: 'goldie',   name: 'Goldie',   kind: 'jackpot',  radius: 36, hpMult: 1.0, speed: 240, move: 'flee', goldMult: 10, attack: 'none', despawnMs: 6000, elem: 'light', skill: 'goldaura' },
-        { body: '#ffd54a', belly: '#e8b82e', face: 'greedy', accessory: 'coin' }),
+        { tint: 0.85, face: 'greedy', hat: 'halo',    aura: 'gleam' }),
     species({ id: 'king',     name: 'King Jelly', kind: 'boss',   radius: 240, hpMult: 1.0, speed: 25, move: 'amble', goldMult: 1.0, attack: 'slam', elem: 'dark', skill: 'summon' },
-        { body: '#b06fff', belly: '#9350e0', face: 'angry',  accessory: 'crown' })
+        { tint: 0.70, face: 'angry',  hat: 'crown',   aura: 'shadow', boss: true })
 ];
 
 // =============================================================================
@@ -172,10 +315,92 @@ const SPECIES = [
 // light/dark), 1.5 strong / 0.7 weak - see Balance.elementMult.
 // =============================================================================
 
+// v4.0 Phase C Task 5: pet painter surgery - same signature-part pattern as
+// paintJelly() (see its doc comment above): `pattern`, `prop` and `tailStyle`
+// are new slots, each non-'none' fragment wrapped in <g data-part="kind-
+// value"> via the shared partTag() helper. `ear` (pre-existing) gets the
+// same data-part treatment for architectural symmetry. Fragment builders
+// below take (v, x) where x is a partCtx: { r, br, cx, cy, eyeY, eyeDx,
+// eyeR, mouthY, stroke, sw, body, belly, earIn } - `earIn` doubles as the
+// pattern accent color (matches the pre-existing nose-color usage below).
+// Tails use `body`, not `earIn` - see petTailFrag. No thematic (non-black)
+// strokes are used in any new fragment - only fills vary - so no deviation
+// to document there.
+//
 // One cute round animal. r = radius. o = { body, belly, ear, earIn, pattern,
-// mouth, extra } - ear: round|pointy|long|floppy|horn|antenna|fin|tuft|wing|none
-// pattern: none|spots|stripes|mask|shell|patch  mouth: w|smile|beak|open
-// extra: none|whiskers|mane|tusk|antler|tail|sparkle
+// prop, tailStyle, mouth, extra }
+//   ear:      round|pointy|long|floppy|horn|antenna|fin|tuft|wing|none
+//   pattern:  none|spots|stripes|patch|mask|star
+//   prop:     none|bow|scarf|flower|leaf|goggles|bell
+//   tailStyle:none|puff|curly|long|fin|feather
+//   mouth:    w|smile|beak|open
+//   extra:    none|whiskers|mane|tusk|antler|sparkle
+// (`extra`'s old 'tail' value was retired in favor of the dedicated
+// `tailStyle` slot - see animal() migration note below.)
+function petEarFrag(v, x) {
+    const { cx, cy, br, stroke: S, sw, body, earIn } = x;
+    const ears = {
+        round:  `<circle cx="${cx - br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.3}" fill="${body}" stroke="${S}" stroke-width="${sw}"/><circle cx="${cx + br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.3}" fill="${body}" stroke="${S}" stroke-width="${sw}"/><circle cx="${cx - br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.15}" fill="${earIn}"/><circle cx="${cx + br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.15}" fill="${earIn}"/>`,
+        pointy: `<path d="M${cx - br * 0.85} ${cy - br * 0.45} L${cx - br * 0.65} ${cy - br * 1.15} L${cx - br * 0.25} ${cy - br * 0.75} Z" fill="${body}" stroke="${S}" stroke-width="${sw}"/><path d="M${cx + br * 0.85} ${cy - br * 0.45} L${cx + br * 0.65} ${cy - br * 1.15} L${cx + br * 0.25} ${cy - br * 0.75} Z" fill="${body}" stroke="${S}" stroke-width="${sw}"/><path d="M${cx - br * 0.7} ${cy - br * 0.62} L${cx - br * 0.62} ${cy - br * 0.95} L${cx - br * 0.42} ${cy - br * 0.72} Z" fill="${earIn}"/><path d="M${cx + br * 0.7} ${cy - br * 0.62} L${cx + br * 0.62} ${cy - br * 0.95} L${cx + br * 0.42} ${cy - br * 0.72} Z" fill="${earIn}"/>`,
+        long:   `<ellipse cx="${cx - br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.2}" ry="${br * 0.55}" fill="${body}" stroke="${S}" stroke-width="${sw}" transform="rotate(-10 ${cx - br * 0.42} ${cy - br * 1.0})"/><ellipse cx="${cx + br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.2}" ry="${br * 0.55}" fill="${body}" stroke="${S}" stroke-width="${sw}" transform="rotate(10 ${cx + br * 0.42} ${cy - br * 1.0})"/><ellipse cx="${cx - br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.09}" ry="${br * 0.38}" fill="${earIn}" transform="rotate(-10 ${cx - br * 0.42} ${cy - br * 1.0})"/><ellipse cx="${cx + br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.09}" ry="${br * 0.38}" fill="${earIn}" transform="rotate(10 ${cx + br * 0.42} ${cy - br * 1.0})"/>`,
+        floppy: `<ellipse cx="${cx - br * 0.8}" cy="${cy - br * 0.2}" rx="${br * 0.24}" ry="${br * 0.5}" fill="${earIn}" stroke="${S}" stroke-width="${sw}" transform="rotate(18 ${cx - br * 0.8} ${cy - br * 0.2})"/><ellipse cx="${cx + br * 0.8}" cy="${cy - br * 0.2}" rx="${br * 0.24}" ry="${br * 0.5}" fill="${earIn}" stroke="${S}" stroke-width="${sw}" transform="rotate(-18 ${cx + br * 0.8} ${cy - br * 0.2})"/>`,
+        horn:   `<path d="M${cx - br * 0.4} ${cy - br * 0.85} L${cx - br * 0.5} ${cy - br * 1.25} L${cx - br * 0.15} ${cy - br * 0.95} Z" fill="#ffe9a8" stroke="${S}" stroke-width="${sw * 0.8}"/><path d="M${cx + br * 0.4} ${cy - br * 0.85} L${cx + br * 0.5} ${cy - br * 1.25} L${cx + br * 0.15} ${cy - br * 0.95} Z" fill="#ffe9a8" stroke="${S}" stroke-width="${sw * 0.8}"/>`,
+        antenna:`<path d="M${cx - br * 0.3} ${cy - br * 0.8} q${-br * 0.15} ${-br * 0.5} ${-br * 0.35} ${-br * 0.55}" stroke="${S}" stroke-width="${sw * 0.7}" fill="none"/><circle cx="${cx - br * 0.68}" cy="${cy - br * 1.36}" r="${br * 0.12}" fill="${earIn}" stroke="${S}" stroke-width="${sw * 0.5}"/><path d="M${cx + br * 0.3} ${cy - br * 0.8} q${br * 0.15} ${-br * 0.5} ${br * 0.35} ${-br * 0.55}" stroke="${S}" stroke-width="${sw * 0.7}" fill="none"/><circle cx="${cx + br * 0.68}" cy="${cy - br * 1.36}" r="${br * 0.12}" fill="${earIn}" stroke="${S}" stroke-width="${sw * 0.5}"/>`,
+        fin:    `<path d="M${cx} ${cy - br * 0.8} L${cx - br * 0.22} ${cy - br * 1.25} L${cx + br * 0.22} ${cy - br * 1.25} Z" fill="${earIn}" stroke="${S}" stroke-width="${sw * 0.8}"/>`,
+        tuft:   `<path d="M${cx - br * 0.25} ${cy - br * 0.82} q${br * 0.1} ${-br * 0.4} ${br * 0.25} ${-br * 0.42} q${br * 0.15} ${br * 0.02} ${br * 0.25} ${br * 0.42} Z" fill="${earIn}" stroke="${S}" stroke-width="${sw * 0.7}"/>`,
+        wing:   `<ellipse cx="${cx - br * 0.95}" cy="${cy}" rx="${br * 0.22}" ry="${br * 0.42}" fill="${earIn}" stroke="${S}" stroke-width="${sw * 0.8}"/><ellipse cx="${cx + br * 0.95}" cy="${cy}" rx="${br * 0.22}" ry="${br * 0.42}" fill="${earIn}" stroke="${S}" stroke-width="${sw * 0.8}"/>`
+    };
+    return ears[v] || '';
+}
+
+function petPatternFrag(v, x) {
+    const { cx, cy, br, r, sw, earIn, eyeY, eyeDx, eyeR } = x;
+    if (v === 'spots') return `<circle cx="${cx - br * 0.45}" cy="${cy - br * 0.3}" r="${br * 0.12}" fill="${earIn}" opacity=".8"/><circle cx="${cx + br * 0.5}" cy="${cy - br * 0.15}" r="${br * 0.1}" fill="${earIn}" opacity=".8"/><circle cx="${cx + br * 0.2}" cy="${cy - br * 0.55}" r="${br * 0.08}" fill="${earIn}" opacity=".8"/>`;
+    if (v === 'stripes') return `<path d="M${cx - br * 0.75} ${cy - br * 0.5} q${br * 0.2} ${br * 0.12} ${br * 0.36} 0 M${cx + br * 0.75} ${cy - br * 0.5} q${-br * 0.2} ${br * 0.12} ${-br * 0.36} 0 M${cx - br * 0.2} ${cy - br * 0.78} q${br * 0.2} ${br * 0.1} ${br * 0.4} 0" stroke="${earIn}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
+    if (v === 'patch') return `<ellipse cx="${cx + br * 0.42}" cy="${cy + br * 0.04}" rx="${br * 0.3}" ry="${br * 0.36}" fill="${earIn}" opacity=".85" transform="rotate(-8 ${cx + br * 0.42} ${cy + br * 0.04})"/>`;
+    if (v === 'mask') return `<ellipse cx="${cx - eyeDx}" cy="${eyeY}" rx="${eyeR * 2.1}" ry="${eyeR * 1.7}" fill="${earIn}" opacity=".85"/><ellipse cx="${cx + eyeDx}" cy="${eyeY}" rx="${eyeR * 2.1}" ry="${eyeR * 1.7}" fill="${earIn}" opacity=".85"/>`;
+    if (v === 'star') return `<path d="M${cx} ${cy + br * 0.32} l${r * 0.05} ${r * 0.11} l${r * 0.12} ${r * 0.02} l${-r * 0.09} ${r * 0.08} l${r * 0.03} ${r * 0.12} l${-r * 0.11} ${-r * 0.07} l${-r * 0.11} ${r * 0.07} l${r * 0.03} ${-r * 0.12} l${-r * 0.09} ${-r * 0.08} l${r * 0.12} ${-r * 0.02} Z" fill="#ffffff" opacity=".9"/>`;
+    return '';
+}
+
+// v4.0 Phase C Task 6: close-up (r=90 dex-detail) scaling pass - several
+// minor-accent strokes here used to be fixed low fractions of `sw` (0.25-
+// 0.35), which read fine at the production r=24 but drop under the 3px
+// close-up floor once this art gets rendered bigger (see tests/catalog.test.js
+// "r=90 close-up scaling"). Normalized every previously-too-thin stroke to
+// sw*0.4 (the smallest ratio that clears 3px at r=90) instead of hand-tuning
+// each one separately. `scarf`'s neck-band was the one non-sw, r-direct
+// stroke (r*0.16, ~14.4px at r=90) - thinned to r*0.11 to fit the r*0.12
+// upper-bound cap. `goggles`'s strap also switched from a hardcoded
+// '#2a2a34' to the shared `S` (partCtx.stroke) so it recolors with the rest
+// of the character ink instead of drifting from it.
+function petPropFrag(v, x) {
+    const { cx, cy, br, r, sw, stroke: S, eyeY, eyeDx, eyeR } = x;
+    const topY = cy - br;
+    if (v === 'bow') return `<path d="M${cx} ${topY + r * 0.08} l${-r * 0.16} ${-r * 0.09} q${-r * 0.02} ${r * 0.10} 0 ${r * 0.13} Z M${cx} ${topY + r * 0.08} l${r * 0.16} ${-r * 0.09} q${r * 0.02} ${r * 0.10} 0 ${r * 0.13} Z" fill="#ff8fcf" stroke="${S}" stroke-width="${sw * 0.4}"/><circle cx="${cx}" cy="${topY + r * 0.08}" r="${r * 0.04}" fill="#ff5ec4" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'flower') {
+        const fx = cx - br * 0.55, fy = topY + r * 0.28, pr = r * 0.065;
+        const petal = (dx, dy) => `<circle cx="${fx + dx}" cy="${fy + dy}" r="${pr}" fill="#fff0b8" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+        return petal(0, -pr * 1.5) + petal(0, pr * 1.5) + petal(-pr * 1.5, 0) + petal(pr * 1.5, 0) + `<circle cx="${fx}" cy="${fy}" r="${pr * 0.85}" fill="#ffb547"/>`;
+    }
+    if (v === 'leaf') return `<path d="M${cx} ${topY + r * 0.1} q${r * 0.03} ${-r * 0.14} ${r * 0.16} ${-r * 0.16} q${-r * 0.01} ${r * 0.13} ${-r * 0.16} ${r * 0.16} Z" fill="#6fc46f" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'goggles') return `<path d="M${cx - eyeDx - eyeR * 1.6} ${eyeY} h${2 * (eyeDx + eyeR * 1.6)}" stroke="${S}" stroke-width="${sw * 0.5}"/><circle cx="${cx - eyeDx}" cy="${eyeY}" r="${eyeR * 1.55}" fill="#bfe8ff" fill-opacity=".55" stroke="${S}" stroke-width="${sw * 0.4}"/><circle cx="${cx + eyeDx}" cy="${eyeY}" r="${eyeR * 1.55}" fill="#bfe8ff" fill-opacity=".55" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'scarf') return `<path d="M${cx - br * 0.6} ${cy + br * 0.5} q${br * 0.6} ${br * 0.34} ${br * 1.2} 0" stroke="#ff6f61" stroke-width="${r * 0.11}" fill="none" stroke-linecap="round"/><path d="M${cx + br * 0.18} ${cy + br * 0.62} l${r * 0.03} ${r * 0.16} l${r * 0.12} ${-r * 0.02} Z" fill="#e0554a" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'bell') return `<path d="M${cx - br * 0.15} ${cy + br * 0.56} q${br * 0.15} ${br * 0.12} ${br * 0.3} 0" stroke="${S}" stroke-width="${sw * 0.4}" fill="none"/><circle cx="${cx}" cy="${cy + br * 0.72}" r="${r * 0.09}" fill="#ffd54a" stroke="${S}" stroke-width="${sw * 0.4}"/><path d="M${cx - r * 0.03} ${cy + br * 0.72} h${r * 0.06}" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    return '';
+}
+
+function petTailFrag(v, x) {
+    const { cx, cy, br, r, sw, stroke: S, body } = x;
+    const tx = cx + br * 0.9, ty = cy + br * 0.35;
+    if (v === 'puff') return `<circle cx="${tx}" cy="${ty}" r="${r * 0.2}" fill="${body}" stroke="${S}" stroke-width="${sw * 0.5}"/><circle cx="${tx + r * 0.07}" cy="${ty - r * 0.13}" r="${r * 0.13}" fill="${body}" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'curly') return `<path d="M${tx} ${ty} q${r * 0.45} ${-r * 0.1} ${r * 0.3} ${-r * 0.5}" stroke="${body}" stroke-width="${sw * 1.3}" fill="none" stroke-linecap="round"/>`;
+    if (v === 'long') return `<path d="M${tx} ${ty} q${r * 0.32} ${r * 0.02} ${r * 0.4} ${-r * 0.32} q${r * 0.06} ${-r * 0.24} ${-r * 0.1} ${-r * 0.34}" stroke="${body}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
+    if (v === 'fin') return `<path d="M${tx} ${ty - r * 0.08} l${r * 0.22} ${r * 0.02} l${-r * 0.1} ${r * 0.2} Z" fill="${body}" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
+    if (v === 'feather') return `<path d="M${tx} ${ty} l${r * 0.26} ${-r * 0.06} M${tx} ${ty} l${r * 0.24} ${r * 0.06} M${tx} ${ty} l${r * 0.2} ${-r * 0.22}" stroke="${body}" stroke-width="${sw * 0.7}" fill="none" stroke-linecap="round"/>`;
+    return '';
+}
+
 function paintAnimal(r, o) {
     const d = r * 2, cx = r, cy = r * 1.08;
     const br = r * 0.82;                       // body radius
@@ -184,31 +409,11 @@ function paintAnimal(r, o) {
     const eyeY = cy - br * 0.14, eyeDx = br * 0.4;
     const eyeR = Math.max(3, r * 0.135); // v2.5: bigger puppy eyes
 
-    const ears = {
-        round:  `<circle cx="${cx - br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.3}" fill="${o.body}" stroke="${S}" stroke-width="${sw}"/><circle cx="${cx + br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.3}" fill="${o.body}" stroke="${S}" stroke-width="${sw}"/><circle cx="${cx - br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.15}" fill="${o.earIn}"/><circle cx="${cx + br * 0.62}" cy="${cy - br * 0.78}" r="${br * 0.15}" fill="${o.earIn}"/>`,
-        pointy: `<path d="M${cx - br * 0.85} ${cy - br * 0.45} L${cx - br * 0.65} ${cy - br * 1.15} L${cx - br * 0.25} ${cy - br * 0.75} Z" fill="${o.body}" stroke="${S}" stroke-width="${sw}"/><path d="M${cx + br * 0.85} ${cy - br * 0.45} L${cx + br * 0.65} ${cy - br * 1.15} L${cx + br * 0.25} ${cy - br * 0.75} Z" fill="${o.body}" stroke="${S}" stroke-width="${sw}"/><path d="M${cx - br * 0.7} ${cy - br * 0.62} L${cx - br * 0.62} ${cy - br * 0.95} L${cx - br * 0.42} ${cy - br * 0.72} Z" fill="${o.earIn}"/><path d="M${cx + br * 0.7} ${cy - br * 0.62} L${cx + br * 0.62} ${cy - br * 0.95} L${cx + br * 0.42} ${cy - br * 0.72} Z" fill="${o.earIn}"/>`,
-        long:   `<ellipse cx="${cx - br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.2}" ry="${br * 0.55}" fill="${o.body}" stroke="${S}" stroke-width="${sw}" transform="rotate(-10 ${cx - br * 0.42} ${cy - br * 1.0})"/><ellipse cx="${cx + br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.2}" ry="${br * 0.55}" fill="${o.body}" stroke="${S}" stroke-width="${sw}" transform="rotate(10 ${cx + br * 0.42} ${cy - br * 1.0})"/><ellipse cx="${cx - br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.09}" ry="${br * 0.38}" fill="${o.earIn}" transform="rotate(-10 ${cx - br * 0.42} ${cy - br * 1.0})"/><ellipse cx="${cx + br * 0.42}" cy="${cy - br * 1.0}" rx="${br * 0.09}" ry="${br * 0.38}" fill="${o.earIn}" transform="rotate(10 ${cx + br * 0.42} ${cy - br * 1.0})"/>`,
-        floppy: `<ellipse cx="${cx - br * 0.8}" cy="${cy - br * 0.2}" rx="${br * 0.24}" ry="${br * 0.5}" fill="${o.earIn}" stroke="${S}" stroke-width="${sw}" transform="rotate(18 ${cx - br * 0.8} ${cy - br * 0.2})"/><ellipse cx="${cx + br * 0.8}" cy="${cy - br * 0.2}" rx="${br * 0.24}" ry="${br * 0.5}" fill="${o.earIn}" stroke="${S}" stroke-width="${sw}" transform="rotate(-18 ${cx + br * 0.8} ${cy - br * 0.2})"/>`,
-        horn:   `<path d="M${cx - br * 0.4} ${cy - br * 0.85} L${cx - br * 0.5} ${cy - br * 1.25} L${cx - br * 0.15} ${cy - br * 0.95} Z" fill="#ffe9a8" stroke="${S}" stroke-width="${sw * 0.8}"/><path d="M${cx + br * 0.4} ${cy - br * 0.85} L${cx + br * 0.5} ${cy - br * 1.25} L${cx + br * 0.15} ${cy - br * 0.95} Z" fill="#ffe9a8" stroke="${S}" stroke-width="${sw * 0.8}"/>`,
-        antenna:`<path d="M${cx - br * 0.3} ${cy - br * 0.8} q${-br * 0.15} ${-br * 0.5} ${-br * 0.35} ${-br * 0.55}" stroke="${S}" stroke-width="${sw * 0.7}" fill="none"/><circle cx="${cx - br * 0.68}" cy="${cy - br * 1.36}" r="${br * 0.12}" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.5}"/><path d="M${cx + br * 0.3} ${cy - br * 0.8} q${br * 0.15} ${-br * 0.5} ${br * 0.35} ${-br * 0.55}" stroke="${S}" stroke-width="${sw * 0.7}" fill="none"/><circle cx="${cx + br * 0.68}" cy="${cy - br * 1.36}" r="${br * 0.12}" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.5}"/>`,
-        fin:    `<path d="M${cx} ${cy - br * 0.8} L${cx - br * 0.22} ${cy - br * 1.25} L${cx + br * 0.22} ${cy - br * 1.25} Z" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.8}"/>`,
-        tuft:   `<path d="M${cx - br * 0.25} ${cy - br * 0.82} q${br * 0.1} ${-br * 0.4} ${br * 0.25} ${-br * 0.42} q${br * 0.15} ${br * 0.02} ${br * 0.25} ${br * 0.42} Z" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.7}"/>`,
-        wing:   `<ellipse cx="${cx - br * 0.95}" cy="${cy}" rx="${br * 0.22}" ry="${br * 0.42}" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.8}"/><ellipse cx="${cx + br * 0.95}" cy="${cy}" rx="${br * 0.22}" ry="${br * 0.42}" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.8}"/>`,
-        none:   ''
-    };
-
-    let pattern = '';
-    if (o.pattern === 'spots') {
-        pattern = `<circle cx="${cx - br * 0.45}" cy="${cy - br * 0.3}" r="${br * 0.12}" fill="${o.earIn}" opacity=".8"/><circle cx="${cx + br * 0.5}" cy="${cy - br * 0.15}" r="${br * 0.1}" fill="${o.earIn}" opacity=".8"/><circle cx="${cx + br * 0.2}" cy="${cy - br * 0.55}" r="${br * 0.08}" fill="${o.earIn}" opacity=".8"/>`;
-    } else if (o.pattern === 'stripes') {
-        pattern = `<path d="M${cx - br * 0.75} ${cy - br * 0.5} q${br * 0.2} ${br * 0.12} ${br * 0.36} 0 M${cx + br * 0.75} ${cy - br * 0.5} q${-br * 0.2} ${br * 0.12} ${-br * 0.36} 0 M${cx - br * 0.2} ${cy - br * 0.78} q${br * 0.2} ${br * 0.1} ${br * 0.4} 0" stroke="${o.earIn}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
-    } else if (o.pattern === 'mask') {
-        pattern = `<ellipse cx="${cx - eyeDx}" cy="${eyeY}" rx="${eyeR * 2.1}" ry="${eyeR * 1.7}" fill="${o.earIn}" opacity=".85"/><ellipse cx="${cx + eyeDx}" cy="${eyeY}" rx="${eyeR * 2.1}" ry="${eyeR * 1.7}" fill="${o.earIn}" opacity=".85"/>`;
-    } else if (o.pattern === 'shell') {
-        pattern = `<path d="M${cx - br * 0.85} ${cy + br * 0.1} a${br * 0.85} ${br * 0.85} 0 0 1 ${br * 1.7} 0" fill="${o.earIn}" stroke="${S}" stroke-width="${sw * 0.7}" opacity=".9"/>`;
-    } else if (o.pattern === 'patch') {
-        pattern = `<circle cx="${cx + eyeDx}" cy="${eyeY}" r="${eyeR * 2}" fill="${o.earIn}" opacity=".7"/>`;
-    }
+    const partCtx = { r, br, cx, cy, eyeY, eyeDx, eyeR, stroke: S, sw, body: o.body, belly: o.belly, earIn: o.earIn };
+    const ear = partTag('ear', o.ear, petEarFrag(o.ear, partCtx));
+    const pattern = partTag('pattern', o.pattern, petPatternFrag(o.pattern, partCtx));
+    const prop = partTag('prop', o.prop, petPropFrag(o.prop, partCtx));
+    const tailStyle = partTag('tailStyle', o.tailStyle, petTailFrag(o.tailStyle, partCtx));
 
     const mouthY = cy + br * 0.28;
     const mouths = {
@@ -232,12 +437,17 @@ function paintAnimal(r, o) {
         extra = `<path d="M${cx - br * 0.45} ${cy - br * 0.8} v${-br * 0.35} m0 ${br * 0.15} h${-br * 0.2} M${cx + br * 0.45} ${cy - br * 0.8} v${-br * 0.35} m0 ${br * 0.15} h${br * 0.2}" stroke="#a5732e" stroke-width="${sw * 0.8}" fill="none" stroke-linecap="round"/>`;
     } else if (o.extra === 'sparkle') {
         extra = `<path d="M${cx + br * 0.75} ${cy - br * 0.85} l${r * 0.05} ${r * 0.1} l${r * 0.1} ${r * 0.05} l${-r * 0.1} ${r * 0.05} l${-r * 0.05} ${r * 0.1} l${-r * 0.05} ${-r * 0.1} l${-r * 0.1} ${-r * 0.05} l${r * 0.1} ${-r * 0.05} Z" fill="#fff" opacity=".95"/>`;
-    } else if (o.extra === 'tail') {
-        extra = `<path d="M${cx + br * 0.9} ${cy + br * 0.35} q${br * 0.45} ${-br * 0.1} ${br * 0.3} ${-br * 0.5}" stroke="${o.body}" stroke-width="${sw * 1.6}" fill="none" stroke-linecap="round"/>`;
+    } else if (o.extra === 'horn') {
+        // cow/goat's stubby horn-pair - was completely missing pre-Task-6
+        // (both set extra:'horn' in PET_SPECIES but no branch handled it,
+        // so they rendered hornless). Small ivory triangles tucked above
+        // the floppy ears both species also wear; sized/stroked like this
+        // chain's siblings (r-scaled geometry, sw*0.4 stroke via `S`).
+        extra = `<path d="M${cx - br * 0.24} ${cy - br * 0.78} L${cx - br * 0.32} ${cy - br * 1.08} L${cx - br * 0.08} ${cy - br * 0.86} Z" fill="#ffe9a8" stroke="${S}" stroke-width="${sw * 0.4}"/><path d="M${cx + br * 0.24} ${cy - br * 0.78} L${cx + br * 0.32} ${cy - br * 1.08} L${cx + br * 0.08} ${cy - br * 0.86} Z" fill="#ffe9a8" stroke="${S}" stroke-width="${sw * 0.4}"/>`;
     }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${d} ${d}">
-  ${o.extra === 'mane' ? extra : ''}${ears[o.ear] || ''}
+  ${o.extra === 'mane' ? extra : ''}${tailStyle}${ear}
   <circle cx="${cx}" cy="${cy}" r="${br}" fill="${o.body}" stroke="${S}" stroke-width="${sw}"/>
   <ellipse cx="${cx}" cy="${cy + br * 0.45}" rx="${br * 0.55}" ry="${br * 0.4}" fill="${o.belly}"/>
   ${pattern}
@@ -249,15 +459,29 @@ function paintAnimal(r, o) {
   <circle cx="${cx - eyeDx - eyeR * 0.35}" cy="${eyeY + eyeR * 0.35}" r="${eyeR * 0.16}" fill="#fff" opacity=".85"/><circle cx="${cx + eyeDx - eyeR * 0.35}" cy="${eyeY + eyeR * 0.35}" r="${eyeR * 0.16}" fill="#fff" opacity=".85"/>
   <circle cx="${cx - eyeDx - eyeR * 1.55}" cy="${eyeY + eyeR * 1.5}" r="${eyeR * 1.0}" fill="#ff9ab5" opacity=".75"/><circle cx="${cx + eyeDx + eyeR * 1.55}" cy="${eyeY + eyeR * 1.5}" r="${eyeR * 1.0}" fill="#ff9ab5" opacity=".75"/>
   ${nose}${mouths[o.mouth] || mouths.smile}
+  ${prop}
   ${o.extra !== 'mane' ? extra : ''}
 </svg>`;
 }
 
-function animal(id, name, element, skill, body, belly, earIn, ear, pattern, mouth, extra) {
+// Migration note (extra's old 'tail' value -> dedicated tailStyle slot): the
+// 10 pets that used extra:'tail' (dog/fox/monkey/raccoon/squirrel/dragon/
+// skunk/gecko/chameleon/redpanda) were re-authored with a personality-true
+// tailStyle value instead (see the recipe table in phase-c-task-5-report.md)
+// - extra is now free for whiskers/mane/tusk/antler/sparkle only.
+//
+// art: { ear, pattern, prop, tailStyle, mouth, extra } - the recipe fields
+// are spread onto the returned pet object too (not just baked into svg),
+// mirroring species(def, art) so tests can introspect p.ear/p.pattern/etc
+// directly instead of re-parsing markup.
+function animal(id, name, element, skill, body, belly, earIn, art) {
+    const ear = art.ear || 'none', pattern = art.pattern || 'none', prop = art.prop || 'none';
+    const tailStyle = art.tailStyle || 'none', mouth = art.mouth || 'smile', extra = art.extra || 'none';
     return {
         id, name, element, skill,
+        ear, pattern, prop, tailStyle, mouth, extra,
         color: parseInt(body.slice(1), 16),
-        svg: paintAnimal(24, { body, belly, earIn, ear, pattern, mouth, extra })
+        svg: paintAnimal(24, { body, belly, earIn, ear, pattern, prop, tailStyle, mouth, extra })
     };
 }
 
@@ -268,56 +492,71 @@ function animal(id, name, element, skill, body, belly, earIn, ear, pattern, mout
 // panda=shield, fox=stealth, etc. Distribution: every one of the 22
 // archetypes used >=1x, none >4x (see tests/catalog.test.js).
 const PET_SPECIES = [
-    animal('cat',      'Cat',      'fire',     'dash',      '#ffb066', '#ffd9b0', '#e8894a', 'pointy', 'none',    'w',     'whiskers'),
-    animal('dog',      'Dog',      'leaf',     'taunt',     '#c9a06a', '#ecd9b8', '#a5732e', 'floppy', 'patch',   'open',  'tail'),
-    animal('rabbit',   'Rabbit',   'ice',      'heal',      '#f5e6e8', '#ffffff', '#ffb6c8', 'long',   'none',    'w',     'none'),
-    animal('bear',     'Bear',     'ice',      'slam',      '#b98050', '#e0c09a', '#8a5a30', 'round',  'none',    'smile', 'none'),
-    animal('panda',    'Panda',    'leaf',     'shield',    '#f5f5f5', '#ffffff', '#2a2a34', 'round',  'mask',    'smile', 'none'),
-    animal('fox',      'Fox',      'fire',     'stealth',   '#ff8a4a', '#ffe0c0', '#d06020', 'pointy', 'none',    'w',     'tail'),
-    animal('pig',      'Pig',      'water',    'lifesteal', '#ffb0c0', '#ffd0da', '#e88a9e', 'pointy', 'none',    'open',  'none'),
-    animal('frog',     'Frog',     'water',    'poison',    '#7ec850', '#c5e8a5', '#5aa032', 'round',  'none',    'smile', 'none'),
-    animal('chick',    'Chick',    'light',    'heal',      '#ffe066', '#fff2b8', '#ffb547', 'tuft',   'none',    'beak',  'none'),
-    animal('penguin',  'Penguin',  'ice',      'freeze',    '#3a4a63', '#ffffff', '#28344a', 'none',   'belly',   'beak',  'wing'),
-    animal('koala',    'Koala',    'leaf',     'slow',      '#a8b0bd', '#d8dde5', '#8890a0', 'round',  'none',    'smile', 'none'),
-    animal('tiger',    'Tiger',    'fire',     'dash',      '#ffab3d', '#ffe0b0', '#c87818', 'round',  'stripes', 'w',     'whiskers'),
-    animal('lion',     'Lion',     'fire',     'taunt',     '#ffc36a', '#ffe6bd', '#d08830', 'round',  'none',    'w',     'mane'),
-    animal('mouse',    'Mouse',    'electric', 'chain',     '#c8c8d5', '#e8e8f0', '#ffb6c8', 'round',  'none',    'w',     'whiskers'),
-    animal('hamster',  'Hamster',  'electric', 'chain',     '#ffcf8a', '#fff0d5', '#e8a050', 'round',  'patch',   'open',  'none'),
-    animal('duck',     'Duck',     'wind',     'goldaura',  '#fff2b8', '#ffffff', '#ffd75e', 'none',   'none',    'beak',  'wing'),
-    animal('owl',      'Owl',      'wind',     'stun',      '#b08860', '#e5d0b0', '#7d5a38', 'tuft',   'mask',    'beak',  'none'),
-    animal('wolf',     'Wolf',     'dark',     'taunt',     '#9aa5b8', '#d5dce8', '#6d7a90', 'pointy', 'none',    'w',     'none'),
-    animal('deer',     'Deer',     'leaf',     'heal',      '#d8a878', '#f0ddc0', '#b0824e', 'floppy', 'spots',   'smile', 'antler'),
-    animal('sheep',    'Sheep',    'light',    'goldaura',  '#f8f2ea', '#ffffff', '#e0d5c5', 'floppy', 'none',    'smile', 'none'),
-    animal('cow',      'Cow',      'leaf',     'rage',      '#f5f5f0', '#ffffff', '#3a3a44', 'floppy', 'spots',   'open',  'horn'),
-    animal('monkey',   'Monkey',   'leaf',     'rage',      '#b08055', '#ecd0a8', '#8a5a30', 'round',  'none',    'open',  'tail'),
-    animal('elephant', 'Elephant', 'water',    'slam',      '#b8c0d5', '#dde2f0', '#98a0b8', 'floppy', 'none',    'smile', 'tusk'),
-    animal('raccoon',  'Raccoon',  'dark',     'stealth',   '#a8a8b8', '#dcdce8', '#454550', 'pointy', 'mask',    'w',     'tail'),
-    animal('hedgehog', 'Hedgehog', 'dark',     'shield',    '#c09468', '#ecd9b8', '#7d5a38', 'tuft',   'spots',   'w',     'none'),
-    animal('squirrel', 'Squirrel', 'leaf',     'buffaura',  '#d5854a', '#f5d5ae', '#a5601e', 'pointy', 'none',    'open',  'tail'),
-    animal('otter',    'Otter',    'water',    'execute',   '#a5825f', '#e5d0b0', '#7d5a38', 'round',  'none',    'w',     'whiskers'),
-    animal('seal',     'Seal',     'ice',      'freeze',    '#c5d5e5', '#eef4fa', '#a0b5c8', 'none',   'spots',   'w',     'whiskers'),
-    animal('dolphin',  'Dolphin',  'water',    'buffaura',  '#7fb8e8', '#c5e2f8', '#4a90c8', 'fin',    'belly',   'smile', 'none'),
-    animal('whale',    'Whale',    'water',    'knockback', '#6a9ad5', '#b8d5f0', '#4a78b0', 'fin',    'belly',   'smile', 'none'),
-    animal('turtle',   'Turtle',   'water',    'shield',    '#8ac878', '#c8e8b8', '#5a9548', 'none',   'shell',   'smile', 'none'),
-    animal('snail',    'Snail',    'leaf',     'slow',      '#e8c880', '#f5e5c0', '#c89850', 'antenna','shell',   'smile', 'none'),
-    animal('bee',      'Bee',      'electric', 'summon',    '#ffd75e', '#fff0b8', '#3a3a44', 'antenna','stripes', 'smile', 'wing'),
-    animal('ladybug',  'Ladybug',  'leaf',     'summon',    '#ff6b6b', '#ffb8b8', '#3a3a44', 'antenna','spots',   'smile', 'none'),
-    animal('butterfly','Butterfly','wind',     'clone',     '#c7a4ff', '#e8dcff', '#9a6fe0', 'antenna','none',    'smile', 'wing'),
-    animal('bat',      'Bat',      'dark',     'stealth',   '#8a7aa8', '#c0b5d5', '#5d4d78', 'pointy', 'none',    'open',  'wing'),
-    animal('crab',     'Crab',     'water',    'execute',   '#ff8a70', '#ffc5b5', '#e05a3a', 'antenna','none',    'w',     'none'),
-    animal('octopus',  'Octopus',  'water',    'lifesteal', '#e88ab8', '#f5c5dd', '#c85a90', 'none',   'spots',   'w',     'none'),
-    animal('axolotl',  'Axolotl',  'water',    'clone',     '#ffb5c5', '#ffdde5', '#ff8aa5', 'tuft',   'none',    'smile', 'none'),
-    animal('dragon',   'Dragon',   'fire',     'burn',      '#ff7d5c', '#ffc5b0', '#d05030', 'horn',   'belly',   'open',  'tail'),
-    animal('unicorn',  'Unicorn',  'light',    'critaura',  '#f0e5ff', '#ffffff', '#ffb6dd', 'fin',    'none',    'smile', 'sparkle'),
-    animal('gecko',    'Gecko',    'fire',     'dash',      '#a5e05f', '#d5f0b0', '#78b038', 'none',   'spots',   'smile', 'tail'),
-    animal('skunk',    'Skunk',    'dark',     'poison',    '#4a4a58', '#e8e8f0', '#f0f0f5', 'pointy', 'stripes', 'w',     'tail'),
-    animal('goat',     'Goat',     'ice',      'slam',      '#e5ddd0', '#f8f4ec', '#c0b5a0', 'floppy', 'none',    'smile', 'horn'),
-    animal('horse',    'Horse',    'wind',     'knockback', '#c08858', '#ead0ae', '#8a5a30', 'pointy', 'none',    'smile', 'mane'),
-    animal('alpaca',   'Alpaca',   'light',    'revive',    '#f5e8d5', '#fdf8ee', '#e0c8a5', 'long',   'none',    'w',     'none'),
-    animal('toucan',   'Toucan',   'wind',     'critaura',  '#3a3a48', '#f5f5f0', '#ff9a3d', 'none',   'belly',   'beak',  'wing'),
-    animal('jellyfish','Jellyfish','electric', 'stun',      '#b8d5ff', '#e0edff', '#8aa8e8', 'antenna','none',    'smile', 'none'),
-    animal('chameleon','Chameleon','light',    'revive',    '#78d0a0', '#c0ecd5', '#48a870', 'fin',    'stripes', 'smile', 'tail'),
-    animal('redpanda', 'Red Panda','fire',     'burn',      '#e0784a', '#f5c5a5', '#8a4020', 'round',  'mask',    'w',     'tail')
+    // --- fire (7) ---
+    animal('cat',      'Cat',      'fire',     'dash',      '#ffb066', '#ffd9b0', '#e8894a', { ear: 'pointy', prop: 'bow',    tailStyle: 'curly', mouth: 'w',     extra: 'whiskers' }),
+    animal('fox',      'Fox',      'fire',     'stealth',   '#ff8a4a', '#ffe0c0', '#d06020', { ear: 'pointy', pattern: 'patch', tailStyle: 'puff', mouth: 'w',     extra: 'whiskers' }),
+    animal('tiger',    'Tiger',    'fire',     'dash',      '#ffab3d', '#ffe0b0', '#c87818', { ear: 'round',  pattern: 'stripes', tailStyle: 'long', mouth: 'w',   extra: 'whiskers' }),
+    animal('lion',     'Lion',     'fire',     'taunt',     '#ffc36a', '#ffe6bd', '#d08830', { ear: 'round',  pattern: 'patch', tailStyle: 'puff', mouth: 'w',   extra: 'mane' }),
+    animal('dragon',   'Dragon',   'fire',     'burn',      '#ff7d5c', '#ffc5b0', '#d05030', { ear: 'horn',   pattern: 'patch', tailStyle: 'long', mouth: 'open' }),
+    animal('gecko',    'Gecko',    'fire',     'dash',      '#a5e05f', '#d5f0b0', '#78b038', { pattern: 'spots', tailStyle: 'long', mouth: 'smile' }),
+    animal('redpanda', 'Red Panda','fire',     'burn',      '#e0784a', '#f5c5a5', '#8a4020', { ear: 'round',  pattern: 'mask', tailStyle: 'puff', mouth: 'w' }),
+
+    // --- water (10) ---
+    animal('pig',      'Pig',      'water',    'lifesteal', '#ffb0c0', '#ffd0da', '#e88a9e', { ear: 'pointy', prop: 'bell', tailStyle: 'curly', mouth: 'open' }),
+    animal('frog',     'Frog',     'water',    'poison',    '#7ec850', '#c5e8a5', '#5aa032', { ear: 'round',  pattern: 'spots', mouth: 'smile' }),
+    animal('elephant', 'Elephant', 'water',    'slam',      '#b8c0d5', '#dde2f0', '#98a0b8', { ear: 'floppy', pattern: 'patch', tailStyle: 'long', mouth: 'smile', extra: 'tusk' }),
+    animal('otter',    'Otter',    'water',    'execute',   '#a5825f', '#e5d0b0', '#7d5a38', { ear: 'round',  pattern: 'patch', tailStyle: 'long', mouth: 'w',    extra: 'whiskers' }),
+    animal('dolphin',  'Dolphin',  'water',    'buffaura',  '#7fb8e8', '#c5e2f8', '#4a90c8', { ear: 'fin',    pattern: 'spots', tailStyle: 'fin', mouth: 'smile' }),
+    animal('whale',    'Whale',    'water',    'knockback', '#6a9ad5', '#b8d5f0', '#4a78b0', { pattern: 'spots', tailStyle: 'fin', mouth: 'open' }),
+    animal('turtle',   'Turtle',   'water',    'shield',    '#8ac878', '#c8e8b8', '#5a9548', { pattern: 'mask', mouth: 'smile' }),
+    animal('crab',     'Crab',     'water',    'execute',   '#ff8a70', '#ffc5b5', '#e05a3a', { ear: 'antenna', pattern: 'patch', mouth: 'w' }),
+    animal('octopus',  'Octopus',  'water',    'lifesteal', '#e88ab8', '#f5c5dd', '#c85a90', { pattern: 'spots', prop: 'bow', mouth: 'w' }),
+    animal('axolotl',  'Axolotl',  'water',    'clone',     '#ffb5c5', '#ffdde5', '#ff8aa5', { ear: 'tuft',   prop: 'flower', tailStyle: 'fin', mouth: 'smile' }),
+
+    // --- leaf (9) ---
+    animal('dog',      'Dog',      'leaf',     'taunt',     '#c9a06a', '#ecd9b8', '#a5732e', { ear: 'floppy', pattern: 'patch', prop: 'scarf', tailStyle: 'curly', mouth: 'open' }),
+    animal('panda',    'Panda',    'leaf',     'shield',    '#f5f5f5', '#ffffff', '#2a2a34', { ear: 'round',  pattern: 'mask', tailStyle: 'puff', mouth: 'smile' }),
+    animal('koala',    'Koala',    'leaf',     'slow',      '#a8b0bd', '#d8dde5', '#8890a0', { ear: 'round',  prop: 'leaf', mouth: 'smile' }),
+    animal('deer',     'Deer',     'leaf',     'heal',      '#d8a878', '#f0ddc0', '#b0824e', { ear: 'floppy', pattern: 'spots', tailStyle: 'puff', mouth: 'smile', extra: 'antler' }),
+    animal('cow',      'Cow',      'leaf',     'rage',      '#f5f5f0', '#ffffff', '#3a3a44', { ear: 'floppy', pattern: 'patch', prop: 'bell', tailStyle: 'long', mouth: 'open', extra: 'horn' }),
+    animal('monkey',   'Monkey',   'leaf',     'rage',      '#b08055', '#ecd0a8', '#8a5a30', { ear: 'round',  pattern: 'patch', tailStyle: 'long', mouth: 'open' }),
+    animal('squirrel', 'Squirrel', 'leaf',     'buffaura',  '#d5854a', '#f5d5ae', '#a5601e', { ear: 'pointy', prop: 'leaf', tailStyle: 'puff', mouth: 'open' }),
+    animal('snail',    'Snail',    'leaf',     'slow',      '#e8c880', '#f5e5c0', '#c89850', { ear: 'antenna', pattern: 'stripes', prop: 'leaf', mouth: 'smile' }),
+    animal('ladybug',  'Ladybug',  'leaf',     'summon',    '#ff6b6b', '#ffb8b8', '#3a3a44', { ear: 'antenna', pattern: 'spots', mouth: 'smile' }),
+
+    // --- ice (5) ---
+    animal('rabbit',   'Rabbit',   'ice',      'heal',      '#f5e6e8', '#ffffff', '#ffb6c8', { ear: 'long',   prop: 'flower', tailStyle: 'puff', mouth: 'w' }),
+    animal('bear',     'Bear',     'ice',      'slam',      '#b98050', '#e0c09a', '#8a5a30', { ear: 'round',  pattern: 'patch', mouth: 'smile' }),
+    animal('penguin',  'Penguin',  'ice',      'freeze',    '#3a4a63', '#ffffff', '#28344a', { ear: 'wing',   prop: 'scarf', tailStyle: 'fin', mouth: 'beak' }),
+    animal('seal',     'Seal',     'ice',      'freeze',    '#c5d5e5', '#eef4fa', '#a0b5c8', { pattern: 'spots', tailStyle: 'fin', mouth: 'w', extra: 'whiskers' }),
+    animal('goat',     'Goat',     'ice',      'slam',      '#e5ddd0', '#f8f4ec', '#c0b5a0', { ear: 'floppy', prop: 'bell', mouth: 'smile', extra: 'horn' }),
+
+    // --- electric (4) ---
+    animal('mouse',    'Mouse',    'electric', 'chain',     '#c8c8d5', '#e8e8f0', '#ffb6c8', { ear: 'round',  pattern: 'patch', tailStyle: 'long', mouth: 'w', extra: 'whiskers' }),
+    animal('hamster',  'Hamster',  'electric', 'chain',     '#ffcf8a', '#fff0d5', '#e8a050', { ear: 'round',  pattern: 'patch', tailStyle: 'puff', mouth: 'open' }),
+    animal('bee',      'Bee',      'electric', 'summon',    '#ffd75e', '#fff0b8', '#3a3a44', { ear: 'wing',   pattern: 'stripes', prop: 'goggles', mouth: 'smile' }),
+    animal('jellyfish','Jellyfish','electric', 'stun',      '#b8d5ff', '#e0edff', '#8aa8e8', { ear: 'antenna', prop: 'bow', mouth: 'smile' }),
+
+    // --- wind (5) ---
+    animal('duck',     'Duck',     'wind',     'goldaura',  '#fff2b8', '#ffffff', '#ffd75e', { ear: 'wing',   pattern: 'spots', tailStyle: 'feather', mouth: 'beak' }),
+    animal('owl',      'Owl',      'wind',     'stun',      '#b08860', '#e5d0b0', '#7d5a38', { ear: 'tuft',   pattern: 'mask', tailStyle: 'feather', mouth: 'beak' }),
+    animal('butterfly','Butterfly','wind',     'clone',     '#c7a4ff', '#e8dcff', '#9a6fe0', { ear: 'wing',   pattern: 'spots', prop: 'flower', mouth: 'smile' }),
+    animal('horse',    'Horse',    'wind',     'knockback', '#c08858', '#ead0ae', '#8a5a30', { ear: 'pointy', pattern: 'patch', tailStyle: 'long', mouth: 'smile', extra: 'mane' }),
+    animal('toucan',   'Toucan',   'wind',     'critaura',  '#3a3a48', '#f5f5f0', '#ff9a3d', { ear: 'wing',   pattern: 'patch', tailStyle: 'long', mouth: 'beak' }),
+
+    // --- light (5) ---
+    animal('chick',    'Chick',    'light',    'heal',      '#ffe066', '#fff2b8', '#ffb547', { ear: 'tuft',   prop: 'bow', tailStyle: 'puff', mouth: 'beak' }),
+    animal('sheep',    'Sheep',    'light',    'goldaura',  '#f8f2ea', '#ffffff', '#e0d5c5', { ear: 'floppy', prop: 'bell', tailStyle: 'puff', mouth: 'smile' }),
+    animal('unicorn',  'Unicorn',  'light',    'critaura',  '#f0e5ff', '#ffffff', '#ffb6dd', { ear: 'fin',    pattern: 'star', prop: 'flower', tailStyle: 'long', mouth: 'smile', extra: 'sparkle' }),
+    animal('alpaca',   'Alpaca',   'light',    'revive',    '#f5e8d5', '#fdf8ee', '#e0c8a5', { ear: 'long',   prop: 'scarf', mouth: 'w' }),
+    animal('chameleon','Chameleon','light',    'revive',    '#78d0a0', '#c0ecd5', '#48a870', { ear: 'fin',    pattern: 'stripes', tailStyle: 'curly', mouth: 'smile' }),
+
+    // --- dark (5) ---
+    animal('wolf',     'Wolf',     'dark',     'taunt',     '#9aa5b8', '#d5dce8', '#6d7a90', { ear: 'pointy', pattern: 'patch', tailStyle: 'long', mouth: 'w' }),
+    animal('raccoon',  'Raccoon',  'dark',     'stealth',   '#a8a8b8', '#dcdce8', '#454550', { ear: 'round',  pattern: 'mask', tailStyle: 'puff', mouth: 'w' }),
+    animal('hedgehog', 'Hedgehog', 'dark',     'shield',    '#c09468', '#ecd9b8', '#7d5a38', { ear: 'tuft',   pattern: 'spots', mouth: 'w' }),
+    animal('bat',      'Bat',      'dark',     'stealth',   '#8a7aa8', '#c0b5d5', '#5d4d78', { ear: 'wing',   pattern: 'patch', mouth: 'open' }),
+    animal('skunk',    'Skunk',    'dark',     'poison',    '#4a4a58', '#e8e8f0', '#f0f0f5', { ear: 'pointy', pattern: 'stripes', tailStyle: 'puff', mouth: 'w' })
 ];
 
 // The Nest - the thing we protect. Basket + sleeping babies + an egg.
@@ -334,4 +573,9 @@ const NEST_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 150">
   <circle cx="105" cy="63" r="3.5" fill="#ffd54a"/><circle cx="116" cy="74" r="3" fill="#7fd2ff"/>
 </svg>`;
 
-if (typeof module !== 'undefined') module.exports = { SPECIES, PET_SPECIES, NEST_SVG };
+// paintJelly/paintAnimal are exported alongside the baked catalogs purely for
+// test introspection (tests/catalog.test.js's r=90 close-up scaling check
+// needs to re-invoke the painters at a size no real species uses) - nothing
+// in www/js reaches for these two exports; every consumer still goes through
+// SPECIES[i].svgIdle/svgSquash or PET_SPECIES[i].svg as before.
+if (typeof module !== 'undefined') module.exports = { SPECIES, PET_SPECIES, NEST_SVG, paintJelly, paintAnimal };
