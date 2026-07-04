@@ -69,18 +69,20 @@ if (typeof Phaser !== 'undefined') {
             // --- fixed header (always covers scrolled-past nodes) ---
             this.add.rectangle(W / 2, 72, W, 144, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
             // v4.0 Phase C Task 3: title is on-bg (not on-panel) but still a
             // gold/good hue text - goodText reads even better here since bg
             // (0xf6f1fb) is lighter than the panel goodText was tuned against.
+            // v5.0 Task 2: 40->34 / 20->17 - header-title + subtitle trim
+            // (pixel-font headroom).
             this.add.text(W / 2, 56, I18n.t('map.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+                fontFamily: CONFIG.FONT, fontSize: '34px', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
             this.add.text(W / 2, 100, I18n.t('map.replayReward'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '17px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10);
 
             // --- scroll bounds + initial position centered on the frontier node ---
@@ -133,11 +135,22 @@ if (typeof Phaser !== 'undefined') {
                 .setStrokeStyle(n.boss ? 5 : 3, strokeColor, isFuture ? 0.35 : 0.9);
             c.add(circle);
 
-            const numColor = isFuture ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.ink;
+            // v5 final-review fix: the frontier node's fill is the bright
+            // neon `accent` (see `fill` above) - `ink` (near-white) on that
+            // bright fill is ~1.5:1, unreadable. `bg` (near-black) reads
+            // dark-on-bright instead, matching the button-label/chip-label
+            // convention - verified >=4.5:1 in tests/pastel.test.js. Cleared
+            // nodes are unaffected (dark `panel` fill, `ink` text already
+            // contrasts fine); future nodes are unaffected (deliberately
+            // dimmed, both fill and text at inkSoft).
+            const numColor = isFuture ? CONFIG.PASTEL.inkSoft : (isFrontier ? CONFIG.PASTEL.bg : CONFIG.PASTEL.ink);
             const num = this.add.text(0, 0, String(n.stage), {
-                fontFamily: 'Arial, sans-serif', fontSize: (isFrontier ? '24px' : '20px'),
-                fontStyle: 'bold', color: Balance.hex(numColor)
+                fontFamily: CONFIG.FONT, fontSize: (isFrontier ? '24px' : '20px'),
+                color: Balance.hex(numColor)
             }).setOrigin(0.5);
+            // v5.0 Task 2 review fix: infinite stages -> 3-4 digit numbers at
+            // 1.0em/char pixel-font would overrun the node circle (2r wide).
+            fitToWidth(num, 2 * r - 12);
             c.add(num);
 
             if (n.boss) {
@@ -231,7 +244,7 @@ if (typeof Phaser !== 'undefined') {
             const bg = this.add.nineslice(W / 2, y, 'btn-tex', 0, W - 40, 140, 24, 24, 24, 24)
                 .setTint(CONFIG.PASTEL.panel).setDepth(20);
             const label = this.add.text(W / 2, y - 32, I18n.t('map.stageN', { n: stageNum }), {
-                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+                fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5).setDepth(21);
             this._confirmParts = [bg, label];
 

@@ -11,68 +11,98 @@ const CONFIG = {
     WIDTH: 720,
     HEIGHT: 1280,
 
+    // v5.0 RETRO ARCADE Task 2: vendored OFL pixel font (www/fonts/, see
+    // www/css/style.css @font-face). Every Phaser text fontFamily reads this
+    // - single point of truth so a future font swap is a one-line change.
+    FONT: "'Press Start 2P', monospace",
+
+    // v5.0 RETRO ARCADE Task 3: character art is baked to a SMALL raster at
+    // BootScene registration time (main.js _loadSpeciesTextures forces the
+    // SVG's width/height attrs to this instead of the species' natural
+    // display size), then upscaled with NEAREST filtering wherever it's
+    // shown (dex/field/nest/gacha/pvp all setDisplaySize() from these same
+    // texture keys, so every consumer inherits automatically). That low
+    // sample count is what actually reads as "chunky pixel sprite" - Task
+    // 2's global pixelArt:true only stops smoothing on upscale, it can't
+    // pixelate an already-smooth full-res raster.
+    // bake=40: verified against paintJelly/paintAnimal's geometry (both
+    // scale every feature off their own radius r, so this is a resolution
+    // cut, not a proportion change) - smallest monster is Mini at r=26/d=52
+    // (40 is a mild 0.77x of its native res), and pets are painted at a
+    // fixed r=24/d=48 (40 is 0.83x) - signature parts (ears/horns/props,
+    // all sized >=0.065r) stay well above 1px at 40x40 for every case
+    // except the giant king boss (r=240/d=480, a deliberately extreme
+    // 12x-blocky pixel-boss look, not a legibility failure - its parts are
+    // the same >=0.065r fraction, just of a much larger silhouette).
+    // bakeDecor=48: decor props (paintDecor, decor.js) are hand-drawn scenes
+    // on a fixed 64x64 canvas with several small independent details
+    // (speckle dots r=1.6-2.4, star dots r=2) that read as *distinct props*
+    // rather than a single blob - 48 (0.75x) keeps those legible; the plain
+    // 40 used for monsters/pets started blending them in a structural check.
+    PIXEL: { bake: 40, bakeDecor: 48, filter: 'NEAREST' },
+
     // Monster play field (below the top HUD, above the fever/upgrade bar)
     FIELD: { x: 20, y: 210, w: 680, h: 780 },
 
     // =========================================================================
-    // v4.0 - pastel token system. CONFIG.PASTEL is the source of truth (design
-    // tokens: soft cream/lavender surfaces, deep-plum ink, 8 per-element 3-step
-    // ramps). CONFIG.COLORS keeps its original keys for existing consumers but
-    // every value now points at a PASTEL equivalent - see tests/pastel.test.js
-    // for the contrast/distinctness invariants this palette must hold.
+    // v5.0 RETRO ARCADE - neon-CRT token system. CONFIG.PASTEL is (still) the
+    // source of truth - same KEYS as the v4.0 pastel theme, re-pointed to a
+    // dark 80s-arcade neon palette (deep indigo-black surfaces, near-white
+    // cyan-tint ink, saturated neon accents, 8 per-element 3-step ramps).
+    // CONFIG.COLORS keeps its original keys for existing consumers but every
+    // value still points at a PASTEL equivalent - see tests/pastel.test.js
+    // for the contrast/distinctness invariants this palette must hold (now
+    // flipped for light-text-on-dark-surface contrast).
     // =========================================================================
     PASTEL: {
-        bg: 0xf6f1fb,          // page/canvas background - soft lavender-cream
-        bgField: 0xefe6f9,     // monster play-field backdrop, one notch deeper
-        panel: 0xe3d6f2,       // card/panel surface
-        panelLight: 0xf0e6fa,  // lighter nested panel / highlight surface
-        ink: 0x453a56,         // primary text - deep plum, NOT black
-        inkSoft: 0x6f6485,     // secondary/dim text on panel surfaces
-        accent: 0x9b7fd4,      // pastel violet UI accent
-        gold: 0xe8b74a,        // currency accent
-        danger: 0xf2727e,      // damage/danger accent
+        bg: 0x0d0221,          // page/canvas background - deep indigo-black
+        bgField: 0x160934,     // monster play-field backdrop, one notch lighter
+        panel: 0x1f0f47,       // card/panel surface
+        panelLight: 0x2c1966,  // lighter nested panel / highlight surface
+        ink: 0xeafcff,         // primary text - bright near-white cyan-tint
+        inkSoft: 0xa79bd6,     // secondary/dim text on panel surfaces - muted lavender
+        accent: 0x00e5ff,      // neon cyan UI accent
+        gold: 0xffcc00,        // neon amber currency accent
+        danger: 0xff2f6e,      // neon red-pink damage/danger accent
         // v4.0 Phase C Task 2: nudged off elements.leaf.base (manhattan was 19,
         // needed >=48 so heal/positive pop-text never blends into leaf-element
-        // monsters) - deeper/more teal-leaning green, see tests/pastel.test.js.
-        good: 0x62cd90,        // heal/positive accent
-        fever: 0xff8fcf,       // fever-mode accent
+        // monsters) - v5.0: neon lime, still >=48 from the new leaf spring-green.
+        good: 0x39ff14,        // neon lime heal/positive accent
+        fever: 0xff00e5,       // hot magenta fever-mode accent
         // v4.0 Phase C Task 2: nudged off elements.electric.base (manhattan was
         // 15, needed >=48 so crit pop-text never blends into electric-element
-        // monsters) - deeper/more muted gold, see tests/pastel.test.js.
-        crit: 0xe9cf77,        // critical-hit accent
+        // monsters) - v5.0: electric chartreuse-yellow, still >=48 from electric.
+        crit: 0xccff00,        // electric-yellow critical-hit accent
         white: 0xffffff,
-        // v4.0 Phase C Task 2: readable text on panel/panelLight surfaces
-        goldText: 0x6d5318,    // deep amber for cost/currency text (WCAG >=4.5:1 on panel)
-        goodText: 0x1a5c3f,    // deep forest green for heal/positive text (WCAG >=4.5:1 on panel)
-        // v4.0 Phase C Task 3: same on-panel-text problem, two more hue
-        // families needed by the shop/friends/pvp sweep (danger warnings +
-        // decline actions; gems currency + "rare" rarity tier) that Task 2's
-        // goldText/goodText didn't cover. Same >=4.5:1 vs panel/panelLight
-        // floor, see tests/pastel.test.js.
-        dangerText: 0x8a2430,  // deep brick red for warning/decline text (WCAG >=4.5:1 on panel)
-        gemText: 0x0d5a73,     // deep teal for gem-currency/rare-rarity text (WCAG >=4.5:1 on panel)
+        // v4.0 Phase C Task 2/3: readable text on panel/panelLight surfaces -
+        // v5.0: re-derived as neon-bright light-on-dark variants (panels are
+        // now dark), WCAG >=4.5:1 vs both panel and panelLight.
+        goldText: 0xffd94a,    // bright neon amber for cost/currency text
+        goodText: 0x5dff8f,    // bright neon mint-green for heal/positive text
+        dangerText: 0xff6f91,  // bright neon rose for warning/decline text
+        gemText: 0x5be3ff,     // bright neon sky-cyan for gem-currency/rare-rarity text
         elements: {
-            fire:     { base: 0xff8a65, soft: 0xffc2ab, deep: 0xc85a38 },  // coral
-            water:    { base: 0x82c3ea, soft: 0xc3e6f7, deep: 0x4f88b3 },  // baby blue
-            leaf:     { base: 0x74e0a3, soft: 0xbdf3d4, deep: 0x45a86e },  // mint
-            wind:     { base: 0x93b3c4, soft: 0xc6dae4, deep: 0x607e92 },  // sage-sky
-            electric: { base: 0xffe066, soft: 0xfff0b0, deep: 0xd1a921 },  // butter yellow
-            ice:      { base: 0xb2e8f0, soft: 0xdcf6fa, deep: 0x74b9c4 },  // powder cyan
-            light:    { base: 0xfff0c4, soft: 0xfff8e2, deep: 0xd9bd7e },  // vanilla
-            dark:     { base: 0xb49bc8, soft: 0xd9cbe6, deep: 0x7f6693 }   // dusty lilac
+            fire:     { base: 0xff2d55, soft: 0xff8fa8, deep: 0xa8001f },  // hot neon red
+            water:    { base: 0x00d9ff, soft: 0x7deeff, deep: 0x0089a8 },  // neon cyan
+            leaf:     { base: 0x00ffab, soft: 0x7cffd4, deep: 0x00a870 },  // spring-green neon
+            wind:     { base: 0x8fd9c0, soft: 0xc5f0e0, deep: 0x4f9c86 },  // pale neon teal
+            electric: { base: 0xfff200, soft: 0xfff98f, deep: 0xa89e00 },  // electric yellow
+            ice:      { base: 0x9fefff, soft: 0xd2f9ff, deep: 0x5aa8b8 },  // ice-blue neon
+            light:    { base: 0xfff6d5, soft: 0xfffbec, deep: 0xc9b97a },  // white-gold neon
+            dark:     { base: 0xb44bff, soft: 0xd6a0ff, deep: 0x6d1fa8 }   // electric violet
         }
     },
 
     COLORS: {
-        bg: 0xf6f1fb,
-        hud: 0x453a56,
-        gold: 0xe8b74a,
-        fever: 0xff8fcf,
-        crit: 0xe9cf77,
-        dim: 0x6f6485,
-        panel: 0xe3d6f2,
-        good: 0x62cd90,
-        danger: 0xf2727e
+        bg: 0x0d0221,
+        hud: 0xeafcff,
+        gold: 0xffcc00,
+        fever: 0xff00e5,
+        crit: 0xccff00,
+        dim: 0xa79bd6,
+        panel: 0x1f0f47,
+        good: 0x39ff14,
+        danger: 0xff2f6e
     },
 
     // UI order matters: this is the upgrade bar layout order.
@@ -123,14 +153,29 @@ const CONFIG = {
     },
 
     GACHA: {
+        // v5.0 RETRO ARCADE Task 4: legendary pets are gem-egg only. Gold
+        // egg's old 0.03 legendary mass was redistributed into common/rare/
+        // epic (+0.00/+0.01/+0.02, sum still 1) so gold caps at epic - a
+        // legendary pet is only obtainable from the gem egg. gemRates is
+        // unchanged (already summed to 1 with a positive legendary share).
         // gold egg rates              // gem egg rates (premium, better odds)
-        rates:    { common: 0.60, rare: 0.25, epic: 0.12, legendary: 0.03 },
+        rates:    { common: 0.60, rare: 0.26, epic: 0.14, legendary: 0 },
         gemRates: { common: 0.40, rare: 0.30, epic: 0.20, legendary: 0.10 },
-        pityAt: 40,          // guaranteed epic+ within this many rolls
+        pityAt: 40,          // guaranteed epic+ within this many rolls (gold: epic only - see gacha.js)
         multiPull: 10,       // 10+1: multi pull grants one bonus roll
         shardsForDupe: { common: 5, rare: 15, epic: 40, legendary: 120 },
         shardsPerLevel: 8    // spend shards of a species to level its pet
     },
+
+    // v5 final-review fix: GACHA.rates used to be shared by the PET gacha
+    // (gacha.js) AND every GEAR/necklace drop-rarity roll (field drops in
+    // game.js, the gold chest in shop.js). Task 4 zeroed GACHA.rates.legendary
+    // so gold-egg PETS cap at epic - but that same zero silently leaked into
+    // gear/necklace drops too, which were never meant to lose their legendary
+    // tier. DROP_RATES is the split-off table (the exact pre-Task-4 values)
+    // for the non-pet item economy - every GEAR/ITEM/necklace rarity roll
+    // reads this, never CONFIG.GACHA.rates. See tests/gacha.test.js.
+    DROP_RATES: { common: 0.60, rare: 0.25, epic: 0.12, legendary: 0.03 },
 
     GEMS: {
         bossKill: 1, kingKill: 3,

@@ -21,7 +21,19 @@ const Gacha = {
             acc += rates[r];
             if (roll < acc) return r;
         }
-        return 'legendary';
+        // v5 final-review fix: fall back to the LAST rarity with a positive
+        // weight in THIS table, not a hardcoded 'legendary'. A hardcoded
+        // fallback silently assumed every table sums to 1 with legendary
+        // last and >0 - false for a gold-egg-style table (legendary:0), where
+        // float rounding could walk the loop past 1.0 without a `roll < acc`
+        // hit and wrongly hand out a legendary the table says is impossible.
+        // Also closes a NaN edge (rates summing < 1 for any reason) by
+        // degrading gracefully to the highest attainable rarity instead of
+        // always defaulting to the rarest.
+        for (let i = RARITY_ORDER.length - 1; i >= 0; i--) {
+            if (rates[RARITY_ORDER[i]] > 0) return RARITY_ORDER[i];
+        }
+        return RARITY_ORDER[RARITY_ORDER.length - 1];
     },
 
     // One egg roll. Returns { kind:'new'|'upgrade'|'shards', species, rarity, shards }
@@ -29,14 +41,22 @@ const Gacha = {
         const G = CONFIG.GACHA;
         let rates = useGems ? G.gemRates : G.rates;
 
-        // pity: guarantee epic+ on the pityAt-th dry roll
+        // pity: guarantee epic+ on the pityAt-th dry roll.
+        // v5.0 RETRO ARCADE Task 4: gold-egg pity must guarantee AT MOST
+        // epic - legendary can never drop from gold. This already falls out
+        // of gold's rates.legendary being 0 (eplusTotal collapses to
+        // rates.epic, so the remapped legendary share is 0/epic = 0), but we
+        // zero it explicitly here too so the gold-never-legendary invariant
+        // holds even if the rate table is retuned later. Gem-egg pity is
+        // unchanged - it keeps its legendary share and can still roll it.
         const pityTriggered = state.gachaPity >= G.pityAt - 1;
         if (pityTriggered) {
-            const eplusTotal = rates.epic + rates.legendary;
+            const legendaryMass = useGems ? rates.legendary : 0;
+            const eplusTotal = rates.epic + legendaryMass;
             rates = {
                 common: 0, rare: 0,
                 epic: rates.epic / eplusTotal,
-                legendary: rates.legendary / eplusTotal
+                legendary: legendaryMass / eplusTotal
             };
         }
 

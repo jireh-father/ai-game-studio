@@ -21,25 +21,25 @@ class PvpScene extends Phaser.Scene {
         const st = SaveManager.state;
 
         const back = this.add.text(44, 56, '‹', {
-            fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
         back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
         // v4.0 Phase C Task 3: unified with the other scenes' header-title
         // treatment (goodText on-bg) instead of inventing a one-off deep
         // "fever pink" text token for this single title.
+        // v5.0 Task 2: 44->38 - header-title trim (pixel-font headroom).
         this.add.text(W / 2, 56, 'PET BATTLE', {
-            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+            fontFamily: CONFIG.FONT, fontSize: '38px', color: Balance.hex(CONFIG.PASTEL.goodText)
         }).setOrigin(0.5);
         this.add.text(W / 2, 108, '🏆 ' + st.pvp.rating + '  ·  ' +
             st.pvp.wins + 'W ' + st.pvp.losses + 'L', {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5);
 
         if (!st.pets.length) {
             this.add.text(W / 2, H * 0.42, 'You need pets to battle!\nHatch an egg in the shop 🥚', {
-                fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold',
-                color: Balance.hex(CONFIG.PASTEL.inkSoft), align: 'center'
+                fontFamily: CONFIG.FONT, fontSize: '32px', color: Balance.hex(CONFIG.PASTEL.inkSoft), align: 'center'
             }).setOrigin(0.5);
             makeUiButton(this, W / 2, H * 0.58, 420, 96, 'GO TO SHOP', CONFIG.PASTEL.accent,
                 () => SmooshGame.goto('ShopScene'));
@@ -72,10 +72,10 @@ class PvpScene extends Phaser.Scene {
         // default depth 0) so they stay visible above the picker backdrop.
         parts.push(this.add.rectangle(W / 2, H / 2, W, H, CONFIG.COLORS.bg).setDepth(-1));
         parts.push(this.add.text(W / 2, 158, I18n.t('pvp.pickTeam'), {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
+            fontFamily: CONFIG.FONT, fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0.5).setDepth(2));
         this.pickCountText = this.add.text(W / 2, 188, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(2);
         parts.push(this.pickCountText);
 
@@ -126,10 +126,10 @@ class PvpScene extends Phaser.Scene {
                 .setTint(CONFIG.PASTEL.panel);
             const spr = this.add.image(x, y - 20, 'pet-' + pet.species).setDisplaySize(76, 76);
             const label = this.add.text(x, y + 38, def ? def.name : pet.species, {
-                fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+                fontFamily: CONFIG.FONT, fontSize: '16px', color: Balance.hex(CONFIG.PASTEL.ink)
             }).setOrigin(0.5);
             const lvl = this.add.text(x, y + 58, 'Lv.' + pet.level, {
-                fontFamily: 'Arial, sans-serif', fontSize: '14px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '14px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5);
             this.pickGridContainer.add([ring, card, spr, label, lvl]);
 
@@ -216,10 +216,10 @@ class PvpScene extends Phaser.Scene {
         this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, CONFIG.PASTEL.bgField)
             .setStrokeStyle(2, CONFIG.PASTEL.ink).setDepth(0);
         this.add.text(F.x + 20, F.y + 18, 'RIVAL', {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.dangerText)
+            fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.dangerText)
         }).setOrigin(0, 0.5).setDepth(1);
         this.add.text(F.x + 20, F.y + F.h - 18, 'YOU', {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+            fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.goodText)
         }).setOrigin(0, 0.5).setDepth(1);
 
         // armies - the player's team is EXACTLY the picked pets (not the full
@@ -434,8 +434,7 @@ class PvpScene extends Phaser.Scene {
         // variants) - same convention as game.js's "THE NEST BROKE!" panel.
         this.add.rectangle(W / 2, H / 2, W, H, 0x0a0714, 0.7).setDepth(20);
         this.add.text(W / 2, H * 0.34, won ? '🏆 VICTORY!' : '💀 DEFEAT...', {
-            fontFamily: 'Arial, sans-serif', fontSize: '72px', fontStyle: 'bold',
-            color: Balance.hex(won ? CONFIG.PASTEL.good : CONFIG.PASTEL.danger)
+            fontFamily: CONFIG.FONT, fontSize: '72px', color: Balance.hex(won ? CONFIG.PASTEL.good : CONFIG.PASTEL.danger)
         }).setOrigin(0.5).setDepth(21);
 
         // rewards line with real currency icons
@@ -443,21 +442,22 @@ class PvpScene extends Phaser.Scene {
         const ry = H * 0.44;
         const coin = this.add.image(W / 2 - 150, ry, 'coin-tex').setDepth(21).setDisplaySize(30, 30);
         const goldT = this.add.text(W / 2 - 128, ry, '+' + Balance.fmt(gold), {
-            fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.gold)
+            fontFamily: CONFIG.FONT, fontSize: '30px', color: Balance.hex(CONFIG.PASTEL.gold)
         }).setOrigin(0, 0.5).setDepth(21);
         if (won) {
             this.add.image(W / 2 + 30, ry, 'gem-tex').setDepth(21).setDisplaySize(28, 28);
             this.add.text(W / 2 + 52, ry, '+' + CONFIG.GEMS.pvpWin, {
-                fontFamily: 'Arial, sans-serif', fontSize: '30px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.elements.water.base)
+                fontFamily: CONFIG.FONT, fontSize: '30px', color: Balance.hex(CONFIG.PASTEL.elements.water.base)
             }).setOrigin(0, 0.5).setDepth(21);
         }
-        // v4.0 Phase C final-review: sits directly on the near-black dim
-        // scrim (no panel under it) - inkSoft is a panel-surface secondary
-        // token and reads too dim there; panelLight is the documented
-        // light-text-on-dark-scrim choice (same fix as game.js's nest-broken
-        // subtitle).
+        // v5 final-review fix: sits directly on the near-black dim scrim (no
+        // panel under it). v5's palette flip turned panelLight into a DARK
+        // panel token (deep purple), so dark-on-near-black read at ~1.4:1 -
+        // switched to `ink` (bright near-white), same fix + same reasoning as
+        // game.js's nest-broken subtitle - verified >=4.5:1 in
+        // tests/pastel.test.js.
         this.add.text(W / 2, ry + 46, 'rating ' + st.pvp.rating, {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.panelLight)
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(21);
 
         if (won && typeof Effects !== 'undefined') {

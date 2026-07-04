@@ -5,6 +5,17 @@
 // Banner ads live ONLY on MenuScene.
 // =============================================================================
 
+// v5.0 Task 2 review fix: Press Start 2P is a TRUE 1.0em/char monospace font
+// (every glyph's advance == the font size), not the ~0.6em/char a proportional
+// font like Arial would give you. Fixed-width pills/badges sized under the old
+// assumption clip once late-game values grow extra digits (infinite stages ->
+// multi-digit stage/level/cost numbers). Call this after every .setText() on
+// a label that lives inside a fixed-width pill/badge with no wordWrap.
+function fitToWidth(t, w) {
+    t.setScale(1);
+    if (t.width > w) t.setScale(w / t.width);
+}
+
 // Rounded button: shadow + body + gloss + passive label.
 // The body is the ONLY interactive object.
 // iconKey (optional): a texture (e.g. 'coin-tex'/'gem-tex') rendered before
@@ -21,9 +32,18 @@ function makeUiButton(scene, x, y, w, h, label, color, cb, iconKey) {
         .setInteractive({ useHandCursor: true });
     const gloss = scene.add.nineslice(x, y - h * 0.24, 'btn-tex', 0, w - 16, Math.max(18, h * 0.34), 16, 16, 12, 12)
         .setTint(CONFIG.PASTEL.white).setAlpha(0.16).setDepth(22);
+    // v5.0 retro-neon carry-over fix: every fill this helper is ever called
+    // with (accent, dangerText, ...) is a BRIGHT neon hue now that v5 flipped
+    // the palette, so a dark label reads reliably across all of them - see
+    // tests/pastel.test.js for the button-label-vs-fill contrast floors this
+    // depends on. If a future fill is ever a genuinely dark surface, that
+    // call site needs its own light-label override (none exist today).
+    // v5.0 RETRO ARCADE Task 2: Press Start 2P renders far wider than Arial
+    // at the same size - base label size dropped 32->24px (still auto-
+    // shrunk further below via layout()'s room-based setScale if a specific
+    // button's label+icon still don't fit).
     const txt = scene.add.text(x, y, label, {
-        fontFamily: 'Arial, sans-serif', fontSize: '32px', fontStyle: 'bold',
-        color: Balance.hex(CONFIG.PASTEL.white)
+        fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.bg)
     }).setOrigin(0.5).setDepth(23);
 
     const iconSize = Math.min(34, h * 0.48);
@@ -71,11 +91,15 @@ function makeChip(scene, x, y, w, h, tint, iconKey, text, textColor) {
         tx = x + h * 0.28;
     }
     const label = scene.add.text(tx, y, text, {
-        fontFamily: 'Arial, sans-serif', fontSize: Math.round(h * 0.48) + 'px',
-        fontStyle: 'bold', color: textColor || Balance.hex(CONFIG.PASTEL.ink)
+        fontFamily: CONFIG.FONT, fontSize: Math.round(h * 0.48) + 'px',
+        color: textColor || Balance.hex(CONFIG.PASTEL.ink)
     }).setOrigin(0.5).setDepth(11);
+    // v5.0 Task 2 review fix: at 1.0em/char an 8-char label (e.g. "ELECTRIC")
+    // grazes the pill edge - clamp to the pill's inner width past the icon.
+    const chipRoom = w - (iconKey ? h : 0) - 12;
+    fitToWidth(label, chipRoom);
     return {
-        setText(s) { label.setText(s); },
+        setText(s) { label.setText(s); fitToWidth(label, chipRoom); },
         parts: [bg, icon, label].filter(Boolean)
     };
 }
@@ -105,23 +129,25 @@ function buildUpgradeBar(scene) {
             .setInteractive({ useHandCursor: true });
         const icon = scene.add.image(x, BAR_Y - 46, def.icon)
             .setDepth(11).setTint(def.color).setDisplaySize(42, 42);
+        // v5.0 Task 2: 13->11 / 21->18 - pixel font headroom in this tight
+        // 130px-wide card (name still keeps its explicit clamp below as a
+        // second line of defense for long upgrade names).
         const name = scene.add.text(x, BAR_Y - 12, def.name.toUpperCase(), {
-            fontFamily: 'Arial, sans-serif', fontSize: '13px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '11px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(11);
         if (name.width > BTN_W - 14) name.setScale((BTN_W - 14) / name.width);
 
         const lvlBg = scene.add.nineslice(x, BAR_Y + 14, 'pill-tex', 0, 66, 26, 12, 12, 12, 12)
             .setTint(def.color).setAlpha(0.22).setDepth(11);
         const lvl = scene.add.text(x, BAR_Y + 14, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '16px', fontStyle: 'bold',
+            fontFamily: CONFIG.FONT, fontSize: '14px',
             color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(12);
 
         const costIcon = scene.add.image(x - 26, BAR_Y + 50, 'coin-tex')
             .setDepth(11).setDisplaySize(22, 22);
         const cost = scene.add.text(x - 10, BAR_Y + 50, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '21px', fontStyle: 'bold',
+            fontFamily: CONFIG.FONT, fontSize: '18px',
             color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0, 0.5).setDepth(11);
 
@@ -129,8 +155,10 @@ function buildUpgradeBar(scene) {
             const level = SaveManager.state.upgrades[def.id];
             const maxed = level >= Balance.maxLevel(def.id);
             lvl.setText('Lv.' + level);
+            fitToWidth(lvl, 60);
             if (maxed) {
                 cost.setText('MAX').setColor(Balance.hex(CONFIG.PASTEL.goodText)).setX(x - 22);
+                fitToWidth(cost, 60);
                 costIcon.setVisible(false);
                 glow.setAlpha(0);
                 card.setTint(CONFIG.PASTEL.panel).setAlpha(0.85);
@@ -138,6 +166,7 @@ function buildUpgradeBar(scene) {
             } else {
                 const c = Balance.upgradeCost(def.id, level);
                 cost.setText(Balance.fmt(c)).setX(x - 10);
+                fitToWidth(cost, 60);
                 costIcon.setVisible(true);
                 const afford = SaveManager.state.gold >= c;
                 cost.setColor(Balance.hex(afford ? CONFIG.PASTEL.goldText : CONFIG.PASTEL.inkSoft));
@@ -175,7 +204,7 @@ function buildUpgradeBar(scene) {
 function buildFeverGauge(scene) {
     const Y = 996, W = CONFIG.WIDTH - 240, X = 44, H = 16;
     const gfx = scene.add.graphics().setDepth(10);
-    scene.add.text(X - 8, Y + H / 2, '🔥', { fontSize: '20px' })
+    scene.add.text(X - 8, Y + H / 2, '🔥', { fontFamily: CONFIG.FONT, fontSize: '20px' })
         .setOrigin(1, 0.5).setDepth(10);
 
     const chip = makeUiButton(scene, CONFIG.WIDTH - 90, Y + 8, 132, 46, '⚡ AD', CONFIG.PASTEL.accent, () => {
@@ -234,9 +263,9 @@ function buildUltButton(scene) {
         .setTint(CONFIG.PASTEL.gold).setAlpha(0).setDisplaySize(R * 2.3, R * 2.3);
     const body = scene.add.nineslice(x, y, 'btn-tex', 0, R * 2, R * 2, 28, 28, 28, 28)
         .setTint(CONFIG.PASTEL.panel).setAlpha(0.85).setDepth(16).setInteractive({ useHandCursor: true });
-    const icon = scene.add.text(x, y - 8, '⚡', { fontSize: '38px' }).setOrigin(0.5).setDepth(17);
+    const icon = scene.add.text(x, y - 8, '⚡', { fontFamily: CONFIG.FONT, fontSize: '38px' }).setOrigin(0.5).setDepth(17);
     const label = scene.add.text(x, y + 30, 'ULT', {
-        fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+        fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
     }).setOrigin(0.5).setDepth(17);
 
     // wireInput() (game.js) shadows this button out of field-tap resolution -
@@ -299,24 +328,27 @@ function showSettlement(scene, opts) {
 
     // v3.0 Task 10: a replay settles a SINGLE stage - "STAGES N-N CLEAR!"
     // would read oddly, so it gets its own singular title + a REPLAY badge.
+    // v5.0 Task 2: 48->32 - at 48px this title (up to "STAGES 121-125
+    // CLEAR!") overran both the 560px panel and the 720px screen in the
+    // pixel font; wordWrap added as a second line of defense.
     const title = opts.replay ? `STAGE ${opts.to} CLEAR!` : `STAGES ${opts.from}–${opts.to} CLEAR!`;
     items.push(scene.add.text(W / 2, H * 0.3, title, {
-        fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold',
-        color: Balance.hex(CONFIG.PASTEL.goodText)
+        fontFamily: CONFIG.FONT, fontSize: '32px', color: Balance.hex(CONFIG.PASTEL.goodText), align: 'center', wordWrap: { width: 520 }
     }).setOrigin(0.5).setDepth(21));
 
     if (opts.replay) {
         items.push(scene.add.nineslice(W / 2, H * 0.35, 'pill-tex', 0, 150, 40, 16, 16, 14, 14)
             .setTint(CONFIG.PASTEL.accent).setDepth(21));
         items.push(scene.add.text(W / 2, H * 0.35, I18n.t('map.replay'), {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.ink)
+            fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.ink)
         }).setOrigin(0.5).setDepth(22));
     }
 
     items.push(scene.add.image(W / 2 - 80, H * 0.42, 'coin-tex').setDepth(21).setScale(1.4));
+    // v5.0 Task 2: 56->44 - a large formatted gold amount ("+1,234,567") at
+    // 56px pushed past the panel's right edge; 44px keeps it clear.
     const goldTxt = scene.add.text(W / 2 - 40, H * 0.42, '+' + Balance.fmt(opts.gold), {
-        fontFamily: 'Arial, sans-serif', fontSize: '56px', fontStyle: 'bold',
-        color: Balance.hex(CONFIG.PASTEL.goldText)
+        fontFamily: CONFIG.FONT, fontSize: '44px', color: Balance.hex(CONFIG.PASTEL.goldText)
     }).setOrigin(0, 0.5).setDepth(21);
     items.push(goldTxt);
 
@@ -376,9 +408,11 @@ class MenuScene extends Phaser.Scene {
             this.add.circle(bx, by, br, CONFIG.PASTEL.bgField);
         }
 
+        // v5.0 Task 2: 110->92 - headroom for the wider pixel-font glyphs
+        // (still comfortably clears the 720px screen width; also reads
+        // cleaner as a chunky arcade marquee at this size than blown up).
         const logo = this.add.text(W / 2, H * 0.2, 'SMOOSH!', {
-            fontFamily: 'Arial, sans-serif', fontSize: '110px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
+            fontFamily: CONFIG.FONT, fontSize: '92px', color: Balance.hex(CONFIG.PASTEL.good), stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 12
         }).setOrigin(0.5);
         this.tweens.add({
             targets: logo, scaleX: 1.06, scaleY: 0.94, duration: 700,
@@ -396,9 +430,16 @@ class MenuScene extends Phaser.Scene {
         }
 
         const st = SaveManager.state;
+        // v5.0 Task 2: 28->20 - this line has no panel/wordWrap and can get
+        // long (large bestStage + abbreviated kill count); 20px keeps the
+        // worst case clear of the 720px screen edges in the wider pixel font.
+        // v5.0 Task 2 review fix: wordWrap so a large bestStage + kill count
+        // (both unbounded - infinite stages, lifetime kills) can never run
+        // off the 720px screen edges instead of relying on font-size alone.
         this.add.text(W / 2, H * 0.49,
             'BEST STAGE ' + st.bestStage + '   ·   ' + Balance.fmt(st.totalKills) + ' SMOOSHED', {
-            fontFamily: 'Arial, sans-serif', fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft),
+            align: 'center', wordWrap: { width: 680 }
         }).setOrigin(0.5);
 
         // v4.0 Phase C Task 2: every generic CTA on this menu (nav buttons +
@@ -434,20 +475,19 @@ class MenuScene extends Phaser.Scene {
         // wallet
         this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26);
         this.add.text(W / 2 - 90, H * 0.53, Balance.fmt(st.gold), {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(0, 0.5);
         this.add.image(W / 2 + 40, H * 0.53, 'gem-tex').setDisplaySize(24, 24);
         // gems are the premium currency - accent (violet) keeps them visually
         // distinct from gold at a glance.
         this.add.text(W / 2 + 60, H * 0.53, Balance.fmt(st.gems), {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.accent)
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.accent)
         }).setOrigin(0, 0.5);
 
         // sound toggle
         const soundLabel = () => st.muted ? 'SOUND OFF' : 'SOUND ON';
         const toggle = this.add.text(W - 36, 52, soundLabel(), {
-            fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-            color: Balance.hex(st.muted ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.goodText)
+            fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(st.muted ? CONFIG.PASTEL.inkSoft : CONFIG.PASTEL.goodText)
         }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
         toggle.on('pointerdown', () => {
             st.muted = !st.muted;
@@ -460,7 +500,7 @@ class MenuScene extends Phaser.Scene {
         // reset progress (tap twice to confirm)
         let armed = false;
         const reset = this.add.text(W / 2, H - 100, 'RESET PROGRESS', {
-            fontFamily: 'Arial, sans-serif', fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: '22px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         reset.on('pointerdown', () => {
             if (!armed) {

@@ -120,17 +120,22 @@ if (typeof Phaser !== 'undefined') {
             const W = CONFIG.WIDTH;
             this.add.rectangle(W / 2, 76, W, 152, CONFIG.COLORS.bg).setDepth(5);
             const back = this.add.text(44, 56, '‹', {
-                fontFamily: 'Arial, sans-serif', fontSize: '48px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '48px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
             back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
 
+            // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
             this.add.text(W / 2, 56, I18n.t('nest.title'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '40px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+                fontFamily: CONFIG.FONT, fontSize: '34px', color: Balance.hex(CONFIG.PASTEL.goodText)
             }).setOrigin(0.5).setDepth(10);
 
             if (this.visit) {
+                // v5.0 Task 2: 22->18 + wordWrap - "Visiting {generated
+                // nickname}'s nest" (up to ~40 chars, see nicknames.js) had no
+                // overflow guard at all in the pixel font; wrap as a backstop.
                 this.add.text(W / 2, 104, I18n.t('nest.visiting', { name: this.visit.nickname || '???' }), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '22px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
+                    fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.goldText),
+                    align: 'center', wordWrap: { width: W - 80 }
                 }).setOrigin(0.5).setDepth(10);
             }
         }
@@ -200,7 +205,7 @@ if (typeof Phaser !== 'undefined') {
                 .setInteractive({ useHandCursor: true });
             if (!isMine) sprite.setAlpha(0.88); // subtle "guest" tell
             const badge = this.add.text(x, y - size * 0.72, '', {
-                fontFamily: 'Arial, sans-serif', fontSize: '18px'
+                fontFamily: CONFIG.FONT, fontSize: '18px'
             }).setOrigin(0.5).setDepth(5);
 
             const agent = {
@@ -406,7 +411,7 @@ if (typeof Phaser !== 'undefined') {
 
             this.trayParts.push(this.add.rectangle(W / 2, H - 160, W, 220, CONFIG.PASTEL.panel, 0.92).setDepth(9));
             this.trayParts.push(this.add.text(W / 2, H - 258, I18n.t('nest.tray'), {
-                fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '20px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(10));
 
             pageItems.forEach((def, i) => {
@@ -422,8 +427,7 @@ if (typeof Phaser !== 'undefined') {
                     .setTint(heldTint).setDepth(10).setInteractive({ useHandCursor: true });
                 const icon = this.add.image(x, y - 12, 'decor-' + def.id).setDisplaySize(44, 44).setDepth(11);
                 const count = this.add.text(x, y + 28, (placedCount) + '/' + owned, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '14px', fontStyle: 'bold',
-                    color: Balance.hex(owned > placedCount ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '14px', color: Balance.hex(owned > placedCount ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(11);
                 bg.on('pointerdown', () => {
                     this.editHeldId = this.editHeldId === def.id ? null : def.id;
@@ -434,7 +438,7 @@ if (typeof Phaser !== 'undefined') {
 
             if (!list.length) {
                 this.trayParts.push(this.add.text(W / 2, trayY + 20, I18n.t('nest.trayEmpty'), {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(10));
             }
 
@@ -445,7 +449,7 @@ if (typeof Phaser !== 'undefined') {
                     this.refreshTray();
                 });
                 const label = this.add.text(W / 2, py, (this.trayPage + 1) + ' / ' + pages, {
-                    fontFamily: 'Arial, sans-serif', fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '18px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(10);
                 const next = makeUiButton(this, W / 2 + 150, py, 90, 48, '▶', CONFIG.PASTEL.accent, () => {
                     this.trayPage = (this.trayPage + 1) % pages;
@@ -476,12 +480,14 @@ if (typeof Phaser !== 'undefined') {
         // -------------------------------------------------------------------
         showToast(msg) {
             this.hideToast(true);
-            // v4.0 Phase C Task 3: toast chip stays a dark ink pill with white
-            // text regardless of theme - same "always-dark floating chip"
-            // exception as makeUiButton's drop shadow / modal scrims.
+            // v4.0 Phase C Task 3 / v5.0 carry-over fix: toast chip stays a
+            // dark pill with white text regardless of theme - same "always-
+            // dark floating chip" exception as makeUiButton's drop shadow /
+            // modal scrims. v5.0 flipped `ink` to bright near-white, so the
+            // pill fill moved to `panel` (still a dark surface) to keep the
+            // white text readable - see tests/pastel.test.js.
             this._toast = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 300, msg, {
-                fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-                color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.ink), padding: { x: 18, y: 10 }
+                fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.panel), padding: { x: 18, y: 10 }
             }).setOrigin(0.5).setDepth(40);
             this._toastTween = this.tweens.add({
                 targets: this._toast, alpha: 0, delay: 1400, duration: 300,

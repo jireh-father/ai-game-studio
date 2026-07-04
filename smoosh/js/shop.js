@@ -18,10 +18,21 @@
 // and CONFIG.PASTEL.gemText (added this task) for "rare" (same blue family
 // as the gems currency text) - see tests/pastel.test.js for the contrast floor.
 const RARITY_COLORS = { common: 0x9aa5c0, rare: 0x5aa9ff, epic: 0xb06fff, legendary: 0xffd54a };
+// v5 final-review fix: `epic` was elements.dark.deep, a token picked back
+// when panels were LIGHT (v4) - v5's neon-CRT flip made every panel/bg DARK,
+// so that same "deep" (darkened) purple now reads at ~2:1 against
+// panel/panelLight/bg, all failing WCAG. The two brighter candidates this
+// fix wave first tried - CONFIG.PASTEL.fever (5.24/4.44/6.09) and
+// elements.dark.base (4.43/3.75/5.15) - each measured under 4.5:1 against
+// panelLight with Balance.relLuminance, so neither is safe on every surface
+// this text appears on (panel, panelLight, AND the dark bg). elements.dark.
+// soft is the brighter step of the same violet ramp (still reads as "epic
+// purple", matching RARITY_COLORS.epic's hue family) and clears all three:
+// panel 8.49, panelLight 7.18, bg 9.86 - see tests/pastel.test.js.
 const RARITY_TEXT_COLORS = {
     common: CONFIG.PASTEL.inkSoft,
     rare: CONFIG.PASTEL.gemText,
-    epic: CONFIG.PASTEL.elements.dark.deep,
+    epic: CONFIG.PASTEL.elements.dark.soft,
     legendary: CONFIG.PASTEL.goldText
 };
 const RARITY_STARS = { common: '★', rare: '★★', epic: '★★★', legendary: '★★★★' };
@@ -45,8 +56,8 @@ class ShopScene extends Phaser.Scene {
 
         // header
         const back = this.add.text(44, 56, this.fromGame ? '▶' : '‹', {
-            fontFamily: 'Arial, sans-serif', fontSize: this.fromGame ? '36px' : '48px',
-            fontStyle: 'bold', color: Balance.hex(this.fromGame ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
+            fontFamily: CONFIG.FONT, fontSize: this.fromGame ? '36px' : '48px',
+            color: Balance.hex(this.fromGame ? CONFIG.PASTEL.goodText : CONFIG.PASTEL.inkSoft)
         }).setOrigin(0.5).setDepth(10).setInteractive({ useHandCursor: true });
         back.on('pointerdown', () => {
             if (this.fromGame) {
@@ -57,15 +68,15 @@ class ShopScene extends Phaser.Scene {
             }
         });
         this.add.text(W / 2, 56, 'SHOP', {
-            fontFamily: 'Arial, sans-serif', fontSize: '44px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goodText)
+            fontFamily: CONFIG.FONT, fontSize: '44px', color: Balance.hex(CONFIG.PASTEL.goodText)
         }).setOrigin(0.5);
 
         // wallet: real texture icons (emoji coins render as globes on some fonts)
         this.goldText = this.add.text(W - 44, 44, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.goldText)
+            fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.goldText)
         }).setOrigin(1, 0.5).setDepth(10);
         this.gemText = this.add.text(W - 44, 78, '', {
-            fontFamily: 'Arial, sans-serif', fontSize: '24px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.gemText)
+            fontFamily: CONFIG.FONT, fontSize: '24px', color: Balance.hex(CONFIG.PASTEL.gemText)
         }).setOrigin(1, 0.5).setDepth(10);
         this.goldIcon = this.add.image(0, 44, 'coin-tex').setDepth(10).setDisplaySize(26, 26);
         this.gemIcon = this.add.image(0, 78, 'gem-tex').setDepth(10).setDisplaySize(24, 24);
@@ -79,8 +90,11 @@ class ShopScene extends Phaser.Scene {
             const x = 20 + i * tw + tw / 2;
             const bg = this.add.nineslice(x, 128, 'pill-tex', 0, tw - 8, 52, 16, 16, 14, 14)
                 .setTint(CONFIG.PASTEL.panel).setDepth(5).setInteractive({ useHandCursor: true });
+            // v5.0 Task 2: 20->17 - 7 tabs share the 720px bar (~97px/tab,
+            // ~89px pill); the wider pixel font needed the headroom so
+            // 'DECOR' (the longest label) can't crowd its pill edges.
             const label = this.add.text(x, 128, name, {
-                fontFamily: 'Arial, sans-serif', fontSize: '20px', fontStyle: 'bold', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                fontFamily: CONFIG.FONT, fontSize: '17px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
             }).setOrigin(0.5).setDepth(6);
             bg.on('pointerdown', () => this.showTab(name));
             this.tabButtons.push({ name, bg, label });
@@ -110,11 +124,20 @@ class ShopScene extends Phaser.Scene {
         this['tab' + name]();
     }
 
-    _text(x, y, str, size, color, origin) {
-        const t = this.add.text(x, y, str, {
-            fontFamily: 'Arial, sans-serif', fontSize: size + 'px', fontStyle: 'bold',
-            color: color || Balance.hex(CONFIG.PASTEL.ink)
-        }).setOrigin(origin !== undefined ? origin : 0.5);
+    // v5 final-review fix: optional trailing `wrapWidth` - long static
+    // sentences (PITY/dupe-info/rate-footer/chest-drop-list copy) were a
+    // single unbounded line that can run past the 720px design width once
+    // the pixel font's true 1.0em/char metric is accounted for. Passing a
+    // width wraps the line instead of letting it overflow.
+    _text(x, y, str, size, color, origin, wrapWidth) {
+        const style = {
+            fontFamily: CONFIG.FONT, fontSize: size + 'px', color: color || Balance.hex(CONFIG.PASTEL.ink)
+        };
+        if (wrapWidth) {
+            style.wordWrap = { width: wrapWidth, useAdvancedWrap: true };
+            style.align = 'center';
+        }
+        const t = this.add.text(x, y, str, style).setOrigin(origin !== undefined ? origin : 0.5);
         this.items.push(t);
         return t;
     }
@@ -142,7 +165,8 @@ class ShopScene extends Phaser.Scene {
         const egg1 = this.add.image(W / 2 - 220, 300, 'egg-tex').setDisplaySize(120, 150);
         this.items.push(egg1);
         this._text(W / 2 + 60, 240, 'GOLD EGG', 34, Balance.hex(CONFIG.PASTEL.goldText));
-        this._text(W / 2 + 60, 282, 'Hatch a random pet!', 20, Balance.hex(CONFIG.PASTEL.inkSoft));
+        // v5.0 RETRO ARCADE Task 4: gold egg caps at epic - legendary is gem-egg only.
+        this._text(W / 2 + 60, 282, I18n.t('shop.eggGoldTier'), 20, Balance.hex(RARITY_TEXT_COLORS.epic));
         this._btn(W / 2 - 60, 380, 240, 76, '1× ' + Balance.fmt(goldCost), CONFIG.PASTEL.accent,
             () => this.doGacha(false, 1), 'coin-tex');
         this._btn(W / 2 + 210, 380, 240, 76, '10+1 ' + Balance.fmt(goldCost * 10), CONFIG.PASTEL.accent,
@@ -156,29 +180,41 @@ class ShopScene extends Phaser.Scene {
             .setTint(CONFIG.PASTEL.elements.ice.deep);
         this.items.push(egg2);
         this._text(W / 2 + 60, 580, 'GEM EGG', 34, Balance.hex(CONFIG.PASTEL.gemText));
-        this._text(W / 2 + 60, 622, 'Premium odds! Epic 20% / Leg 10%', 20, Balance.hex(CONFIG.PASTEL.inkSoft));
+        // v5.0 RETRO ARCADE Task 4: only the gem egg can drop a legendary pet.
+        this._text(W / 2 + 60, 622, I18n.t('shop.eggGemTier'), 20, Balance.hex(RARITY_TEXT_COLORS.legendary));
         this._btn(W / 2 - 60, 720, 240, 76, '1× ' + CONFIG.GEMS.eggCost, CONFIG.PASTEL.accent,
             () => this.doGacha(true, 1), 'gem-tex');
         this._btn(W / 2 + 210, 720, 240, 76, '10+1 ' + CONFIG.GEMS.eggCost * 10, CONFIG.PASTEL.accent,
             () => this.doGacha(true, 11), 'gem-tex');
 
+        // v5 final-review fix: these 3 static lines are long single-sentence
+        // copy at the pixel font's true 1.0em/char metric - wordWrap so a
+        // long line breaks instead of overflowing the 720px design width.
         this._text(W / 2, 860, 'PITY: epic+ guaranteed within ' +
-            (CONFIG.GACHA.pityAt - st.gachaPity) + ' rolls', 22, Balance.hex(RARITY_TEXT_COLORS.epic));
+            (CONFIG.GACHA.pityAt - st.gachaPity) + ' rolls', 22, Balance.hex(RARITY_TEXT_COLORS.epic),
+            undefined, 680);
         this._text(W / 2, 920,
-            'Dupes → shards (level pets) · Better rarity dupes UPGRADE your pet!', 19, Balance.hex(CONFIG.PASTEL.inkSoft));
+            'Dupes → shards (level pets) · Better rarity dupes UPGRADE your pet!', 19, Balance.hex(CONFIG.PASTEL.inkSoft),
+            undefined, 680);
+        // v5.0 RETRO ARCADE Task 4: derived from CONFIG.GACHA directly (not
+        // hardcoded) so this footer can never drift from the real rates again.
+        const gr = CONFIG.GACHA.rates, gm = CONFIG.GACHA.gemRates;
+        const pct = n => Math.round(n * 100);
         this._text(W / 2, 1080,
-            'rates GOLD: C60 R25 E12 L3 (%)   GEM: C40 R30 E20 L10 (%)', 18, Balance.hex(CONFIG.PASTEL.inkSoft));
+            `rates GOLD: C${pct(gr.common)} R${pct(gr.rare)} E${pct(gr.epic)} L${pct(gr.legendary)} (%)   ` +
+            `GEM: C${pct(gm.common)} R${pct(gm.rare)} E${pct(gm.epic)} L${pct(gm.legendary)} (%)`,
+            18, Balance.hex(CONFIG.PASTEL.inkSoft), undefined, 680);
     }
 
     doGacha(useGems, count) {
         const st = SaveManager.state;
         if (useGems) {
             const cost = CONFIG.GEMS.eggCost * (count > 1 ? 10 : 1);
-            if (st.gems < cost) return this.toast('젬이 부족해요!');
+            if (st.gems < cost) return this.toast(I18n.t('shop.needGems'));
             st.gems -= cost;
         } else {
             const cost = Balance.eggCost(this.stageRef) * (count > 1 ? 10 : 1);
-            if (!SaveManager.spendGold(cost)) return this.toast('골드가 부족해요!');
+            if (!SaveManager.spendGold(cost)) return this.toast(I18n.t('shop.needGold'));
         }
         const results = count === 1
             ? [Gacha.roll(st, Math.random, useGems)]
@@ -217,7 +253,16 @@ class ShopScene extends Phaser.Scene {
                     Effects.screenFlash(this, color, best.rarity === 'legendary' ? 0.5 : 0.3, 500);
                     Effects.burst(this, W / 2, H * 0.42, color, 24, 1.6);
                     Effects.ring(this, W / 2, H * 0.42, color, 320);
-                    if (best.rarity === 'legendary') Effects.confetti(this, W / 2, H * 0.4);
+                    if (best.rarity === 'legendary') {
+                        // v5.0 RETRO ARCADE Task 5: legendary gets the full
+                        // premium treatment on top of the existing flash/
+                        // burst/ring/confetti - a second sparkle burst plus a
+                        // real camera shake so the rarest pull is unmistakably
+                        // the biggest moment in the ceremony.
+                        Effects.confetti(this, W / 2, H * 0.4);
+                        Effects.burst(this, W / 2, H * 0.42, CONFIG.PASTEL.gold, 30, 2.2);
+                        this.cameras.main.shake(220, 0.006);
+                    }
                 }
                 Sfx.jackpot();
                 egg.destroy();
@@ -228,19 +273,26 @@ class ShopScene extends Phaser.Scene {
 
                 if (results.length === 1) {
                     const r = results[0];
+                    // v5.0 RETRO ARCADE Task 5: the pulled pet reveals inside
+                    // its own rarity frame - sized a bit past the 160px
+                    // sprite, and popped in with the same Back.easeOut beat
+                    // as the sprite itself so the two read as one reveal.
+                    const frame = Frames.draw(this, W / 2, H * 0.42, 190, 190, r.rarity)
+                        .setDepth(31).setScale(0.1);
+                    overlay.push(frame);
+                    this.tweens.add({ targets: frame, scale: 1, duration: 320, ease: 'Back.easeOut' });
                     const spr = this.add.image(W / 2, H * 0.42, 'pet-' + r.species)
                         .setDepth(32).setDisplaySize(160, 160).setScale(0.1);
                     overlay.push(spr);
-                    this.tweens.add({ targets: spr, scale: 160 / 48, duration: 320, ease: 'Back.easeOut' });
+                    this.tweens.add({ targets: spr, scale: 160 / CONFIG.PIXEL.bake, duration: 320, ease: 'Back.easeOut' });
                     const def = PET_SPECIES.find(p => p.id === r.species);
                     overlay.push(this.add.text(W / 2, H * 0.58, def.name + '  ' + RARITY_STARS[r.rarity], {
-                        fontFamily: 'Arial, sans-serif', fontSize: '42px', fontStyle: 'bold',
-                        color: '#' + color.toString(16).padStart(6, '0')
+                        fontFamily: CONFIG.FONT, fontSize: '42px', color: '#' + color.toString(16).padStart(6, '0')
                     }).setOrigin(0.5).setDepth(32));
                     overlay.push(this.add.text(W / 2, H * 0.64,
                         r.kind === 'new' ? 'NEW PET!' :
                             r.kind === 'upgrade' ? 'RARITY UPGRADED!' : '+' + r.shards + ' shards', {
-                        fontFamily: 'Arial, sans-serif', fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.white)
+                        fontFamily: CONFIG.FONT, fontSize: '28px', color: Balance.hex(CONFIG.PASTEL.white)
                     }).setOrigin(0.5).setDepth(32));
                 } else {
                     // multi: result grid
@@ -250,24 +302,37 @@ class ShopScene extends Phaser.Scene {
                         const c = RARITY_COLORS[r.rarity];
                         const cell = this.add.nineslice(gx, gy, 'btn-tex', 0, 130, 130, 20, 20, 20, 20)
                             .setTint(c).setAlpha(0.28).setDepth(31);
+                        // v5.0 RETRO ARCADE Task 5: each grid cell gets its
+                        // own rarity frame (sized just inside the 130px
+                        // cell), depth-sandwiched between the tinted cell
+                        // and the pet sprite/tag on top of it.
+                        const frame = Frames.draw(this, gx, gy, 118, 118, r.rarity).setDepth(31.5);
                         const spr = this.add.image(gx, gy - 8, 'pet-' + r.species)
                             .setDepth(32).setDisplaySize(76, 76).setScale(0.05);
                         const tag = this.add.text(gx, gy + 44,
                             r.kind === 'shards' ? '+' + r.shards + '🧩' : r.kind.toUpperCase(), {
-                            fontFamily: 'Arial, sans-serif', fontSize: '15px', fontStyle: 'bold',
-                            color: Balance.hex(CONFIG.PASTEL.white)
+                            fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.white)
                         }).setOrigin(0.5).setDepth(32);
-                        overlay.push(cell, spr, tag);
+                        overlay.push(cell, frame, spr, tag);
                         this.tweens.add({
-                            targets: spr, scale: 76 / 48, delay: i * 90,
+                            targets: spr, scale: 76 / CONFIG.PIXEL.bake, delay: i * 90,
                             duration: 220, ease: 'Back.easeOut',
-                            onStart: () => Sfx.coin()
+                            onStart: () => {
+                                Sfx.coin();
+                                // Legendary flourish, per-cell: a small gold
+                                // sparkle burst timed with that cell's own
+                                // reveal beat (the multi-pull otherwise has
+                                // no per-rarity FX at all).
+                                if (r.rarity === 'legendary' && typeof Effects !== 'undefined') {
+                                    Effects.burst(this, gx, gy, CONFIG.PASTEL.gold, 14, 0.9);
+                                }
+                            }
                         });
                     });
                 }
 
                 overlay.push(this.add.text(W / 2, H * 0.88, 'TAP TO CLOSE', {
-                    fontFamily: 'Arial, sans-serif', fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
+                    fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.inkSoft)
                 }).setOrigin(0.5).setDepth(32));
                 dim.once('pointerdown', () => {
                     overlay.forEach(o => o.destroy());
@@ -286,8 +351,11 @@ class ShopScene extends Phaser.Scene {
             this._text(W / 2, 460, 'No pets yet!\nHatch an egg first 🥚', 32, Balance.hex(CONFIG.PASTEL.inkSoft));
             return;
         }
+        // v5 final-review fix: wordWrap - this line is already long before the
+        // dynamic counts are appended, and easily overflows 720px.
         this._text(W / 2, 180, 'ALL ' + st.pets.length + ' pets fight for you!  ·  collection ' +
-            st.pets.length + '/50  ·  🧩' + Balance.fmt(st.shards), 20, Balance.hex(CONFIG.PASTEL.inkSoft));
+            st.pets.length + '/50  ·  🧩' + Balance.fmt(st.shards), 20, Balance.hex(CONFIG.PASTEL.inkSoft),
+            undefined, 680);
 
         // pagination: up to 50 pets
         const PER_PAGE = 4;
@@ -306,14 +374,16 @@ class ShopScene extends Phaser.Scene {
             this._text(200, y - 56, (def ? def.name : pet.species) + '  ' + RARITY_STARS[pet.rarity] +
                 '  ⚔', 25,
                 Balance.hex(RARITY_TEXT_COLORS[pet.rarity]), 0);
-            this._text(200, y - 22, 'Lv.' + pet.level + ' · ' + (def ? def.element : '?') +
-                (pet.necklace ? ' · 📿' + pet.necklace : ''), 21, Balance.hex(CONFIG.PASTEL.ink), 0);
+            // v5.0 Task 2 review fix: pet level is linear-cost (uncapped) so
+            // "Lv.NNN · element · 📿rarity" grows past the 660px card edge.
+            fitToWidth(this._text(200, y - 22, 'Lv.' + pet.level + ' · ' + (def ? def.element : '?') +
+                (pet.necklace ? ' · 📿' + pet.necklace : ''), 21, Balance.hex(CONFIG.PASTEL.ink), 0), 470);
             this._text(200, y + 8, 'DPS ' + Balance.fmt(
                 Balance.petDamage(pet.level, st.upgrades.tap, pet.rarity, pet.necklace)), 19, Balance.hex(CONFIG.PASTEL.inkSoft), 0);
 
             const feedCost = Balance.petFeedCost(this.stageRef, pet.level);
             this._btn(300, y + 56, 240, 56, 'FEED ' + Balance.fmt(feedCost), CONFIG.PASTEL.accent, () => {
-                if (!SaveManager.spendGold(feedCost)) return this.toast('골드가 부족해요!');
+                if (!SaveManager.spendGold(feedCost)) return this.toast(I18n.t('shop.needGold'));
                 pet.level++;
                 SaveManager.persist();
                 this.refreshWallet();
@@ -321,7 +391,7 @@ class ShopScene extends Phaser.Scene {
                 this.showTab('PETS');
             });
             this._btn(560, y + 56, 220, 56, '🧩8 → LV UP', CONFIG.PASTEL.accent, () => {
-                if (!Gacha.levelWithShards(st, pet.species)) return this.toast('조각이 부족해요!');
+                if (!Gacha.levelWithShards(st, pet.species)) return this.toast(I18n.t('shop.needShards'));
                 SaveManager.persist();
                 Sfx.coin();
                 this.showTab('PETS');
@@ -347,7 +417,14 @@ class ShopScene extends Phaser.Scene {
     // =========================================================================
     _openChest(useGems) {
         const st = SaveManager.state;
-        const rates = useGems ? CONFIG.GACHA.gemRates : CONFIG.GACHA.rates;
+        // v5 final-review fix: chests drop GEAR (glove/ring/charm) or a pet
+        // necklace, never a pet itself - the gold-chest branch must NOT read
+        // GACHA.rates (that table's legendary share is intentionally zeroed
+        // for gold-egg PETS only, per Task 4). Gold chest -> DROP_RATES (the
+        // item economy's own table, legendary preserved). Gem chest keeps
+        // GACHA.gemRates unchanged - that table was never touched by Task 4
+        // and already carries a positive legendary share.
+        const rates = useGems ? CONFIG.GACHA.gemRates : CONFIG.DROP_RATES;
         const rarity = Gacha._rollRarity(rates, Math.random);
         const pool = ['glove', 'ring', 'charm', 'necklace'];
         const slot = pool[Math.floor(Math.random() * 4)];
@@ -381,7 +458,7 @@ class ShopScene extends Phaser.Scene {
         const chestCost = Balance.chestCost(this.stageRef);
 
         this._btn(W / 2 - 170, 210, 320, 76, 'CHEST ' + Balance.fmt(chestCost), CONFIG.PASTEL.accent, () => {
-            if (!SaveManager.spendGold(chestCost)) return this.toast('골드가 부족해요!');
+            if (!SaveManager.spendGold(chestCost)) return this.toast(I18n.t('shop.needGold'));
             const r = this._openChest(false);
             SaveManager.persist(); this.refreshWallet();
             Sfx.jackpot();
@@ -392,7 +469,7 @@ class ShopScene extends Phaser.Scene {
             this.time.delayedCall(700, () => this.showTab('GEAR'));
         }, 'coin-tex');
         this._btn(W / 2 + 180, 210, 320, 76, 'GEM CHEST ' + CONFIG.GEMS.chestCost, CONFIG.PASTEL.accent, () => {
-            if (st.gems < CONFIG.GEMS.chestCost) return this.toast('젬이 부족해요!');
+            if (st.gems < CONFIG.GEMS.chestCost) return this.toast(I18n.t('shop.needGems'));
             st.gems -= CONFIG.GEMS.chestCost;
             const r = this._openChest(true);
             SaveManager.persist(); this.refreshWallet();
@@ -400,7 +477,10 @@ class ShopScene extends Phaser.Scene {
             this.toast(r.msg);
             this.time.delayedCall(700, () => this.showTab('GEAR'));
         }, 'gem-tex');
-        this._text(W / 2, 270, 'Chests drop: glove / ring / charm / pet necklace', 19, Balance.hex(CONFIG.PASTEL.inkSoft));
+        // v5 final-review fix: wordWrap so this doesn't overflow the 720px
+        // design width at the pixel font's 1.0em/char metric.
+        this._text(W / 2, 270, 'Chests drop: glove / ring / charm / pet necklace', 19, Balance.hex(CONFIG.PASTEL.inkSoft),
+            undefined, 680);
 
         const slotInfo = {
             glove: { name: 'GLOVE', desc: 'tap damage', icon: 'up-tap' },
@@ -426,12 +506,15 @@ class ShopScene extends Phaser.Scene {
             const bonus = Balance.itemBonus(slot, it.rarity, it.level);
             this._text(200, y - 52, info.name + '  ' + RARITY_STARS[it.rarity], 27,
                 Balance.hex(RARITY_TEXT_COLORS[it.rarity]), 0);
-            this._text(200, y - 14, '+Lv.' + it.level + ' · +' +
+            // v5.0 Task 2 review fix: enhance line ("+Lv.N · +X% tap damage")
+            // already grazes the 660px card at level 0 for the longest desc and
+            // grows with level (linear-cost, uncapped) - clamp it.
+            fitToWidth(this._text(200, y - 14, '+Lv.' + it.level + ' · +' +
                 (slot === 'ring' ? (bonus * 100).toFixed(1) + '%p crit'
-                    : Math.round(bonus * 100) + '% ' + info.desc), 22, Balance.hex(CONFIG.PASTEL.ink), 0);
+                    : Math.round(bonus * 100) + '% ' + info.desc), 22, Balance.hex(CONFIG.PASTEL.ink), 0), 470);
             const cost = Balance.itemEnhanceCost(this.stageRef, it.level);
             this._btn(430, y + 56, 380, 64, 'ENHANCE ' + Balance.fmt(cost), CONFIG.PASTEL.accent, () => {
-                if (!SaveManager.spendGold(cost)) return this.toast('골드가 부족해요!');
+                if (!SaveManager.spendGold(cost)) return this.toast(I18n.t('shop.needGold'));
                 it.level++;
                 SaveManager.persist(); this.refreshWallet();
                 Sfx.coin();
@@ -451,7 +534,10 @@ class ShopScene extends Phaser.Scene {
         this._text(W / 2, 470, '🥚 NEST  Lv.' + L, 40, Balance.hex(CONFIG.PASTEL.goodText));
 
         const rows = [
-            ['HP', Balance.nestMaxHp(L), Balance.nestMaxHp(L + 1)],
+            // v5.0 Task 2 review fix: nestMaxHp is exponential (1.28^L) - shown
+            // RAW it hit 5+ digits by nest level ~20 and overran the row. fmt
+            // abbreviates it (k/m/b/...) like every other big number in the UI.
+            ['HP', Balance.fmt(Balance.nestMaxHp(L)), Balance.fmt(Balance.nestMaxHp(L + 1))],
             ['Regen/s', Balance.nestRegen(L).toFixed(1), Balance.nestRegen(L + 1).toFixed(1)],
             ['Thorns', Balance.fmt(Balance.nestThorns(L, st.upgrades.tap)),
                 Balance.fmt(Balance.nestThorns(L + 1, st.upgrades.tap))],
@@ -464,14 +550,17 @@ class ShopScene extends Phaser.Scene {
 
         const cost = Balance.nestUpCost(this.stageRef, L);
         this._btn(W / 2, 850, 480, 96, 'LEVEL UP ' + Balance.fmt(cost), CONFIG.PASTEL.accent, () => {
-            if (!SaveManager.spendGold(cost)) return this.toast('골드가 부족해요!');
+            if (!SaveManager.spendGold(cost)) return this.toast(I18n.t('shop.needGold'));
             st.nestLevel++;
             SaveManager.persist(); this.refreshWallet();
             Sfx.jackpot();
             if (typeof Effects !== 'undefined') Effects.confetti(this, W / 2, 330);
             this.showTab('NEST');
         });
-        this._text(W / 2, 940, 'Raiders bite the nest — if it breaks, the stage is lost!', 20, Balance.hex(CONFIG.PASTEL.dangerText));
+        // v5 final-review fix: wordWrap - this sentence overflows 720px badly
+        // at 20px/char (~56 chars * 20px ~= 1120px unwrapped).
+        this._text(W / 2, 940, 'Raiders bite the nest — if it breaks, the stage is lost!', 20, Balance.hex(CONFIG.PASTEL.dangerText),
+            undefined, 680);
     }
 
     // =========================================================================
@@ -480,8 +569,11 @@ class ShopScene extends Phaser.Scene {
     tabGEMS() {
         const W = CONFIG.WIDTH, st = SaveManager.state;
         this._text(W / 2, 210, '💎 GET GEMS', 36, Balance.hex(CONFIG.PASTEL.gemText));
+        // v5 final-review fix: wordWrap - overflows badly at 20px/char
+        // (~63 chars * 20px ~= 1260px unwrapped).
         this._text(W / 2, 260,
-            'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 20, Balance.hex(CONFIG.PASTEL.inkSoft));
+            'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 20, Balance.hex(CONFIG.PASTEL.inkSoft),
+            undefined, 680);
 
         IapManager.PRODUCTS.forEach((p, i) => {
             const y = 370 + i * 165;
@@ -517,12 +609,15 @@ class ShopScene extends Phaser.Scene {
                     if (typeof Effects !== 'undefined') Effects.confetti(this, W / 2, y);
                     this.toast('+' + r.gems + ' 💎' + (r.simulated ? ' (dev)' : ''));
                 } else if (r.reason === 'store_not_connected') {
-                    this.toast('스토어 연결은 출시 후에 열려요!');
+                    this.toast(I18n.t('shop.storeSoon'));
                 }
             });
         });
+        // v5 final-review fix: wordWrap - 44 chars * 18px ~= 792px, slightly
+        // past the 720px design width.
         this._text(W / 2, 1055, IapManager.storeConnected
-            ? '' : '(billing goes live with the store release)', 18, Balance.hex(CONFIG.PASTEL.inkSoft));
+            ? '' : '(billing goes live with the store release)', 18, Balance.hex(CONFIG.PASTEL.inkSoft),
+            undefined, 680);
     }
 
     // =========================================================================
@@ -551,7 +646,9 @@ class ShopScene extends Phaser.Scene {
             this._card(x, y, cellW - 16, cellH - 20);
             const icon = this.add.image(x, y - 68, 'decor-' + def.id).setDisplaySize(84, 84);
             this.items.push(icon);
-            this._text(x, y - 8, def.name[I18n.locale] || def.name.en, 17, Balance.hex(CONFIG.PASTEL.ink));
+            // v5.0 Task 2 review fix: longest decor name ("Bounce Mushroom", 15)
+            // at 1.0em/char overruns the 204px cell - clamp to the cell width.
+            fitToWidth(this._text(x, y - 8, def.name[I18n.locale] || def.name.en, 17, Balance.hex(CONFIG.PASTEL.ink)), cellW - 24);
             this._text(x, y + 16, I18n.t('decor.cat.' + def.cat), 13, Balance.hex(CONFIG.PASTEL.inkSoft));
             if (owned > 0) {
                 this._text(x + cellW / 2 - 44, y - cellH / 2 + 20, I18n.t('decor.owned', { n: owned }), 13, Balance.hex(CONFIG.PASTEL.goodText));
@@ -611,12 +708,14 @@ class ShopScene extends Phaser.Scene {
 
     toast(msg) {
         if (this._toast) this._toast.destroy();
-        // v4.0 Phase C Task 3: toast chip stays a dark ink pill with white
-        // text regardless of theme - same "always-dark floating chip"
-        // exception as makeUiButton's drop shadow / modal scrims.
+        // v4.0 Phase C Task 3 / v5.0 carry-over fix: toast chip stays a
+        // dark pill with white text regardless of theme - same "always-
+        // dark floating chip" exception as makeUiButton's drop shadow /
+        // modal scrims. v5.0 flipped `ink` to bright near-white, so the
+        // pill fill moved to `panel` (still a dark surface) to keep the
+        // white text readable - see tests/pastel.test.js.
         this._toast = this.add.text(CONFIG.WIDTH / 2, CONFIG.HEIGHT - 140, msg, {
-            fontFamily: 'Arial, sans-serif', fontSize: '26px', fontStyle: 'bold',
-            color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.ink), padding: { x: 18, y: 10 }
+            fontFamily: CONFIG.FONT, fontSize: '26px', color: Balance.hex(CONFIG.PASTEL.white), backgroundColor: Balance.hex(CONFIG.PASTEL.panel), padding: { x: 18, y: 10 }
         }).setOrigin(0.5).setDepth(40);
         this.tweens.add({
             targets: this._toast, alpha: 0, delay: 1400, duration: 300,

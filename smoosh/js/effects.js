@@ -128,8 +128,7 @@ const Effects = {
         if (pools.texts.filter(t => t.visible).length >= 24) return;
         const t = this._acquire(scene, pools.texts, () =>
             scene.add.text(0, 0, '', {
-                fontFamily: 'Arial, sans-serif', fontStyle: 'bold',
-                stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 6
+                fontFamily: CONFIG.FONT, stroke: Balance.hex(CONFIG.PASTEL.ink), strokeThickness: 6
             }).setOrigin(0.5).setDepth(12));
 
         const size = o.crit ? 46 : o.big ? 38 : 27;

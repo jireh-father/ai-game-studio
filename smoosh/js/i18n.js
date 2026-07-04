@@ -1,7 +1,10 @@
 // =============================================================================
 // SMOOSH! - i18n.js
-// Two-locale string table (en/ko). Locale follows the DEVICE language:
-// Korean devices get Korean, everyone else gets English (spec §A9).
+// Two-locale string table (en/ko). v5.0 RETRO ARCADE: the game is now
+// forced English-only regardless of device language (arcade-cabinet
+// presentation) - detect() always resolves to 'en'. _localeFrom is kept
+// (used by tests/i18n.test.js and available for a future opt-in toggle);
+// STRINGS keeps both en/ko entries so the ko fallback path still works.
 // =============================================================================
 
 const I18n = {
@@ -13,8 +16,8 @@ const I18n = {
     },
 
     detect() {
-        const tag = (typeof navigator !== 'undefined' && navigator.language) || 'en';
-        this.locale = this._localeFrom(tag);
+        // v5.0: forced English - device language no longer consulted.
+        this.locale = 'en';
         return this.locale;
     },
 
@@ -44,6 +47,17 @@ const I18n = {
         'shop.removeAdsLabel': { en: '🚫 Ads',         ko: '🚫 광고' },
         'shop.adsRemoved':  { en: 'Ads removed ✓',     ko: '광고 제거됨 ✓' },
         'shop.storeSoon':   { en: 'Store opens after release!', ko: '스토어 연결은 출시 후에 열려요!' },
+        // v5 final-review fix: shop.js toasts were hardcoded Korean, violating
+        // the forced-English rule (CLAUDE.md). Locale is forced 'en' so only
+        // the en value shows in-game; ko kept for completeness/consistency
+        // with every other STRINGS entry.
+        'shop.needGold':    { en: 'NOT ENOUGH GOLD',   ko: '골드가 부족해요!' },
+        'shop.needGems':    { en: 'NOT ENOUGH GEMS',   ko: '젬이 부족해요!' },
+        'shop.needShards':  { en: 'NOT ENOUGH SHARDS', ko: '조각이 부족해요!' },
+        // v5.0 RETRO ARCADE Task 4: legendary pets are gem-egg only - short
+        // tier badges on the EGGS tab (kept terse, pixel font is wide).
+        'shop.eggGoldTier': { en: 'UP TO EPIC',        ko: '최대 에픽' },
+        'shop.eggGemTier':  { en: '★ LEGENDARY CHANCE', ko: '★ 레전더리 확률' },
         'ult.ready':        { en: 'ULT READY!',        ko: '궁극기 준비!' },
         'drop.despawned':   { en: 'Lost...',           ko: '놓쳤다...' },
         'pvp.pickTeam':     { en: 'PICK YOUR TEAM (max 5)', ko: '팀 선택 (최대 5마리)' },

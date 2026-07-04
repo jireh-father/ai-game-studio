@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#f6f1fb">
+    <meta name="theme-color" content="#0d0221">
     <meta name="mobile-web-app-capable" content="yes">
     <title>SMOOSH!</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='7' fill='%23141020'/><ellipse cx='16' cy='19' rx='11' ry='9' fill='%237dffb2'/><circle cx='12' cy='17' r='1.8' fill='%23141020'/><circle cx='20' cy='17' r='1.8' fill='%23141020'/><path d='M13 22 Q16 24 19 22' stroke='%23141020' stroke-width='1.6' fill='none'/></svg>">
@@ -13,6 +13,9 @@
 </head>
 <body>
     <div id="game-container"></div>
+    <!-- v5.0 RETRO ARCADE Task 2: CRT scanline/vignette overlay - see
+         css/style.css #crt (pointer-events:none, sits above the canvas). -->
+    <div id="crt"></div>
     <div id="landscape-warning">
         <div class="rotate-icon">&#x1F4F1;</div>
         <div>PLEASE ROTATE<br>TO PORTRAIT MODE</div>
@@ -38,6 +41,9 @@
     <script src="js/nicknames.js"></script>
     <script src="js/catalog.js"></script>
     <script src="js/decor.js"></script>
+    <!-- v5.0 RETRO ARCADE Task 5: rarity card frames - must load before any
+         consumer (dex.js, shop.js, ui.js). -->
+    <script src="js/frames.js"></script>
     <script src="js/skills.js"></script>
     <script src="js/spawner.js"></script>
     <script src="js/save.js"></script>
