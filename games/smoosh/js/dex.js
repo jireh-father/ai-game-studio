@@ -477,6 +477,32 @@ const Dex = {
         redpanda: {
             en: 'A masked cutie with a fire streak - every swipe leaves a little smolder behind.',
             ko: '가면 쓴 귀염둥이지만 불꽃 기질이 있어 할퀼 때마다 그을음을 남긴다.'
+        },
+
+        // --- v7 Task 7: 6 legendary-caliber newcomers ---
+        phoenix: {
+            en: 'Bursts into flame, crumbles to ash, and struts back to life like nothing happened.',
+            ko: '화르륵 타올라 재가 되어도, 아무 일 없었다는 듯 다시 걸어 나온다.'
+        },
+        griffin: {
+            en: 'Half eagle, half lion, all business - swoops down and drags its prey straight to the pride.',
+            ko: '반은 독수리, 반은 사자. 급강하해 먹잇감을 무리 앞까지 확 끌고 온다.'
+        },
+        thunderbird: {
+            en: 'Every wingbeat cracks like thunder, and one bolt from its beak arcs to three foes at once.',
+            ko: '날갯짓마다 천둥이 치고, 부리에서 뻗은 번개가 적 셋에게 한 번에 튄다.'
+        },
+        yeti: {
+            en: 'A legend from the highest peak that lumbers down just once - and leaves the whole field frozen solid.',
+            ko: '가장 높은 봉우리의 전설. 딱 한 번 내려와 전장을 통째로 얼려버린다.'
+        },
+        pegasus: {
+            en: 'Wings of pure light carry it above the fray, and its battle-cry lifts every ally\'s attack.',
+            ko: '순수한 빛의 날개로 전장 위를 날며, 함성 한 번으로 아군 전체의 공격력을 끌어올린다.'
+        },
+        hydra: {
+            en: 'Cut off one head and two more grow back - this shadowy beast refuses to ever stay down for good.',
+            ko: '머리 하나를 자르면 두 개가 자란다. 이 그림자 괴수는 완전히 쓰러지길 거부한다.'
         }
     },
 

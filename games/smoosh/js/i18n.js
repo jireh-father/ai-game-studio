@@ -43,10 +43,13 @@ const I18n = {
         'dex.locked':       { en: '???',               ko: '???' },
         'dex.kills':        { en: 'Kills: {n}',        ko: '처치: {n}' },
         'dex.skill':        { en: 'Skill',             ko: '스킬' },
-        'shop.removeAds':   { en: 'Remove Ads',        ko: '광고 제거' },
-        'shop.removeAdsLabel': { en: '🚫 Ads',         ko: '🚫 광고' },
         'shop.adsRemoved':  { en: 'Ads removed ✓',     ko: '광고 제거됨 ✓' },
         'shop.storeSoon':   { en: 'Store opens after release!', ko: '스토어 연결은 출시 후에 열려요!' },
+        // v7 T2: no separate remove-ads product anymore - ANY gem purchase
+        // removes ads forever. Indicator line shown before the first
+        // purchase, uppercase arcade-style badge shown once adsRemoved.
+        'shop.anyGemRemovesAds': { en: '💎 Any gem purchase removes all ads — forever', ko: '💎 젬을 구매하면 모든 광고가 영구히 사라져요' },
+        'shop.adsRemovedBadge':  { en: '✓ ADS REMOVED', ko: '✓ 광고 제거 완료' },
         // v5 final-review fix: shop.js toasts were hardcoded Korean, violating
         // the forced-English rule (CLAUDE.md). Locale is forced 'en' so only
         // the en value shows in-game; ko kept for completeness/consistency

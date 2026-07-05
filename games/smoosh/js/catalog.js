@@ -425,7 +425,8 @@ const SPECIES = [
 ];
 
 // =============================================================================
-// v2.1 - PET ANIMALS: 50 adorable round critters, painted parametrically.
+// v2.1 - PET ANIMALS: 56 adorable round critters, painted parametrically
+// (50 base + v7 Task 7's 6 legendary-caliber newcomers).
 // Element counters: v3.0 8-element chart (fire/water/leaf/wind/electric/ice/
 // light/dark), 1.5 strong / 0.7 weak - see Balance.elementMult.
 // =============================================================================
@@ -600,8 +601,9 @@ function animal(id, name, element, skill, body, belly, earIn, art) {
     };
 }
 
-// 50 critters. v3.0: elements spread across all 8 (fire/water/leaf/wind/
-// electric/ice/light/dark), >=4 per element (see tests/elements.test.js).
+// 56 critters (50 base + v7 Task 7's 6). v3.0: elements spread across all 8
+// (fire/water/leaf/wind/electric/ice/light/dark), >=4 per element (see
+// tests/elements.test.js).
 // v3.0 Task 9: every pet also carries a personality-matched skill archetype
 // (Skills.ARCHETYPES) - cat=dash, dog=taunt, rabbit=heal, bear=slam,
 // panda=shield, fox=stealth, etc. Distribution: every one of the 23
@@ -673,7 +675,28 @@ const PET_SPECIES = [
     animal('raccoon',  'Raccoon',  'dark',     'stealth',   '#a8a8b8', '#dcdce8', '#454550', { ear: 'round',  pattern: 'mask', tailStyle: 'puff', mouth: 'w' }),
     animal('hedgehog', 'Hedgehog', 'dark',     'shield',    '#c09468', '#ecd9b8', '#7d5a38', { ear: 'tuft',   pattern: 'spots', mouth: 'w' }),
     animal('bat',      'Bat',      'dark',     'stealth',   '#8a7aa8', '#c0b5d5', '#5d4d78', { ear: 'wing',   pattern: 'patch', mouth: 'open' }),
-    animal('skunk',    'Skunk',    'dark',     'poison',    '#4a4a58', '#e8e8f0', '#f0f0f5', { ear: 'pointy', pattern: 'stripes', tailStyle: 'puff', mouth: 'w' })
+    animal('skunk',    'Skunk',    'dark',     'poison',    '#4a4a58', '#e8e8f0', '#f0f0f5', { ear: 'pointy', pattern: 'stripes', tailStyle: 'puff', mouth: 'w' }),
+
+    // --- v7 Task 7: 6 legendary-caliber newcomers, one per element (skipping
+    // water/leaf - already the two most-populated elements at 9-10 apiece).
+    // v2.1's rarity model has NO species-level tier: Gacha.roll() (gacha.js)
+    // picks a species uniformly from the whole PET_SPECIES pool independent
+    // of the separately-rolled rarity (common/rare/epic/legendary), so no
+    // pet - old or new - can be "locked" to a rarity. "4-star" (RARITY_STARS
+    // in shop.js: legendary='★★★★') is therefore a per-roll OUTCOME, not a
+    // species attribute; these 6 simply join the same pool everyone else is
+    // in, and - exactly like every other pet - can land on a 4-star/legendary
+    // pull (gem egg only, per the existing v5 gold-caps-at-epic rule, which
+    // this task does not touch). Recipes are mythic/premium in tone (phoenix/
+    // griffin/thunderbird/yeti/pegasus/hydra) and pairwise-distinct from
+    // every same-element sibling by >=2 fields (verified by
+    // tests/catalog.test.js's per-element distinctness check).
+    animal('phoenix',     'Phoenix',     'fire',     'revive',   '#ff5a3c', '#ffe29a', '#c9302c', { ear: 'wing', pattern: 'star',    tailStyle: 'feather', mouth: 'beak',  extra: 'sparkle' }),
+    animal('griffin',     'Griffin',     'wind',     'pull',     '#d9a05b', '#f5e6c8', '#8a5a30', { ear: 'wing', pattern: 'star',    tailStyle: 'puff',    mouth: 'beak',  extra: 'mane' }),
+    animal('thunderbird', 'Thunderbird', 'electric', 'chain',    '#4b3f8f', '#ffe066', '#2e2560', { ear: 'fin',  pattern: 'stripes', tailStyle: 'long',    mouth: 'beak',  extra: 'sparkle' }),
+    animal('yeti',        'Yeti',        'ice',      'freeze',   '#e8f4ff', '#ffffff', '#9fcbe8', { ear: 'tuft', pattern: 'mask',    mouth: 'w',           extra: 'tusk' }),
+    animal('pegasus',     'Pegasus',     'light',    'buffaura', '#fff8ea', '#ffffff', '#ffd54a', { ear: 'wing', pattern: 'spots',   tailStyle: 'feather', mouth: 'smile', extra: 'sparkle' }),
+    animal('hydra',       'Hydra',       'dark',     'clone',    '#3a2f52', '#241c38', '#7de08a', { ear: 'horn', pattern: 'spots',   tailStyle: 'curly',   mouth: 'open',  extra: 'tusk' })
 ];
 
 // The Nest - the thing we protect. Basket + sleeping babies + an egg.

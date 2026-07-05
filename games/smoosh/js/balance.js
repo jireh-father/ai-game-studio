@@ -32,8 +32,27 @@ const Balance = {
     // one (gg=1.25, tdg=1.376) had the widest margin above both floors
     // (48.1% >= 42%, avg 2.04 >= 1.8) while raising BOTH constants upward, as
     // this task's guidance prefers. See tests/balance.test.js for the sim.
+    // v7 T6: late-game-only difficulty ramp on top of the v6 curve above.
+    // Stages <= DIFF_EARLY_FLOOR are untouched (lateMult=1, current feel
+    // preserved exactly); stages >= DIFF_FULL_STAGE reach the full
+    // DIFF_LATE_SCALE (3x) multiplier, linearly interpolated in between.
+    // Applied to mobHP only (not monsterAtkMult): monsterAtkMult is already
+    // explicitly OUTSIDE Balance.simulate()'s scope (see that constant's own
+    // comment) and tunes a separate pet/nest-survivability balance untouched
+    // by this task's sim/test scope, so leaving it alone keeps this a
+    // surgical, easily-isolated change. Tripling HP alone already satisfies
+    // "total difficulty (HP x atk pressure) ~3x by late game" since atk
+    // pressure is an independent, unchanged multiplicand.
+    DIFF_EARLY_FLOOR: 20,
+    DIFF_FULL_STAGE: 150,
+    DIFF_LATE_SCALE: 3,
+    lateMult(stage) {
+        const span = this.DIFF_FULL_STAGE - this.DIFF_EARLY_FLOOR;
+        const t = Math.max(0, Math.min(1, (stage - this.DIFF_EARLY_FLOOR) / span));
+        return 1 + (this.DIFF_LATE_SCALE - 1) * t;
+    },
     mobHP(stage) {
-        return Math.round(3 * Math.pow(1.30, stage));
+        return Math.round(3 * Math.pow(1.30, stage) * this.lateMult(stage));
     },
 
     waveSize(stage) {
@@ -85,6 +104,11 @@ const Balance = {
     nestThorns(L, tapLevel) { return this.tapDamage(tapLevel) * 0.15 * (L - 1); },
     petSlots(L)   { return Math.min(3, 1 + Math.floor((L - 1) / 5)); },
     NEST_BITE_DPS: 2,   // per attached nibbler, flat by design (upgrade race)
+    // v7 Task 5: normal stage-clear progression carries nest damage forward
+    // (no free full heal) but tops it up a LITTLE - see CONFIG.NEST.
+    // stageClearHealPct. Pure function so it's unit-testable without a live
+    // Nest/Phaser scene; Nest.carryHeal() (nest.js) is the only caller.
+    nestCarryHeal(hp, maxHp, frac) { return Math.min(maxHp, hp + maxHp * frac); },
 
     // =========================================================================
     // v2.0 - pets. Damage rides the player's tap level so pets stay relevant.
@@ -146,8 +170,10 @@ const Balance = {
             ? this.itemBonus(slot, items[slot].rarity, items[slot].level) : 0;
         return {
             tapDmg: this.tapDamage(up.tap) * this.levelDamageMult(st.level || 1) * (1 + b('glove')),
-            // v6 Task 1: ceiling lowered 0.6 -> 0.5 (see critChance note above).
-            crit: Math.min(0.5, this.critChance(up.crit) + b('ring')),
+            // v7 T1: ceiling raised 0.5 -> CRIT_MAX (0.99) alongside the deeper
+            // crit curve below - still clamps the SUM of curve + ring bonus so
+            // a tap is never mathematically guaranteed to crit.
+            crit: Math.min(this.CRIT_MAX, this.critChance(up.crit) + b('ring')),
             goldMult: this.goldMult(up.gold) * (1 + b('charm'))
         };
     },
@@ -157,7 +183,17 @@ const Balance = {
     // so prices stay meaningful forever.
     // =========================================================================
     // v2.2: FIXED egg price (progress-indexed only, no per-pet inflation)
-    eggCost(stage)              { return Math.round(this.goldPerMob(stage) * 80); },
+    // v7 T2: gold egg price is now a FIXED FLAT constant, no longer even
+    // progress-indexed - the old round(goldPerMob(stage)*80) formula grew
+    // unboundedly with goldPerMob's exponential curve (round(goldPerMob(200)
+    // *80) ~= 7.7e23 gold), which reads as a runaway "the egg outpaces your
+    // wallet forever" feel even though income grows at the same rate. The
+    // `stage` parameter is now IGNORED and kept only so every existing call
+    // site (shop.js) keeps working unchanged. CONFIG.GACHA.goldEggCost is
+    // the single tunable knob - see its own comment in config.js for how
+    // its value (960) was picked to preserve early-game affordability. Gem
+    // egg price (CONFIG.GEMS.eggCost) is untouched by this change.
+    eggCost(stage)              { return CONFIG.GACHA.goldEggCost; },
     chestCost(stage)            { return Math.round(this.goldPerMob(stage) * 45); },
     nestUpCost(stage, L)        { return Math.round(this.goldPerMob(stage) * 30 * L); },
     petFeedCost(stage, petLv)   { return Math.round(this.goldPerMob(stage) * 10 * petLv); },
@@ -203,12 +239,13 @@ const Balance = {
         return s + units[u];
     },
 
-    // v6 Task 2: growth raised 1.22 -> 1.25/stage alongside tapDamage's growth
-    // (see that constant) - see the mobHP comment above for the sweep that
-    // picked this pair to re-clear the 200-stage invariant under the steeper
-    // HP curve.
+    // v7 T1/T6 retune: growth raised 1.25 -> 1.285/stage alongside tapDamage's
+    // LOWERED growth (see that constant) - see the "v7 economy retune" note
+    // above Balance.simulate() for the sweep that picked this pair to
+    // re-clear the 200-stage invariant under the new ~99% crit ceiling and
+    // the T6 late-game 3x mobHP multiplier.
     goldPerMob(stage) {
-        return Math.max(1, Math.round(1.6 * Math.pow(1.25, stage)));
+        return Math.max(1, Math.round(1.6 * Math.pow(1.285, stage)));
     },
 
     // =========================================================================
@@ -265,20 +302,76 @@ const Balance = {
         return (def && def.maxLevel) || Infinity;
     },
 
-    // v6 Task 2: growth raised 1.35 -> 1.376/stage (paired with goldPerMob's
-    // 1.22 -> 1.25 above) so the greedy sim's damage output keeps pace with
-    // the steeper mobHP(stage) curve - see that constant's comment for the
-    // sweep. level 0 -> 1 either way.
-    tapDamage(level)    { return Math.pow(1.376, level); },
-    // v6 Task 1: slower crit growth + lower ceiling (was 0.03 + 0.015*level,
-    // capped 0.35) - crit auras were pushing effective tap-time crit toward
-    // ~99%; halved the slope, dropped the ceiling to 0.22 (paired with
-    // effective()'s 0.6->0.5 clamp and the applyTap 0.6 hard clamp).
-    critChance(level)   { return Math.min(0.02 + 0.007 * level, 0.22); },
-    // v6 Task 1: slower per-level radius (was 22*level, max level 10 -> 220px)
-    // paired with a deeper upgrade (maxLevel 10->32 in CONFIG.UPGRADES) so the
-    // new ceiling (14*32=448px) lands at ~2x the old one instead of shrinking it.
-    splashRadius(level) { return 14 * level; },                         // px (max level 32 -> 448px)
+    // v7 T1/T6 retune: growth LOWERED 1.376 -> 1.345/stage (paired with
+    // goldPerMob's 1.25 -> 1.285 below; tap costGrowth in config.js stays
+    // UNCHANGED at 1.368, same pattern the v6 Task 2 retune used). Needed
+    // because BOTH v7 changes inflate the OTHER side of the tap-economy
+    // equation - crit reaching ~99% inflates expectedDamage's crit-expectation
+    // term (1+crit*4) up to ~4.96x (was capped ~1.88x), while the T6 late-game
+    // HP multiplier (up to 3x by stage 150+) inflates mobHP - see the "v7
+    // economy retune" note above Balance.simulate() for the full sweep.
+    tapDamage(level)    { return Math.pow(1.345, level); },
+    // v7 T1: crit upgrade goes all the way to a genuine "near-guaranteed
+    // crit" feel at maxLevel (config.js CONFIG.UPGRADES 'crit' maxLevel
+    // 22 -> 1000). CRIT_MAX/CRIT_REACH_LEVEL are the two tunable knobs.
+    // Never reaches a full 1.0 so a tap can never be mathematically
+    // guaranteed to crit - see effective() and game.js applyTap for where
+    // the SUM of this + item/pet-aura bonuses is clamped to the same
+    // CRIT_MAX ceiling.
+    //
+    // v7 T1 crit-feel FIX: the original T1 shape was a straight line from 0
+    // at level 0 to CRIT_MAX at CRIT_REACH_LEVEL, which made every EARLY
+    // crit level far weaker than the pre-v7 (v6) curve (e.g. level 22
+    // dropped 17.4% -> 2.2%). That alone pushed early-stage (5-20)
+    // optimal-play tap counts ~2 taps above the v6 baseline (commit
+    // 3198146) - "초반 난이도 그대로" (early difficulty unchanged) is an
+    // explicit requirement, so the curve below is now piecewise instead:
+    // levels up to the knee where v6's own formula would have hit its old
+    // 22% cap (CRIT_V6_BASE + CRIT_V6_SLOPE*level = CRIT_V6_CAP, knee
+    // ~28.571) reproduce v6's min(0.22, 0.02 + 0.007*level) formula EXACTLY
+    // - so early crit power, and therefore early expectedDamage/tap-count
+    // feel, is byte-for-byte v6 (critChance(22)=0.174, critChance(28)=0.216,
+    // matching v6 exactly). Above the knee it keeps climbing in a second,
+    // shallower linear leg to CRIT_MAX at CRIT_REACH_LEVEL (instead of v6's
+    // hard 22% cap), so the T1 "near-guaranteed crit" late-game feel is
+    // preserved: continuous at the knee (both legs equal CRIT_V6_CAP there)
+    // and strictly monotonic end to end, reaching CRIT_MAX exactly at
+    // CRIT_REACH_LEVEL. Re-verified with this curve alone (economy
+    // UNCHANGED - the "v7 economy retune" note below still holds as-is,
+    // no sweep needed): stages 5-20's greedy-sim tap counts land within +-1
+    // of the v6 baseline (tests/balance.test.js "early-game tap feel"
+    // test), and the 200-stage invariant clears with even wider margin than
+    // before (61.3% of stages 20-200 need 2+ taps, avg 2.04 - up from the
+    // pre-fix 99.4%/2.83, which was itself over-hard early on).
+    CRIT_MAX: 0.99,
+    CRIT_REACH_LEVEL: 1000,
+    CRIT_V6_BASE: 0.02,
+    CRIT_V6_SLOPE: 0.007,
+    CRIT_V6_CAP: 0.22,
+    critChance(level) {
+        const knee = (this.CRIT_V6_CAP - this.CRIT_V6_BASE) / this.CRIT_V6_SLOPE; // ~28.571
+        if (level <= knee) return this.CRIT_V6_BASE + this.CRIT_V6_SLOPE * level;
+        const t = (level - knee) / (this.CRIT_REACH_LEVEL - knee);
+        return Math.min(this.CRIT_MAX, this.CRIT_V6_CAP + (this.CRIT_MAX - this.CRIT_V6_CAP) * t);
+    },
+    // v7 T2: splash upgrade goes all the way to "hits the ENTIRE field" at
+    // maxLevel (config.js maxLevel 32 -> 1000). SPLASH_REACH_LEVEL is the one
+    // tunable knob; the ceiling itself is derived from CONFIG.FIELD.w/h (the
+    // field's diagonal is the longest distance between any two points in the
+    // play area, so a splash radius >= diagonal always covers the whole
+    // field regardless of tap position). Looked up LAZILY inside the
+    // function - not as a top-level object property - because in the Node
+    // test harness CONFIG isn't global yet until the bottom-of-file
+    // require() runs (this file's object literal is built first).
+    SPLASH_REACH_LEVEL: 1000,
+    splashFullFieldRadius() {
+        const f = CONFIG.FIELD;
+        return Math.sqrt(f.w * f.w + f.h * f.h);
+    },
+    splashRadius(level) {
+        const max = this.splashFullFieldRadius();
+        return Math.min(max, max * level / this.SPLASH_REACH_LEVEL);
+    },
     feverMult(level)    { return 1 + 0.12 * level; },
     goldMult(level)     { return 1 + 0.10 * level; },
 
@@ -290,6 +383,45 @@ const Balance = {
     expectedTaps(stage, up) {
         return Math.ceil(this.mobHP(stage) / this.expectedDamage(up));
     },
+
+    // =========================================================================
+    // v7 economy retune (T1 crit maxLevel 1000/~99% + T2 splash maxLevel
+    // 1000/full-field + T6 late-game 3x mobHP) - see tests/balance.test.js
+    // for the invariant this sweep re-clears. Two independent inflations hit
+    // the tap economy at once:
+    //   1. crit ceiling 0.22 -> 0.99: expectedDamage's crit term (1+crit*4)
+    //      goes from a max ~1.88x to up to ~4.96x once the greedy sim levels
+    //      crit up (it settles around level ~270 by stage 200, ~27% crit -
+    //      cost growth 1.22/level is still the natural brake, same as v6).
+    //   2. T6 lateMult: mobHP is up to 3x higher by stage ~150+.
+    // A ~10k-combo grid sweep of (tapDamage growth, goldPerMob growth) with
+    // tap costGrowth (config.js) held at multiple values found 232 passing
+    // triples; tap costGrowth was kept UNCHANGED at 1.368 (same choice the
+    // v6 Task 2 retune made) and only the two growth rates below were
+    // re-picked: tapDamage growth LOWERED 1.376 -> 1.345 (crit's much bigger
+    // expected-damage contribution needed base tap damage to grow slower to
+    // compensate) and goldPerMob growth RAISED 1.25 -> 1.285 (to let the
+    // sim's upgrade levels - and therefore crit's contribution - keep pace
+    // with the steeper mobHP curve). CORRECTION (see the critChance() fix
+    // comment above): reproducing the OLD tapDamage/goldPerMob/costGrowth
+    // triple against the NEW crit/splash/T6 curves does NOT go "trivially
+    // easy" - it is verifiably much HARDER (tail stages need 20-31 taps,
+    // avg ~7.5 for stages 20-200, band badly broken past the 6 cap) because
+    // the original T1 crit curve made every early/mid crit level far weaker
+    // than v6's, while T6 still triples late mobHP. tapDamage/goldPerMob
+    // growth were retuned (not left alone) specifically to compensate for
+    // that harder-not-easier combination.
+    //
+    // These two growth rates (1.345/1.285) are UNCHANGED by the later
+    // critChance() piecewise fix above - re-verification after that fix
+    // showed the existing pair still clears the invariant comfortably, so
+    // no re-sweep was needed. Result as of the crit-curve fix: 200-stage
+    // sim stays in the 1-6 taps band for every stage 5-200 (max 5, at stage
+    // ~8), with 61.3% of stages 20-200 needing 2+ taps (avg 2.04) - down
+    // from a pre-fix 99.4%/2.83 (which had gone over-hard early on, see the
+    // critChance() comment above), but still comfortably clear of the
+    // 42%/1.8 floors.
+    // =========================================================================
 
     // =========================================================================
     // Greedy progression simulation.

@@ -9,7 +9,7 @@ const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'];
 
 const Gacha = {
 
-    // v2.1: the pool is the full 50-animal roster.
+    // v2.1: the pool is the full animal roster (56 since v7 Task 7's +6).
     get SPECIES_IDS() { return PET_SPECIES.map(p => p.id); },
 
     rarityRank(r) { return RARITY_ORDER.indexOf(r); },

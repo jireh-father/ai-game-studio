@@ -173,34 +173,40 @@ class BootScene extends Phaser.Scene {
     _makeUpgradeIcons() {
         let g;
 
-        // up-tap: sword (blade + crossguard + hilt/pommel) - reads as
-        // "attack power" at a glance, unlike the old abstract pressing-
-        // finger glyph. v6 Task 4 review: this texture is reused far beyond
-        // the Tap Power upgrade card - the live stats readout tints it the
-        // same upgrade blue (game.js ~L128), but spawnItemDrop's 'gear'
-        // field drop AND shop.js's GLOVE gear listing tint it per-RARITY
-        // (common/rare/epic/legendary, 4 different hues - see game.js
-        // spawnItemDrop / shop.js RARITY_COLORS). So, same convention as
-        // every sibling up-* icon in this function: a PURE WHITE silhouette
-        // only - baking in fixed accent/gold colors for the guard/hilt would
-        // multiply-blend into muddy off-hues under those other 3 tint
-        // contexts. Shape definition instead comes from a tint-neutral
-        // black-alpha edge stroke + center fuller groove (same trick as
-        // up-gold's stroked ellipses below).
+        // up-tap: clenched fist (knuckles + folded fingers + thumb) - reads
+        // as "attack power / punch" at a glance. v7 Task 3 redraw (v6 Task 4
+        // had made this a sword; the fist is more immediately readable as
+        // "power"). Reuse contexts are unchanged from the sword version -
+        // this texture is used far beyond the Tap Power upgrade card: the
+        // live stats readout tints it the same upgrade blue (game.js
+        // ~L128), but spawnItemDrop's 'gear' field drop AND shop.js's GLOVE
+        // gear listing tint it per-RARITY (common/rare/epic/legendary, 4
+        // different hues - see game.js spawnItemDrop / shop.js
+        // RARITY_COLORS). So, same convention as every sibling up-* icon in
+        // this function: a PURE WHITE silhouette only - baking in a fixed
+        // skin-tone color would multiply-blend into muddy off-hues under
+        // those other 3 tint contexts. Shape definition instead comes from
+        // tint-neutral black-alpha finger-crease lines + a thumb edge stroke
+        // (same trick as up-gold's stroked ellipses below).
         g = this.add.graphics();
         g.fillStyle(0xffffff, 1);
-        g.fillPoints([                                 // tapered blade
-            { x: 24, y: 3 }, { x: 29, y: 11 }, { x: 27, y: 28 }, { x: 21, y: 28 }, { x: 19, y: 11 }
-        ], true);
-        g.fillRoundedRect(9, 26, 30, 7, 3);            // crossguard
-        g.fillRoundedRect(20, 32, 8, 10, 2);           // grip
-        g.fillCircle(24, 42, 4);                       // pommel
+        g.fillRoundedRect(15, 30, 18, 16, 3);           // wrist
+        g.fillRoundedRect(8, 15, 32, 22, 9);            // fist body (folded fingers)
+        g.fillCircle(12, 15, 6.5);                      // knuckle 1
+        g.fillCircle(20, 15, 6.5);                      // knuckle 2
+        g.fillCircle(28, 15, 6.5);                      // knuckle 3
+        g.fillCircle(36, 15, 6.5);                      // knuckle 4
+        const upTapThumb = [
+            { x: 4, y: 26 }, { x: 13, y: 17 }, { x: 19, y: 22 }, { x: 17, y: 31 }, { x: 9, y: 34 }
+        ];
+        g.fillPoints(upTapThumb, true);                 // thumb wrapping the front
         g.lineStyle(2, 0x000000, 0.22);
-        g.strokePoints([
-            { x: 24, y: 3 }, { x: 29, y: 11 }, { x: 27, y: 28 }, { x: 21, y: 28 }, { x: 19, y: 11 }
-        ], true, true);
+        g.strokePoints(upTapThumb, true, true);         // define thumb edge
         g.fillStyle(0x000000, 0.16);
-        g.fillRect(23, 12, 2, 14);                     // center fuller groove
+        g.fillRect(15, 16, 2, 18);                      // finger crease
+        g.fillRect(23, 16, 2, 18);                      // finger crease
+        g.fillRect(31, 16, 2, 18);                      // finger crease
+        g.fillRect(15, 31, 18, 2);                      // wrist crease
         g.generateTexture('up-tap', 48, 48);
         g.destroy();
 

@@ -297,9 +297,38 @@ class ShopScene extends Phaser.Scene {
 
         const best = results.slice().sort((a, b) =>
             Gacha.rarityRank(b.rarity) - Gacha.rarityRank(a.rarity))[0];
-        const egg = this.add.image(W / 2, H * 0.42, 'egg-tex')
-            .setDepth(31).setDisplaySize(170, 212);
-        overlay.push(egg);
+
+        // v7 Task 9: multi-pull (10 eggs) now hatches as TEN eggs laid out
+        // in the same grid the results will land in, instead of one big
+        // center egg. `gridPos(i)` is the SAME (gx,gy) formula the result
+        // cells below use, so each egg sits exactly where its cell/pet will
+        // pop in once it cracks - single-pull keeps the original one big
+        // egg untouched.
+        const isMulti = results.length > 1;
+        const gridPos = (i) => ({
+            gx: W / 2 + ((i % 4) - 1.5) * 150,
+            gy: H * 0.32 + Math.floor(i / 4) * 150
+        });
+
+        let egg = null, eggs = null;
+        if (isMulti) {
+            eggs = results.map((r, i) => {
+                const { gx, gy } = gridPos(i);
+                const e = this.add.image(gx, gy, 'egg-tex').setDepth(31.5).setDisplaySize(96, 124);
+                overlay.push(e);
+                return e;
+            });
+        } else {
+            egg = this.add.image(W / 2, H * 0.42, 'egg-tex')
+                .setDepth(31).setDisplaySize(170, 212);
+            overlay.push(egg);
+        }
+        // shared anchor for the charge glow below and the shake chain at the
+        // bottom of this function - the single big egg's own position for a
+        // single pull, or the grid's vertical center for a multi pull (so
+        // the ambient charge glow sits behind the whole 10-egg grid rather
+        // than favoring one corner).
+        const chargeX = W / 2, chargeY = isMulti ? H * 0.32 + 75 : H * 0.42;
 
         // v6 Task 11: anticipation build-up - a growing/pulsing glow + rising
         // sparks + a deepening scrim (Effects.gachaCharge), running
@@ -309,7 +338,7 @@ class ShopScene extends Phaser.Scene {
         // "TAP TO CLOSE" exists (no early-abort path reaches it), so it only
         // needs the one explicit destroy() below, not a killTweensOf entry.
         const charge = typeof Effects !== 'undefined'
-            ? Effects.gachaCharge(this, W / 2, H * 0.42, dim, DIM_BASE_ALPHA) : null;
+            ? Effects.gachaCharge(this, chargeX, chargeY, dim, DIM_BASE_ALPHA) : null;
         Sfx.gachaCharge();
 
         const reveal = () => {
@@ -399,7 +428,10 @@ class ShopScene extends Phaser.Scene {
                 }
             }
             Sfx.jackpot();
-            egg.destroy();
+            // v7 Task 9: single-pull's one big egg is spent here as before;
+            // multi-pull has no single `egg` (10 grid eggs instead) - those
+            // are destroyed one-by-one at each egg's own crack moment below.
+            if (egg) egg.destroy();
 
             // pillar
             const pillar = this.add.rectangle(W / 2, H * 0.45, 220, H * 0.6, color, 0.25).setDepth(30);
@@ -473,48 +505,70 @@ class ShopScene extends Phaser.Scene {
                         { count: legendary ? 22 : 12, life: 750 }));
                 }
             } else {
-                // multi: result grid
+                // v7 Task 9: multi - the 10 eggs (already shaking in the
+                // grid, see `eggs`/gridPos above) now CRACK open one-by-one
+                // into the result cells, instead of the cells just popping
+                // in cold. Cell/pedestal/frame/tag creation is now folded
+                // INSIDE each egg's own crack moment (was created eagerly
+                // for all 10 up front before) - only `spr` (the tween
+                // target) has to exist ahead of time, kept invisible until
+                // its own crack fires, so before any given egg cracks the
+                // player sees nothing but that egg shaking, not a preview
+                // of the frame/rarity tint underneath it.
                 const bestIdx = results.indexOf(best);
                 results.forEach((r, i) => {
-                    const gx = W / 2 + ((i % 4) - 1.5) * 150;
-                    const gy = H * 0.32 + Math.floor(i / 4) * 150;
+                    const { gx, gy } = gridPos(i);
                     const c = RARITY_COLORS[r.rarity];
-                    const cell = this.add.nineslice(gx, gy, 'btn-tex', 0, 130, 130, 20, 20, 20, 20)
-                        .setTint(c).setAlpha(0.28).setDepth(31);
-                    // v6 Task 12: little pedestal under each cell's sprite -
-                    // depth sandwiched the same as the frame (below the
-                    // sprite, above the tinted cell).
-                    const pedestal = Frames.drawPedestal(this, gx, gy + 22, 56, r.rarity).setDepth(31.2);
-                    // v5.0 RETRO ARCADE Task 5: each grid cell gets its
-                    // own rarity frame (sized just inside the 130px
-                    // cell), depth-sandwiched between the tinted cell
-                    // and the pet sprite/tag on top of it. v6 Task 12: up
-                    // to 11 of these render at once (a full multi-pull), so
-                    // - same perf reasoning as dex.js's grid - shimmer/glow/
-                    // pip/gem tweens stay OFF here regardless of rolled
-                    // rarity (static sheen instead); only the single-pull
-                    // reveal above keeps the animated version.
-                    const frame = Frames.draw(this, gx, gy, 118, 118, r.rarity, { animate: false }).setDepth(31.5);
+                    const eggSpr = eggs[i];
                     const spr = this.add.image(gx, gy - 8, 'pet-' + r.species)
-                        .setDepth(32).setDisplaySize(76, 76).setScale(0.05);
-                    const tag = this.add.text(gx, gy + 44,
-                        r.kind === 'shards' ? '+' + r.shards + '🧩' : r.kind.toUpperCase(), {
-                        fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.white)
-                    }).setOrigin(0.5).setDepth(32);
-                    overlay.push(cell, pedestal, frame, spr, tag);
-                    // v6 Task 11: EVERY cell now gets its own rarity flash
+                        .setDepth(32).setDisplaySize(76, 76).setScale(0.05).setVisible(false);
+                    overlay.push(spr);
+                    // v6 Task 11: EVERY cell still gets its own rarity flash
                     // (was legendary-only before) + the highest rarity in
-                    // the pull gets a highlight ring/beam/"BEST!" callout -
-                    // all folded into this SAME already-`delay`d tween's
-                    // onStart (rather than a fresh delayedCall) so
+                    // the pull still gets a highlight ring/beam/"BEST!"
+                    // callout - all folded into this SAME already-`delay`d
+                    // tween's onStart (rather than a fresh delayedCall) so
                     // `tweens.killTweensOf(overlay)` on early-close (spr is
                     // already tracked above) reliably prevents it from
-                    // firing at all after the reveal is closed.
+                    // firing at all after the reveal is closed. v7 Task 9:
+                    // this onStart is now ALSO the crack moment - it destroys
+                    // this cell's egg and fires Effects.eggCrack() (a
+                    // self-destroying flash+ring+burst - see effects.js -
+                    // needs no overlay/killTweensOf entry of its own) before
+                    // creating the cell/pedestal/frame/tag and making `spr`
+                    // visible, so the shell visibly bursts open right as the
+                    // pet appears in it.
                     this.tweens.add({
                         targets: spr, scale: 76 / CONFIG.PIXEL.bake, delay: i * 90,
                         duration: 220, ease: 'Back.easeOut',
                         onStart: () => {
                             Sfx.coin();
+                            if (eggSpr.active) eggSpr.destroy();
+                            if (typeof Effects !== 'undefined') Effects.eggCrack(this, gx, gy, c);
+                            const cell = this.add.nineslice(gx, gy, 'btn-tex', 0, 130, 130, 20, 20, 20, 20)
+                                .setTint(c).setAlpha(0.28).setDepth(31);
+                            // v6 Task 12: little pedestal under each cell's
+                            // sprite - depth sandwiched the same as the
+                            // frame (below the sprite, above the tinted cell).
+                            const pedestal = Frames.drawPedestal(this, gx, gy + 22, 56, r.rarity).setDepth(31.2);
+                            // v5.0 RETRO ARCADE Task 5: each grid cell gets
+                            // its own rarity frame (sized just inside the
+                            // 130px cell), depth-sandwiched between the
+                            // tinted cell and the pet sprite/tag on top of
+                            // it. v6 Task 12: up to 11 of these render at
+                            // once (a full multi-pull), so - same perf
+                            // reasoning as dex.js's grid - shimmer/glow/pip/
+                            // gem tweens stay OFF here regardless of rolled
+                            // rarity (static sheen instead); only the
+                            // single-pull reveal above keeps the animated
+                            // version.
+                            const frame = Frames.draw(this, gx, gy, 118, 118, r.rarity, { animate: false }).setDepth(31.5);
+                            const tag = this.add.text(gx, gy + 44,
+                                r.kind === 'shards' ? '+' + r.shards + '🧩' : r.kind.toUpperCase(), {
+                                fontFamily: CONFIG.FONT, fontSize: '15px', color: Balance.hex(CONFIG.PASTEL.white)
+                            }).setOrigin(0.5).setDepth(32);
+                            overlay.push(cell, pedestal, frame, tag);
+                            spr.setVisible(true);
                             if (typeof Effects === 'undefined') return;
                             Effects.flash(this, gx, gy, c, 70);
                             if (r.rarity === 'legendary') {
@@ -563,9 +617,13 @@ class ShopScene extends Phaser.Scene {
         // same ~1.05s total as before (400+320+330ms), just escalating
         // instead of constant, so the build-up itself visibly ramps toward
         // the pop instead of holding one steady wobble the whole time.
+        // v7 Task 9: `targets` accepts an array, so for multi this ONE tween
+        // definition shakes all 10 grid eggs in lockstep (same amplitude/
+        // beat) - onComplete still fires exactly once for the whole group,
+        // so the shakeStage chain below needs no change beyond the target.
         const shakeStage = (amp, dur, reps, onDone) => {
             this.tweens.add({
-                targets: egg, angle: { from: -amp, to: amp }, duration: dur,
+                targets: isMulti ? eggs : egg, angle: { from: -amp, to: amp }, duration: dur,
                 yoyo: true, repeat: reps, ease: 'Sine.easeInOut', onComplete: onDone
             });
         };
@@ -586,10 +644,10 @@ class ShopScene extends Phaser.Scene {
         // v5 final-review fix: wordWrap - this line is already long before the
         // dynamic counts are appended, and easily overflows 720px.
         this._text(W / 2, 180, 'ALL ' + st.pets.length + ' pets fight for you!  ·  collection ' +
-            st.pets.length + '/50  ·  🧩' + Balance.fmt(st.shards), 20, Balance.hex(CONFIG.PASTEL.inkSoft),
+            st.pets.length + '/' + PET_SPECIES.length + '  ·  🧩' + Balance.fmt(st.shards), 20, Balance.hex(CONFIG.PASTEL.inkSoft),
             undefined, 680);
 
-        // pagination: up to 50 pets
+        // pagination: PER_PAGE at a time (pool grows with PET_SPECIES)
         const PER_PAGE = 4;
         const sorted = st.pets.slice().sort((a, b) => b.level - a.level);
         const pages = Math.ceil(sorted.length / PER_PAGE);
@@ -809,49 +867,52 @@ class ShopScene extends Phaser.Scene {
 
     // =========================================================================
     // GEMS - premium currency + (dormant) IAP
+    // v7 T2: no separate remove-ads product anymore - ANY gem pack purchase
+    // sets adsRemoved (see iap.js _grant()). This tab shows an indicator
+    // line before the first purchase, and an "ADS REMOVED" badge after.
     // =========================================================================
     tabGEMS() {
         const W = CONFIG.WIDTH, st = SaveManager.state;
-        this._text(W / 2, 210, '💎 GET GEMS', 36, Balance.hex(CONFIG.PASTEL.gemText));
+        this._text(W / 2, 168, '💎 GET GEMS', 32, Balance.hex(CONFIG.PASTEL.gemText));
         // v5 final-review fix: wordWrap - overflows badly at 20px/char
         // (~63 chars * 20px ~= 1260px unwrapped).
-        this._text(W / 2, 260,
-            'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 20, Balance.hex(CONFIG.PASTEL.inkSoft),
+        this._text(W / 2, 206,
+            'Free: boss kills +1 · King +3 · every 25 stages +5 · PvP win +2', 17, Balance.hex(CONFIG.PASTEL.inkSoft),
             undefined, 680);
 
-        IapManager.PRODUCTS.forEach((p, i) => {
-            const y = 370 + i * 165;
-            this._card(W / 2, y, 660, 160);
-            this._text(150, y, p.type === 'noads' ? I18n.t('shop.removeAdsLabel') : p.label, 40, Balance.hex(CONFIG.PASTEL.gemText));
+        if (st.adsRemoved) {
+            this._text(W / 2, 240, I18n.t('shop.adsRemovedBadge'), 20, Balance.hex(CONFIG.PASTEL.goodText));
+        } else {
+            this._text(W / 2, 240, I18n.t('shop.anyGemRemovesAds'), 16, Balance.hex(CONFIG.PASTEL.goldText),
+                undefined, 680);
+        }
 
-            // v3.0 Task 12: remove-ads is a flag grant, not gems - own row logic.
-            if (p.type === 'noads') {
-                if (st.adsRemoved) {
-                    this._text(W / 2 + 130, y, I18n.t('shop.adsRemoved'), 26, Balance.hex(CONFIG.PASTEL.goodText));
-                } else {
-                    this._btn(W / 2 + 130, y, 300, 84, I18n.t('shop.removeAds') + ' $0.99', CONFIG.PASTEL.accent,
-                        async () => {
-                            const r = await IapManager.purchase(p.id);
-                            if (r.ok) {
-                                Sfx.jackpot();
-                                if (typeof Effects !== 'undefined') Effects.confetti(this, W / 2, y);
-                                this.toast(I18n.t('shop.adsRemoved'));
-                                this.showTab('GEMS');
-                            } else if (r.reason === 'store_not_connected') {
-                                this.toast(I18n.t('shop.storeSoon'));
-                            }
-                        });
-                }
-                return;
+        // 6 tiers need tighter vertical spacing than the old 4-row layout;
+        // last row bottom (~1122) + footer (~1220) still clear HEIGHT=1280.
+        const FIRST_Y = 330, ROW_H = 145, CARD_W = 660, CARD_H = 130;
+        IapManager.PRODUCTS.forEach((p, i) => {
+            const y = FIRST_Y + i * ROW_H;
+            this._card(W / 2, y, CARD_W, CARD_H);
+            this._text(150, y - 22, p.label, 30, Balance.hex(CONFIG.PASTEL.gemText));
+            if (p.tag) {
+                this._text(150, y + 22, p.tag, 15, Balance.hex(CONFIG.PASTEL.crit));
             }
 
-            this._btn(W / 2 + 130, y, 300, 84, p.priceLabel, CONFIG.PASTEL.accent, async () => {
+            this._btn(W / 2 + 150, y, 300, 84, p.priceLabel, CONFIG.PASTEL.accent, async () => {
+                const alreadyRemoved = st.adsRemoved;
                 const r = await IapManager.purchase(p.id);
                 if (r.ok) {
                     this.refreshWallet();
                     Sfx.jackpot();
                     if (typeof Effects !== 'undefined') Effects.confetti(this, W / 2, y);
-                    this.toast('+' + r.gems + ' 💎' + (r.simulated ? ' (dev)' : ''));
+                    // First gem purchase ever also silently removed ads -
+                    // call that out instead of the usual "+N gems" toast.
+                    if (!alreadyRemoved && SaveManager.state.adsRemoved) {
+                        this.toast(I18n.t('shop.adsRemovedBadge'));
+                    } else {
+                        this.toast('+' + r.gems + ' 💎' + (r.simulated ? ' (dev)' : ''));
+                    }
+                    this.showTab('GEMS');
                 } else if (r.reason === 'store_not_connected') {
                     this.toast(I18n.t('shop.storeSoon'));
                 }
@@ -859,8 +920,8 @@ class ShopScene extends Phaser.Scene {
         });
         // v5 final-review fix: wordWrap - 44 chars * 18px ~= 792px, slightly
         // past the 720px design width.
-        this._text(W / 2, 1055, IapManager.storeConnected
-            ? '' : '(billing goes live with the store release)', 18, Balance.hex(CONFIG.PASTEL.inkSoft),
+        this._text(W / 2, FIRST_Y + IapManager.PRODUCTS.length * ROW_H + 20, IapManager.storeConnected
+            ? '' : '(billing goes live with the store release)', 15, Balance.hex(CONFIG.PASTEL.inkSoft),
             undefined, 680);
     }
 
