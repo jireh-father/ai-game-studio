@@ -816,11 +816,13 @@ const Effects = {
             .setAlpha(0.3).setScale(1.1);
         // slow monotonic grow (scale only) + a fast heartbeat pulse (alpha
         // only) - kept on SEPARATE properties so the two tweens never fight
-        // over the same value each frame.
-        const growTween = scene.tweens.add({
+        // over the same value each frame. Not captured into refs: destroy()
+        // tears them down via killTweensOf(glow) (see the bug note there),
+        // never via a held-ref .remove().
+        scene.tweens.add({
             targets: glow, scale: 3, duration: 1050, ease: 'Sine.easeIn'
         });
-        const pulseTween = scene.tweens.add({
+        scene.tweens.add({
             targets: glow, alpha: { from: 0.25, to: 0.55 }, duration: 130,
             yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
         });
@@ -843,19 +845,34 @@ const Effects = {
             }
         });
 
-        const dimTween = dimTarget ? scene.tweens.add({
-            targets: dimTarget, alpha: Math.min(0.97, (dimBaseAlpha || 0.85) + 0.1),
-            duration: 1050, ease: 'Sine.easeIn'
-        }) : null;
+        if (dimTarget) {
+            scene.tweens.add({
+                targets: dimTarget, alpha: Math.min(0.97, (dimBaseAlpha || 0.85) + 0.1),
+                duration: 1050, ease: 'Sine.easeIn'
+            });
+        }
 
         return {
             destroy() {
-                growTween.remove(); pulseTween.remove();
+                // BUGFIX: the grow/pulse/dim tweens all run ~1050ms - the SAME
+                // length as the gacha egg's shake chain (400+320+330). When the
+                // shake finishes, its onComplete calls reveal() -> this destroy()
+                // from *inside* the TweenManager's update loop; if the 1050ms
+                // grow/dim tween completed on that very frame, Phaser 3.60 has
+                // already nulled its `.parent`, and calling the held ref's
+                // `.remove()` re-entrantly hits `this.parent.remove()` on null
+                // -> "Cannot read properties of null (reading 'remove')". That
+                // throw aborted reveal() before egg.destroy(), FREEZING the egg
+                // mid-shake with a stuck modal (intermittent - only when the two
+                // ~1050ms timelines land on the same frame). killTweensOf() is
+                // re-entrancy-safe (marks for removal, no null-parent deref) and
+                // a no-op on already-finished tweens.
+                scene.tweens.killTweensOf(glow);
                 if (glow.active) glow.destroy();
                 sparkEvent.remove(false);
                 scene.tweens.killTweensOf(sparks);
                 for (const s of sparks) if (s.active) s.destroy();
-                if (dimTween) dimTween.remove();
+                if (dimTarget) scene.tweens.killTweensOf(dimTarget);
                 if (dimTarget && dimTarget.active) dimTarget.setAlpha(dimBaseAlpha || 0.85);
             }
         };
