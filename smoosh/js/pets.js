@@ -335,6 +335,38 @@ class FieldPets {
             this._updateAgentStatus(a, dt);
             if (a.status.stun || a.status.freeze) continue;
 
+            // v7 Task 10 (Sandbox): a manually-possessed avatar (SandboxScene
+            // flags exactly one agent `manual:true` and gives it a shared
+            // `manualVector` object it mutates from a joystick) skips the
+            // normal seek/home AI + auto-attack + personality-skill cast
+            // entirely for THIS frame - it only moves along the joystick
+            // vector at the same constant speed every pet already walks at
+            // (260, see the seek-block below); attacking is a deliberate
+            // player action fired directly via FieldPets._attack() from
+            // SandboxScene's ATTACK button, never from this loop. Every other
+            // agent - including this one whenever `manual` is unset/false,
+            // i.e. every real game scene - takes the untouched branch below
+            // completely unaffected. Mirrors SandboxMath.clampManualMove
+            // (sandbox.js), pulled out there so the same integrate+clamp math
+            // has a pure, Node-testable seam.
+            if (a.manual) {
+                const F = CONFIG.FIELD;
+                const vx = (a.manualVector && a.manualVector.x) || 0;
+                const vy = (a.manualVector && a.manualVector.y) || 0;
+                const half = a.size / 2;
+                let nx = a.sprite.x + vx * 260 * dt;
+                let ny = a.sprite.y + vy * 260 * dt;
+                a.sprite.x = Math.max(F.x + half, Math.min(F.x + F.w - half, nx));
+                a.sprite.y = Math.max(F.y + half, Math.min(F.y + F.h - half, ny));
+                if (Math.abs(vx) > 0.05) a.sprite.flipX = vx < 0;
+                // Still ticks down (never auto-fires here) so the ATTACK
+                // button's own "am I off cooldown?" readout - driven off this
+                // same a.cooldown field - clears normally after a manual press
+                // instead of staying permanently on cooldown.
+                a.cooldown -= dt;
+                continue;
+            }
+
             // v3.0 review fix: rage passive's "hurt and dangerous" pulse -
             // purely visual, independent of the skill-cast cooldown below.
             this._updateRageTint(a, dt);

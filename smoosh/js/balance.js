@@ -249,6 +249,39 @@ const Balance = {
     },
 
     // =========================================================================
+    // v7 T11 - PAYDAY SMASH bonus stage (bonus.js runs it after every boss
+    // clear). Pure math only - the mash mini-game itself is Phaser-coupled
+    // and lives entirely in bonus.js; this is just the payout formula so it's
+    // unit-testable without a scene. Stage-proportional by design (rides
+    // goldPerMob/waveSize, same convention as every other economy fn on this
+    // file) so it never needs a manual retune as stages climb.
+    // =========================================================================
+
+    // isKingBossStage: every 10th boss (stage 100, 200, ...) is the crowned
+    // King Jelly - mirrors spawner.js's own bossSpecies() king rule
+    // (bossIndex % 10 === 0) so the two never drift apart.
+    isKingBossStage(stage) {
+        return Math.floor(stage / CONFIG.BOSS.every) % 10 === 0;
+    },
+
+    // Flat gem bonus, additive to the existing bossKill/kingKill gem credit
+    // (game.js onSpecialDeath) - see CONFIG.BONUS's own comment for why this
+    // stays small relative to CONFIG.GEMS.eggCost.
+    bonusGems(stage) {
+        return this.isKingBossStage(stage) ? CONFIG.BONUS.gemKing : CONFIG.BONUS.gemBoss;
+    },
+
+    // Guaranteed-in-full base, scaled up to +CONFIG.BONUS.mashBonusMax (50%)
+    // by how hard the player mashed the piñata (mashFraction 0..1, supplied
+    // by bonus.js's tap-vs-timer race - never required to be > 0, so the
+    // reward can never fail to pay out even at zero taps).
+    bonusGold(stage, mashFraction) {
+        const base = Math.round(this.goldPerMob(stage) * this.waveSize(stage) * CONFIG.BONUS.goldMult);
+        const frac = Math.max(0, Math.min(1, mashFraction || 0));
+        return Math.round(base * (1 + CONFIG.BONUS.mashBonusMax * frac));
+    },
+
+    // =========================================================================
     // v3.0 Task 13 - PvP team picker: player picks up to teamSize pets;
     // AUTO = top damage.
     // =========================================================================

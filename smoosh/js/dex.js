@@ -595,7 +595,7 @@ if (typeof Phaser !== 'undefined') {
             back.on('pointerdown', () => {
                 if (this.detailParts) { this.hideDetail(); return; }
                 if (this.fromGame) { this.scene.stop(); this.scene.resume('GameScene'); }
-                else SmooshGame.goto('MenuScene');
+                else SmooshGame.goto('SubMainScene'); // v7 T14: back -> the hub, not the splash
             });
 
             // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).

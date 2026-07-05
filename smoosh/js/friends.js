@@ -87,7 +87,7 @@ if (typeof Phaser !== 'undefined') {
             // this task, so a single-sided +14 pad here only needs the
             // existing ~26px gap to exceed 14, not 2x14=28 - safe.
             padTapArea(back);
-            back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
+            back.on('pointerdown', () => SmooshGame.goto('SubMainScene')); // v7 T14: back -> the hub
 
             // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
             this.add.text(W / 2, 56, I18n.t('social.title'), {

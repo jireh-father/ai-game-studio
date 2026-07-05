@@ -45,11 +45,40 @@ const SaveManager = {
             // --- v6 ---
             decorGridV: 2,     // v6 Task 9: decor grid version (1 = old 6x4, 2 = new 12x8)
             // --- v7 ---
-            nestHpFrac: 1      // v7 Task 5: nest.hp/nest.maxHp, kept in sync by Nest.redraw()
+            nestHpFrac: 1,     // v7 Task 5: nest.hp/nest.maxHp, kept in sync by Nest.redraw()
                                 // so leaving mid-run and returning restores the same damaged
                                 // nest instead of a free full heal (game.js create() reads this
                                 // via `new Nest(scene)`; old saves default to 1 = full, since
                                 // this key simply won't exist in their JSON).
+            stageBestMs: {},   // v7 Task 13: LOCAL best clear-time per stage, {stage: ms} -
+                                // source of truth for "is this a new record" (game.js
+                                // onStageClear) - always correct offline, never depends on
+                                // the network (see leaderboard.js).
+            scoreBest: {},     // v7 Task 13: LOCAL best score per mode, {mode: score} -
+                                // same role as stageBestMs but for the future Infinite mode
+                                // (T12) score board (Leaderboard.submitScore/getScoreRanking).
+            medals: {},        // v7 Task 13: {stage: 1|2|3} - cached GLOBAL top-3 rank per
+                                // stage, set/cleared only by Leaderboard.reportStageRecord /
+                                // .reverifyMedals. stagemap.js renders this synchronously
+                                // from cache, never a network call at map-render time.
+            medalCheckCursor: 0, // v7 Task 13: rotating cursor into the medals map so
+                                // StageMapScene's bounded re-verify pass (~5/session) covers
+                                // every held medal in turn across sessions instead of always
+                                // re-checking the same few.
+            // --- v7 T12: INFINITE mode ---
+            infiniteBest: { score: 0, wave: 0 }, // LOCAL best (score also mirrors
+                                // into scoreBest.infinite below, which is what
+                                // Leaderboard.getScoreRanking actually reads -
+                                // wave is kept here too, display-only, since
+                                // the global leaderboard is score-based only).
+            infiniteRunsToday: 0,   // payout-eligible runs used up today - consumed
+                                // at RUN START, not run end, so the HUD back
+                                // button/an app kill can't dodge the cap (see
+                                // InfiniteBalance.consumePayoutSlotAtStart)
+            infiniteRunsDate: null  // UTC yyyy-mm-dd (Social._todayKey format)
+                                // the counter above was last reset for - a
+                                // new day rolls infiniteRunsToday back to 0
+                                // (see InfiniteBalance.runsTodayFor).
         };
     },
 
@@ -72,7 +101,17 @@ const SaveManager = {
                     social: Object.assign(fresh.social, data.social || {}),
                     decorOwned: Object.assign(fresh.decorOwned, data.decorOwned || {}),
                     decorPlaced: Array.isArray(data.decorPlaced) ? data.decorPlaced : [],
-                    pets: Array.isArray(data.pets) ? data.pets : []
+                    pets: Array.isArray(data.pets) ? data.pets : [],
+                    // v7 Task 13: old saves lack these entirely - deep-merge one
+                    // level so a save from before this task defaults every key to
+                    // {} / 0 instead of losing the object shape.
+                    stageBestMs: Object.assign(fresh.stageBestMs, data.stageBestMs || {}),
+                    scoreBest: Object.assign(fresh.scoreBest, data.scoreBest || {}),
+                    medals: Object.assign(fresh.medals, data.medals || {}),
+                    // v7 T12: old saves lack this entirely - deep-merge one
+                    // level so a pre-T12 save defaults to {score:0, wave:0}
+                    // instead of losing the object shape.
+                    infiniteBest: Object.assign(fresh.infiniteBest, data.infiniteBest || {})
                 });
                 // v2.1 migrations: per-species petShards -> global shards,
                 // old element-pets -> their animal successors.

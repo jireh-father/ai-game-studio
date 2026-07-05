@@ -9,7 +9,8 @@
 //     the counting (SaveManager.state.adStageCounter).
 //   - Rewarded: 'double_gold' on the settlement panel, 'fever_refill' on
 //     the fever gauge chip.
-//   - Banner: ONLY MenuScene ever calls showBanner(). GameScene never.
+//   - Banner: MenuScene and SubMainScene call showBanner() (the player's two
+//     non-gameplay "home" screens post-T14). GameScene never.
 // =============================================================================
 
 const AdsManager = {
@@ -148,7 +149,7 @@ const AdsManager = {
     },
 
     // =========================================================================
-    // Banner Ad (menu/showroom ONLY)
+    // Banner Ad (MenuScene + SubMainScene ONLY - never during gameplay)
     // =========================================================================
     async showBanner() {
         if (this.adsRemoved) return;

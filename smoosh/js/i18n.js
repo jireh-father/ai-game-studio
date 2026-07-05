@@ -116,7 +116,15 @@ const I18n = {
         'social.giftDaily': { en: 'Sent today: {sent}/{max}', ko: '오늘 보낸 선물: {sent}/{max}' },
         'social.giftNoDecor': { en: "You don't own any decor to gift!", ko: '선물할 데코가 없어요!' },
         'social.giftCapReached': { en: 'Daily gift limit reached!', ko: '오늘의 선물 한도를 다 썼어요!' },
-        'social.giftInsufficient': { en: 'Not enough to gift!', ko: '선물할 만큼 충분하지 않아요!' }
+        'social.giftInsufficient': { en: 'Not enough to gift!', ko: '선물할 만큼 충분하지 않아요!' },
+        // v7 T12: INFINITE mode
+        'infinite.navButton':      { en: '♾ INFINITE',              ko: '♾ 무한모드' },
+        'infinite.newBest':        { en: 'NEW PERSONAL BEST!',       ko: '개인 최고 기록!' },
+        'infinite.dailyCapReached':{ en: 'DAILY REWARD CAP REACHED', ko: '오늘의 보상 한도 도달' },
+        'infinite.checkingRank':   { en: 'checking global rank...',  ko: '글로벌 순위 확인 중...' },
+        'infinite.globalRank':     { en: 'GLOBAL RANK #{rank}',      ko: '글로벌 순위 #{rank}' },
+        'infinite.playAgain':      { en: 'PLAY AGAIN',               ko: '다시 하기' },
+        'common.menu':             { en: 'MENU',                     ko: '메뉴' }
     }
 };
 

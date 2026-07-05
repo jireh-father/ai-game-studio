@@ -158,7 +158,7 @@ if (typeof Phaser !== 'undefined') {
             // v6 Task 4: isolated corner glyph - nearest interactive element
             // (the decor grid) starts at y=268, far clear of any padding here.
             padTapArea(back);
-            back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
+            back.on('pointerdown', () => SmooshGame.goto('SubMainScene')); // v7 T14: back -> the hub
 
             // v5.0 Task 2: 40->34 - header-title trim (pixel-font headroom).
             this.add.text(W / 2, 56, I18n.t('nest.title'), {

@@ -74,7 +74,7 @@ if (typeof Phaser !== 'undefined') {
             // v6 Task 4: isolated corner glyph - the scrollable node path
             // starts at viewTop=150, far clear of any padding here.
             padTapArea(back);
-            back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
+            back.on('pointerdown', () => SmooshGame.goto('SubMainScene')); // v7 T14: back -> the hub
 
             // v4.0 Phase C Task 3: title is on-bg (not on-panel) but still a
             // gold/good hue text - goodText reads even better here since bg
@@ -97,6 +97,18 @@ if (typeof Phaser !== 'undefined') {
             this.applyScroll();
 
             this.wireScroll();
+
+            // v7 Task 13: bounded medal re-verification - at most ~5 of the
+            // player's currently-held medal stages get re-checked per map
+            // visit (oldest-checked-first, self-correcting over a few
+            // sessions if someone got dethroned). Fire-and-forget: never
+            // blocks this create(), never touches the nodes already built
+            // above from cache - a changed medal just shows up next time the
+            // map is (re)opened. Fully offline-safe (resolves {offline:true}
+            // and no-ops if there's no connection).
+            if (typeof Leaderboard !== 'undefined') {
+                Leaderboard.reverifyMedals().catch(() => {});
+            }
 
             this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.hideReplayConfirm());
         }
@@ -159,6 +171,35 @@ if (typeof Phaser !== 'undefined') {
             if (n.boss) {
                 const crown = this.add.image(0, -r - 16, 'crown-tex').setDisplaySize(32, 22);
                 c.add(crown);
+            }
+
+            // v7 Task 13: global top-3 medal badge - read SYNCHRONOUSLY from
+            // the local cache only (SaveManager.state.medals), never a
+            // network call at render time (see leaderboard.js header + the
+            // bounded reverifyMedals() call in create() below, which is the
+            // ONLY thing that ever refreshes this cache). Opposite corner
+            // from the boss crown (top-center) so the two never collide.
+            const medalRank = SaveManager.state.medals && SaveManager.state.medals[n.stage];
+            if (medalRank === 1 || medalRank === 2 || medalRank === 3) {
+                const medalColor = medalRank === 1 ? CONFIG.PASTEL.gold
+                    : medalRank === 2 ? CONFIG.PASTEL.silver : CONFIG.PASTEL.bronze;
+                const bx = r * 0.72, by = -r * 0.72;
+                const badge = this.add.circle(bx, by, 13, medalColor, 1)
+                    .setStrokeStyle(2, CONFIG.PASTEL.ink, 0.9);
+                const badgeNum = this.add.text(bx, by, String(medalRank), {
+                    fontFamily: CONFIG.FONT, fontSize: '13px', color: Balance.hex(CONFIG.PASTEL.bg)
+                }).setOrigin(0.5);
+                c.add(badge);
+                c.add(badgeNum);
+                if (medalRank === 1) {
+                    // #1 gets a slow shimmer so it reads as "special" even
+                    // scrolling past dozens of nodes - same tween idiom as
+                    // the frontier bounce below.
+                    this.tweens.add({
+                        targets: [badge, badgeNum], scale: 1.25, duration: 520,
+                        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+                    });
+                }
             }
 
             if (isFrontier) {

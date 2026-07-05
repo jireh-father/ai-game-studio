@@ -38,6 +38,10 @@
     <script src="js/i18n.js"></script>
     <script src="js/fb.js"></script>
     <script src="js/balance.js"></script>
+    <!-- v7 T12: INFINITE mode pure math (ramp/score/reward formulas) - only
+         needs CONFIG (loaded above), same dependency profile as balance.js,
+         so it's grouped right next to it. -->
+    <script src="js/infiniteBalance.js"></script>
     <script src="js/nicknames.js"></script>
     <script src="js/catalog.js"></script>
     <script src="js/decor.js"></script>
@@ -47,6 +51,12 @@
     <script src="js/skills.js"></script>
     <script src="js/spawner.js"></script>
     <script src="js/save.js"></script>
+    <!-- v7 T13: global rankings service - depends on fb.js's Social (uid/db/
+         ready) + save.js's SaveManager (local best cache), both already
+         loaded above; called from game.js/stagemap.js at RUNTIME only (not
+         parse time), so loading here (well before those) is safe, same
+         precedent as bonus.js/sandbox.js noted below. -->
+    <script src="js/leaderboard.js"></script>
     <script src="js/gacha.js"></script>
     <script src="js/battle.js"></script>
     <script src="js/sfx.js"></script>
@@ -59,6 +69,14 @@
     <script src="js/nest.js"></script>
     <script src="js/pets.js"></script>
     <script src="js/game.js"></script>
+    <!-- v7 T12: InfiniteScene - a new self-contained Scene class reusing
+         Monster/FieldPets/Nest/Effects/Feel/Spawner (all above), same
+         precedent as pvp.js. Placed next to game.js (logical grouping);
+         forward references to makeUiButton/fitToWidth/padTapArea/
+         buildFeverGauge (ui.js, loaded later) are safe - they're only
+         CALLED at scene-runtime, long after every script has parsed
+         (game.js itself already relies on this exact ordering). -->
+    <script src="js/infinitegame.js"></script>
     <script src="js/stagemap.js"></script>
     <script src="js/dex.js"></script>
     <script src="js/nestscene.js"></script>
@@ -66,6 +84,22 @@
     <script src="js/ui.js"></script>
     <script src="js/shop.js"></script>
     <script src="js/pvp.js"></script>
+    <!-- v7 T11: PAYDAY SMASH bonus stage - depends on effects.js/gacha.js/
+         frames.js (all above) and ui.js's makeUiButton/fitToWidth, so it must
+         load after those; called from game.js's afterStageClear() at RUNTIME
+         only (not parse time), so it's safe to load after game.js too. -->
+    <script src="js/bonus.js"></script>
+    <!-- v7 Task 10: temp dev/test entry - SandboxScene must load after game.js/
+         pets.js/monsters.js (reuses Monster/FieldPets classes) and before main.js
+         (registers it in the scene array), same load-order rule as every scene. -->
+    <script src="js/sandbox.js"></script>
+    <!-- v7 Task 14: SubMainScene - the sub-main hub between MenuScene (now
+         PLAY-only) and every destination scene. Depends on NestAI
+         (nestscene.js), PET_SPECIES (catalog.js), Decor (decor.js), all
+         loaded above; a forward reference to fitToWidth (ui.js, loaded
+         later) is safe for the same reason noted on infinitegame.js's own
+         script entry above - only ever CALLED at scene-runtime. -->
+    <script src="js/submain.js"></script>
     <script src="js/main.js"></script><!-- ALWAYS LAST -->
 </body>
 </html>

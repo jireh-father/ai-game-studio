@@ -85,7 +85,7 @@ class ShopScene extends Phaser.Scene {
                 this.scene.stop();
                 this.scene.resume('GameScene');
             } else {
-                SmooshGame.goto('MenuScene');
+                SmooshGame.goto('SubMainScene'); // v7 T14: back -> the hub, not the splash
             }
         });
         this.add.text(W / 2, 56, 'SHOP', {
