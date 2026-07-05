@@ -125,12 +125,17 @@ const CONFIG = {
         // mobHP comment) found passing pairs by raising goldPerMob growth
         // (1.22->1.25) and tapDamage growth (1.35->1.376) instead, so this
         // stays 1.368.
+        // v7 T1: maxLevel raised 22 -> 1000 to pair with balance.js's
+        // piecewise critChance curve (v6-identical early, then ramping on),
+        // which reaches CRIT_MAX (0.99, ~99%) at level CRIT_REACH_LEVEL
+        // (1000) - see balance.js critChance().
         { id: 'tap',    name: 'Tap Power',    baseCost: 10, costGrowth: 1.368, icon: 'up-tap',    color: 0x5aa9ff },
-        { id: 'crit',   name: 'Critical',     baseCost: 25, costGrowth: 1.22, icon: 'up-crit',   color: 0xffe066, maxLevel: 22 },
-        // v6 Task 1: maxLevel raised 10 -> 32 to pair with balance.js's slower
-        // per-level radius (14px, was 22px) - new ceiling 14*32=448px, ~2x the
-        // old 22*10=220px ceiling instead of shrinking it.
-        { id: 'splash', name: 'Splash',       baseCost: 40, costGrowth: 1.30, icon: 'up-splash', color: 0xff9a5a, maxLevel: 32 },
+        { id: 'crit',   name: 'Critical',     baseCost: 25, costGrowth: 1.22, icon: 'up-crit',   color: 0xffe066, maxLevel: 1000 },
+        // v7 T2: maxLevel raised 32 -> 1000 to pair with balance.js's new
+        // linear splashRadius curve, which reaches the FULL FIELD DIAGONAL
+        // (every hit splashes the whole field) at level SPLASH_REACH_LEVEL
+        // (1000) - see balance.js splashRadius()/splashFullFieldRadius().
+        { id: 'splash', name: 'Splash',       baseCost: 40, costGrowth: 1.30, icon: 'up-splash', color: 0xff9a5a, maxLevel: 1000 },
         { id: 'fever',  name: 'Fever Charge', baseCost: 30, costGrowth: 1.25, icon: 'up-fever',  color: 0xff5ec4 },
         { id: 'gold',   name: 'Gold Boost',   baseCost: 30, costGrowth: 1.25, icon: 'up-gold',   color: 0xffd54a }
     ],
@@ -139,9 +144,14 @@ const CONFIG = {
         gaugeMax: 30,
         durationMs: 6000,
         damageMult: 10,
-        // v6 Task 1: doubled 140 -> 280 to stay proportionally impactful next
-        // to the new, higher per-upgrade splash ceiling (see UPGRADES.splash).
-        splashRadius: 280,     // universal splash radius during fever (px)
+        // v7 T2: fever splash now covers the FULL FIELD too, matching the
+        // maxed-out splash upgrade's new ceiling - this literal is the ceiling
+        // of CONFIG.FIELD's diagonal (w=680,h=780): ceil(sqrt(680^2+780^2))
+        // = 1035. Keep in sync with FIELD if those dimensions ever change
+        // (balance.js splashFullFieldRadius() computes the same value from
+        // CONFIG.FIELD directly for the per-level upgrade curve).
+        splashRadius: 1035,    // universal splash radius during fever (px) - full field
+
         adRefillBelow: 0.5     // AD refill chip visible when gauge < 50%
     },
 
@@ -166,7 +176,13 @@ const CONFIG = {
     NEST: {
         nibbleChance: 0.25,  // share of a wave that heads for the nest (stage >= nibbleFrom)
         nibbleFrom: 3,
-        x: 360, y: 900       // nest position (design coords)
+        x: 360, y: 900,      // nest position (design coords)
+        // v7 Task 5: normal stage-clear progression no longer hands out a
+        // free full repair - damage carries over into the next stage, only
+        // topped up by this SMALL fraction of max HP (see Nest.carryHeal /
+        // game.js startStage). Nest-broken retry (and a fresh/replay
+        // session) still gets a full repair() - see game.js call sites.
+        stageClearHealPct: 0.35
     },
 
     GACHA: {
@@ -181,7 +197,18 @@ const CONFIG = {
         pityAt: 40,          // guaranteed epic+ within this many rolls (gold: epic only - see gacha.js)
         multiPull: 10,       // 10+1: multi pull grants one bonus roll
         shardsForDupe: { common: 5, rare: 15, epic: 40, legendary: 120 },
-        shardsPerLevel: 8    // spend shards of a species to level its pet
+        shardsPerLevel: 8,   // spend shards of a species to level its pet
+
+        // v7 T2: the GOLD egg price is now a FIXED flat constant instead of
+        // scaling with stage (see balance.js eggCost(), which used to be
+        // round(goldPerMob(stage)*80) and grew unboundedly - by stage 200
+        // that formula priced a single gold egg at ~7.7e23 gold). Value =
+        // that OLD formula evaluated at stage 8 (goldPerMob(8)=12,
+        // round(12*80)=960) - stage 8 sits in the middle of this task's
+        // "early stage 5-10" anchor band, so early-game affordability (a
+        // couple of upgrade buys in) is unchanged from before this task.
+        // Tunable knob: change this one number to retune the flat price.
+        goldEggCost: 960
     },
 
     // v5 final-review fix: GACHA.rates used to be shared by the PET gacha
@@ -214,7 +241,13 @@ const CONFIG = {
         goldMult: 3,        // gold pouch = goldPerMob x this
         // v3.0: click-to-collect - drops sit on the field and must be tapped.
         lifetimeMs: 8000,   // despawns (uncollected) at this age
-        blinkFromMs: 6000   // starts blinking as a "running out of time" cue
+        blinkFromMs: 6000,  // starts blinking as a "running out of time" cue
+        // v7 T4: drops were hard to tap on mobile (old floor was 24px radius /
+        // 48px diameter - a small target on a busy field full of moving
+        // monsters). Bumped to a comfortable 44px-radius / 88px-diameter
+        // minimum; dropContains() still takes the max with the sprite's own
+        // half-size, so bigger drops aren't shrunk by this floor.
+        tapRadius: 44
     },
 
     // v3.0: waves grow forever, so mobs stream in in batches instead of all at

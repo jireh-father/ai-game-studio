@@ -964,6 +964,30 @@ const Effects = {
         return { destroy() { ev.remove(false); } };
     },
 
+    // v7 Task 9: one egg cracking open, for the 10-egg multi-pull hatch wave
+    // in shop.js's playReveal() MULTI path (10 grid eggs shake, then crack
+    // open one-by-one into the framed pet cells - was a flat "grid pops in"
+    // before). Built ENTIRELY from the self-destroying primitives above
+    // (flash/ring/burst) - it holds no tween ref of its own and spawns no
+    // timer, so unlike gachaCharge/lightRays/rarityWash/sparkleTrail above
+    // it needs no `overlay` tracking and no killTweensOf entry: every
+    // object it creates already tears itself down via its own onComplete
+    // regardless of what the caller does next (same reasoning as the bare
+    // Effects.burst()/ring()/flash() calls already used uncaptured elsewhere
+    // in playReveal). Safe to fire-and-forget even if the reveal modal
+    // closes the very next frame.
+    eggCrack(scene, x, y, color) {
+        // the pop: a bright, tight white flash reading as the shell
+        // catching the light the instant it splits open
+        this.flash(scene, x, y, CONFIG.PASTEL.white, 60);
+        // the crack wave: an expanding ring in the pet's own rarity color
+        this.ring(scene, x, y, color, 90);
+        // shell-piece particles: cream shard burst (egg-tex's own base
+        // color), kept visually distinct from the rarity-colored ring/flash
+        // so it reads as physical shell debris, not just more sparkle
+        this.burst(scene, x, y, 0xfff7e0, 9, 0.65);
+    },
+
     confetti(scene, x, y) {
         for (let i = 0; i < 36; i++) {
             const spr = scene.add.image(x, y, 'confetti-tex')

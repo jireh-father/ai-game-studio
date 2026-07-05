@@ -43,7 +43,13 @@ const SaveManager = {
             decorOwned: {},    // v3.5 Task 3: id -> owned count (drops + shop buys)
             decorPlaced: [],   // v3.5 Task 3: [{ id, gx, gy }] - nest decor layout
             // --- v6 ---
-            decorGridV: 2      // v6 Task 9: decor grid version (1 = old 6x4, 2 = new 12x8)
+            decorGridV: 2,     // v6 Task 9: decor grid version (1 = old 6x4, 2 = new 12x8)
+            // --- v7 ---
+            nestHpFrac: 1      // v7 Task 5: nest.hp/nest.maxHp, kept in sync by Nest.redraw()
+                                // so leaving mid-run and returning restores the same damaged
+                                // nest instead of a free full heal (game.js create() reads this
+                                // via `new Nest(scene)`; old saves default to 1 = full, since
+                                // this key simply won't exist in their JSON).
         };
     },
 

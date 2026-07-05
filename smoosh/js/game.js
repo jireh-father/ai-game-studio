@@ -71,11 +71,20 @@ class GameScene extends Phaser.Scene {
             // regardless of whether updateFever()'s natural countdown ever
             // got to fire Feel.feverEnd() itself.
             this.stopFeverEffects();
+            // v7 Task 8: the seeded procedural field background is rebuilt on
+            // every startStage() (see below) - tear down whatever the LAST
+            // stage installed too, so leaving the scene mid-stage never
+            // leaks its Graphics object.
+            Backgrounds.destroy(this);
         });
 
-        // subtle field boundary
+        // subtle field boundary. v7 Task 8: fillAlpha 0 - the opaque bgField
+        // fill this rectangle used to draw is now Backgrounds.render()'s job
+        // (a Graphics object at Backgrounds.DEPTH, well BEHIND this stroke
+        // and every field entity) so the seeded pattern actually shows
+        // through instead of being painted over by this rect's own fill.
         const F = CONFIG.FIELD;
-        this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, CONFIG.PASTEL.bgField)
+        this.add.rectangle(F.x + F.w / 2, F.y + F.h / 2, F.w, F.h, CONFIG.PASTEL.bgField, 0)
             .setStrokeStyle(2, CONFIG.PASTEL.ink).setDepth(0);
 
         this.buildHud();
@@ -88,7 +97,13 @@ class GameScene extends Phaser.Scene {
         this.nest = new Nest(this);
         this.fieldPets = new FieldPets(this);
 
-        this.startStage(this.replayStage || SaveManager.state.stage);
+        // v7 Task 5: a replay-from-map is a clean-slate do-over, independent
+        // of the live run's nest condition - force a full repair regardless
+        // of whatever frac the Nest constructor just restored from the save.
+        // A normal fresh/first start already got that same full repair from
+        // the constructor itself (fresh save defaults nestHpFrac to 1).
+        if (this.replayStage) this.nest.repair();
+        this.startStage(this.replayStage || SaveManager.state.stage, { nestMode: 'none' });
     }
 
     // v3.0 Task 10: the SINGLE funnel every gold credit routes through so a
@@ -241,13 +256,31 @@ class GameScene extends Phaser.Scene {
     // -------------------------------------------------------------------------
     // Stage lifecycle
     // -------------------------------------------------------------------------
-    startStage(n) {
+    // v7 Task 5: opts.nestMode picks how the nest enters this stage -
+    // 'carry' = normal stage-clear progression (damage carries over, small
+    // heal - see Nest.carryHeal); 'none' = leave the nest exactly as the
+    // caller already set it up (scene create(), where the Nest constructor
+    // itself just restored/repaired it - see game.js create()); anything
+    // else (including the default, no opts) = full repair(), which is
+    // correct for the nest-broken retry path (the failure is already
+    // punished by losing the stage; don't compound it) and is a safe
+    // fallback for any future caller that forgets to pass nestMode.
+    startStage(n, opts) {
+        opts = opts || {};
         this.stageNum = n;
         this.isBossStage = n % CONFIG.BOSS.every === 0;
         this.stageText.setText('S.' + n + ' · Lv.' + SaveManager.state.level);
         fitToWidth(this.stageText, 224);
         this.transitioning = false;
-        if (this.nest) this.nest.repair(); // fresh nest every stage
+        // v7 Task 8: reseed the procedural field background for this stage -
+        // deterministic from n (style cycles /20, palette shifts /160), so a
+        // fresh look lands on almost every stage transition (including the
+        // very first startStage() call from create()).
+        Backgrounds.render(this, n);
+        if (this.nest) {
+            if (opts.nestMode === 'carry') this.nest.carryHeal(CONFIG.NEST.stageClearHealPct);
+            else if (opts.nestMode !== 'none') this.nest.repair();
+        }
         // v3.0 review fix: single funnel for BOTH normal stage-clear
         // progression and the nest-break retry path - resets the revive
         // passive's once-per-stage flag and purges any clone/summon spirits
@@ -470,11 +503,17 @@ class GameScene extends Phaser.Scene {
                 from: this.stageNum - 4,
                 to: this.stageNum,
                 gold,
-                onContinue: () => this.startStage(SaveManager.state.stage)
+                // v7 Task 5: still a normal stage-clear continuation (just
+                // gated behind the settlement screen) - carry the nest's
+                // damage forward with a small heal, same as the non-
+                // settlement path below.
+                onContinue: () => this.startStage(SaveManager.state.stage, { nestMode: 'carry' })
             });
             return;
         }
-        this.startStage(SaveManager.state.stage);
+        // v7 Task 5: normal stage-clear progression - carry the nest's
+        // damage forward (small heal only), never a free full repair.
+        this.startStage(SaveManager.state.stage, { nestMode: 'carry' });
     }
 
     // -------------------------------------------------------------------------
@@ -495,12 +534,23 @@ class GameScene extends Phaser.Scene {
             // collecting a drop must never ALSO smoosh a monster sitting under
             // it. Checked (and consumed, via `return`) before the monster loop
             // below runs at all, so the two can never both fire off one tap.
+            // v7 T4: the tap radius was widened (see dropContains) so overlapping
+            // drops are now more likely on a busy field - scan every live drop
+            // under the tap and collect whichever CENTER sits closest to the
+            // pointer, instead of "first hit wins" (which just favored whichever
+            // drop happened to be newest/topmost, even if a tap was dead-center
+            // on a different, older drop).
+            let nearestIdx = -1, nearestDistSq = Infinity;
             for (let i = this.liveDrops.length - 1; i >= 0; i--) {
                 const spr = this.liveDrops[i];
-                if (spr.active && this.dropContains(spr, pointer.x, pointer.y)) {
-                    this.collectDrop(spr, i);
-                    return;
-                }
+                if (!spr.active || !this.dropContains(spr, pointer.x, pointer.y)) continue;
+                const dx = pointer.x - spr.x, dy = pointer.y - spr.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq < nearestDistSq) { nearestDistSq = distSq; nearestIdx = i; }
+            }
+            if (nearestIdx !== -1) {
+                this.collectDrop(this.liveDrops[nearestIdx], nearestIdx);
+                return;
             }
 
             // topmost = latest spawned first; phased-out ghosts are untappable
@@ -522,10 +572,11 @@ class GameScene extends Phaser.Scene {
         const eff = Balance.effective(SaveManager.state);
         // v3.0 Task 9: a pet-cast critaura (unicorn/toucan) adds straight onto
         // the player's own crit chance while it's active.
-        // v6 Task 1: this 0.6 hard ceiling already stopped critaura stacking
-        // from pushing live tap-time crit toward ~99% - kept as-is (eff.crit's
-        // own ceiling was separately lowered 0.6 -> 0.5 in Balance.effective()).
-        const critChance = Math.min(0.6, eff.crit + this.teamBuffAdd('crit'));
+        // v7 T1: hard ceiling raised 0.6 -> Balance.CRIT_MAX (0.99) alongside
+        // the deeper crit curve/effective() clamp - still clamps the SUM of
+        // eff.crit + any live pet critaura buff so tap-time crit can never
+        // mathematically reach a guaranteed 100%.
+        const critChance = Math.min(Balance.CRIT_MAX, eff.crit + this.teamBuffAdd('crit'));
         const isCrit = Math.random() < critChance;
         let dmg = eff.tapDmg * (isCrit ? 5 : 1);
         if (this.feverLeft > 0) dmg *= CONFIG.FEVER.damageMult;
@@ -769,9 +820,11 @@ class GameScene extends Phaser.Scene {
     }
 
     // Circular hit-test, same style as Monster.contains(), sized to at least
-    // a 48px-diameter tap target regardless of the sprite's display size.
+    // a comfortable mobile tap target (CONFIG.DROPS.tapRadius, v7 T4: 44px
+    // radius / 88px diameter - was a cramped 24px/48px) regardless of the
+    // sprite's display size.
     dropContains(spr, x, y) {
-        const r = Math.max(24, spr.displayWidth / 2, spr.displayHeight / 2);
+        const r = Math.max(CONFIG.DROPS.tapRadius, spr.displayWidth / 2, spr.displayHeight / 2);
         const dx = x - spr.x, dy = y - spr.y;
         return dx * dx + dy * dy <= r * r;
     }
@@ -1140,6 +1193,11 @@ class GameScene extends Phaser.Scene {
         const btn = makeUiButton(this, W / 2, H * 0.56, 480, 100, 'RETRY STAGE', CONFIG.PASTEL.accent, () => {
             items.forEach(o => o.destroy());
             btn.destroyAll();
+            // v7 Task 5: nest-broken retry always gets a FULL repair (never
+            // carryHeal) - failing the stage is already its own punishment
+            // via lost progress; don't compound it with a still-damaged
+            // nest on the very next attempt. Explicit here (and matches
+            // startStage()'s own default when no nestMode is passed below).
             this.nest.repair();
             this.transitioning = false;
             this.active = [];
