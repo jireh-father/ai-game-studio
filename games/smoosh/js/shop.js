@@ -313,7 +313,13 @@ class ShopScene extends Phaser.Scene {
         Sfx.gachaCharge();
 
         const reveal = () => {
-            if (charge) charge.destroy();
+            // Defense-in-depth: charge cleanup must NEVER abort the reveal. If
+            // it throws, reveal() would die before egg.destroy()/the close
+            // handler below, freezing the egg mid-shake in a stuck, undismissable
+            // modal (the exact bug the effects.js gachaCharge.destroy() note
+            // describes). Swallow any teardown error so the ceremony always
+            // proceeds to the pet card + TAP TO CLOSE.
+            if (charge) { try { charge.destroy(); } catch (e) { /* keep revealing */ } }
             const color = RARITY_COLORS[best.rarity];
             const legendary = best.rarity === 'legendary';
 
