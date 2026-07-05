@@ -195,7 +195,7 @@ class GameScene extends Phaser.Scene {
         // (glyph-to-glyph, well past the 2*14 both-sides-padded threshold),
         // nothing else nearby - safe to pad on every side.
         padTapArea(back);
-        back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
+        back.on('pointerdown', () => SmooshGame.goto('SubMainScene')); // v7 T14: back -> the hub
 
         // v2.3: in-game SHOP - pauses the fight, opens the shop as an overlay
         this.add.nineslice(136, 60, 'pill-tex', 0, 80, 56, 18, 18, 16, 16)
@@ -268,6 +268,12 @@ class GameScene extends Phaser.Scene {
     startStage(n, opts) {
         opts = opts || {};
         this.stageNum = n;
+        // v7 Task 13: clear-time clock for this stage attempt - onStageClear()
+        // below reads the delta (this.time.now - this.stageStartAt), NOT the
+        // scene's absolute clock, so this is correct across every startStage()
+        // call within one GameScene lifetime (settlement continue, replay,
+        // etc.), not just the very first one from create().
+        this.stageStartAt = this.time.now;
         this.isBossStage = n % CONFIG.BOSS.every === 0;
         this.stageText.setText('S.' + n + ' · Lv.' + SaveManager.state.level);
         fitToWidth(this.stageText, 224);
@@ -431,6 +437,13 @@ class GameScene extends Phaser.Scene {
         // onNestBroken(), where the stage really is over.
         Feel.stageClear();
 
+        // v7 Task 13: LOCAL clear-time record check - always correct offline,
+        // never depends on the network. Only a NEW local best (isNewBestTime)
+        // ever touches the network (fire-and-forget submit+rank via
+        // reportStageRecord) or pops the record toast - an ordinary clear
+        // gets neither, per the "never nag" UX rule (ideation Persona 3).
+        this.checkStageTimeRecord();
+
         // v3.0 Task 10: a REPLAY clear never advances the map pointer - the
         // player is re-running an already-cleared stage, not progressing.
         if (!this.replayStage) {
@@ -470,6 +483,34 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    // v7 Task 13: global stage-clear-time rankings. LOCAL best always wins
+    // first and offline (SaveManager.state.stageBestMs) - the network submit
+    // + rank fetch (Leaderboard.reportStageRecord) is fire-and-forget on TOP
+    // of that, never awaited here, so a slow/absent connection can never
+    // delay or block the stage-clear flow above. Guarded by `typeof
+    // Leaderboard` the same way every other optional-service call in this
+    // file guards (AdsManager/Effects/BonusStage) - safe even if
+    // leaderboard.js somehow fails to load.
+    checkStageTimeRecord() {
+        if (typeof Leaderboard === 'undefined' || !Number.isFinite(this.stageStartAt)) return;
+        const elapsedMs = Math.round(this.time.now - this.stageStartAt);
+        if (!(elapsedMs > 0)) return;
+
+        const stage = this.stageNum;
+        const st = SaveManager.state;
+        if (!st.stageBestMs) st.stageBestMs = {};
+        const prevBest = st.stageBestMs[stage];
+        if (!Leaderboard.isNewBestTime(prevBest, elapsedMs)) return; // ordinary clear - no popup, no network
+
+        st.stageBestMs[stage] = elapsedMs;
+        SaveManager.persist();
+
+        const pending = Leaderboard.reportStageRecord(stage, elapsedMs).catch(() => ({ offline: true }));
+        if (typeof showRecordPopup === 'function') {
+            showRecordPopup(this, { timeMs: elapsedMs, pending });
+        }
+    }
+
     afterStageClear() {
         // Interstitial pacing is ads.js's decision - report every clear.
         // v3.0 Task 10 note: left UNCONDITIONAL for replay clears too - the
@@ -492,6 +533,22 @@ class GameScene extends Phaser.Scene {
                 replay: true,
                 onContinue: () => this.scene.start('StageMapScene')
             });
+            return;
+        }
+
+        // v7 T11: PAYDAY SMASH bonus stage. Boss stages (multiples of
+        // CONFIG.BOSS.every) are ALWAYS also %5 settlement stages, so this
+        // branch must come BEFORE the generic settlement check below - it
+        // REPLACES that plain gold-recap panel (folds the two "look at your
+        // gold" moments into one) rather than stacking a second screen right
+        // after it. Reset stageGoldSinceSettle here too: that accumulator is
+        // only a DISPLAY counter for the recap panel this branch is skipping
+        // - the actual gold was already credited per-kill via SaveManager.
+        // addGold as it was earned, so nothing is lost, only left un-recapped
+        // for this stretch (bonus.js's own reveal is the recap now).
+        if (this.isBossStage && typeof BonusStage !== 'undefined' && CONFIG.BONUS && CONFIG.BONUS.enabled) {
+            this.stageGoldSinceSettle = 0;
+            BonusStage.run(this, { stage: this.stageNum });
             return;
         }
 

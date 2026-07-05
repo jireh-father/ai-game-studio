@@ -63,6 +63,11 @@ const CONFIG = {
         inkSoft: 0xa79bd6,     // secondary/dim text on panel surfaces - muted lavender
         accent: 0x00e5ff,      // neon cyan UI accent
         gold: 0xffcc00,        // neon amber currency accent
+        // v7 Task 13: global-rank medal badge colors (stagemap.js) - silver/
+        // bronze twins of `gold` above, same neon-metallic reading at a
+        // glance in a wall of stage nodes.
+        silver: 0xd7e3f0,      // neon-bright silver medal accent
+        bronze: 0xe08a4a,      // neon-bright bronze/copper medal accent
         danger: 0xff2f6e,      // neon red-pink damage/danger accent
         // v4.0 Phase C Task 2: nudged off elements.leaf.base (manhattan was 19,
         // needed >=48 so heal/positive pop-text never blends into leaf-element
@@ -185,6 +190,80 @@ const CONFIG = {
         stageClearHealPct: 0.35
     },
 
+    // =========================================================================
+    // v7 T12 - INFINITE mode: endless survival, distinct from the campaign
+    // stage ladder. Policy/tuning knobs only - the pure formulas that READ
+    // these (ramp compression, score, rewards, daily cap) live in
+    // infiniteBalance.js (InfiniteBalance), mirroring this file's own header
+    // convention ("numeric balance CURVES live in balance.js - this file is
+    // policy only"). See tests/infinite.test.js + the ideation doc
+    // (docs/superpowers/ideation/2026-07-05-smoosh-v7-t12-infinite-mode.md)
+    // for the reasoning behind every value below.
+    // =========================================================================
+    INFINITE: {
+        // --- ramp ---
+        waveIntervalMs: 15000,     // a new wave lands every 15s, continuously
+        stageCompression: 2.5,     // virtualStage = waveIndex * this - feeds
+                                   // Balance.mobHP/monsterAtkMult/speedMult
+                                   // verbatim (same curves, reached faster)
+        trickleBaseMs: 350,        // wave 0's trickle delay == campaign default
+        trickleMinMs: 120,         // floor - never denser than this
+        trickleStepMs: 8,          // -8ms/wave (concurrentMax already caps
+                                   // on-field population, so this reads as
+                                   // "faster", not "more of the same")
+        miniBossEvery: 4,          // every 4th wave spawns a mini-boss
+        miniBossHpFrac: 0.6,       // mini-boss HP = 0.6 x Balance.bossHpMult
+                                   // (a "tough one", not a full campaign king)
+
+        // --- wave modifiers (rolled once per wave, uniform 25% each) ---
+        // v7 T12: the ideation's synthesized design (§3) folds Persona B's
+        // 4 named pressures into these hp/speed/trickle multipliers, applied
+        // to that wave's freshly-spawned entries only (see infinitegame.js
+        // spawnEntry's per-entry `modScale`/post-spawn speed tweak - the same
+        // non-invasive "adjust the pooled Monster instance's own fields after
+        // Monster.spawn()" pattern game.js already uses for splitter-child
+        // downscaling, never a change to monsters.js itself).
+        MODIFIERS: {
+            swarm:     { hp: 1,    speed: 1,   trickleMult: 0.5 }, // denser flood
+            tanky:     { hp: 1.3,  speed: 1,   trickleMult: 1 },
+            glassRush: { hp: 0.8,  speed: 1.5, trickleMult: 1 },   // fast kills, fast punishment
+            elite:     { hp: 1,    speed: 1,   trickleMult: 1, forceElite: true }
+        },
+
+        // --- score (Persona A/D synthesis - see infiniteBalance.js) ---
+        killValueBase: 10,
+        killValueWaveMult: 0.15,   // killValue(wave) = base * (1 + wave*this)
+        comboMultPerCombo: 0.05,
+        comboMultCap: 3,           // comboMult caps at 3x (reached at combo 40
+                                   // by the formula: (3-1)/0.05 = 40) - see
+                                   // comboMult() doc. (v7 T12 fix: removed the
+                                   // dead comboCapForMult knob that used to
+                                   // clamp the combo value BEFORE this cap -
+                                   // redundant, since comboMultCap alone
+                                   // already bounds the result for any combo.)
+        runMultMilestoneStep: 0.1, // ratchet +0.1 at each CONFIG.COMBO
+                                   // milestone (10/25/50) hit during the run
+        runMultMiniBossStep: 0.05, // ratchet +0.05 per mini-boss kill
+        endBonusPerWave: 50,       // one-time end-of-run bonus: wave*50
+        endBonusPerSecond: 2,      // + floor(survivalSec)*2
+
+        // --- rewards / economy guardrails (Persona C) ---
+        goldMult: 0.35,            // between normal 1.0 and the existing
+                                   // stage-map replay nerf (0.3) - Infinite
+                                   // also carries real risk of a fast death
+        dailyPayoutCap: 5,         // first N runs/day earn gold/gems; beyond
+                                   // that the mode still fully plays and still
+                                   // submits to the leaderboard, reward-free
+        gemsOnPersonalBest: 1,     // flat gem grant on a NEW personal-best
+                                   // score (payout-eligible runs only)
+
+        // --- juice/pacing (Persona D) ---
+        feverChargeMult: 1.5      // fever gauge fills 1.5x faster than
+                                   // campaign - the mode's signature
+                                   // "release valve" beat (Effects/Feel
+                                   // themselves are untouched)
+    },
+
     GACHA: {
         // v5.0 RETRO ARCADE Task 4: legendary pets are gem-egg only. Gold
         // egg's old 0.03 legendary mass was redistributed into common/rare/
@@ -226,6 +305,37 @@ const CONFIG = {
         stageMilestoneEvery: 25, stageMilestoneGems: 5,
         pvpWin: 2,
         eggCost: 20, chestCost: 15   // gem prices in the shop
+    },
+
+    // =========================================================================
+    // v7 T11 - PAYDAY SMASH: the post-boss-clear bonus stage (bonus.js).
+    // Every boss-stage clear (this.isBossStage, game.js) runs a ~14s
+    // failure-proof tap-mash beat instead of the plain gold-recap settlement,
+    // paying out gold + gems + one free gem-egg pull. All knobs tunable here:
+    //   - durationMs: the mash window length (auto-completes at 100% by the
+    //     end regardless of taps - see bonus.js's timer, never a fail state).
+    //   - goldMult: balance.js Balance.bonusGold() reads this - reward scales
+    //     with goldPerMob(stage)*waveSize(stage), never a flat number, so it
+    //     stays meaningful from stage 10 to stage 500+ without a manual retune.
+    //   - mashBonusMax: the tap-speed skill-expression bonus ON TOP of the
+    //     guaranteed base gold (0.5 = up to +50%), never a penalty.
+    //   - gemBoss/gemKing: flat gem grant ADDITIVE to the existing boss/king
+    //     gem credit (game.js onSpecialDeath, CONFIG.GEMS.bossKill/kingKill) -
+    //     not a replacement, and small relative to CONFIG.GEMS.eggCost (20) so
+    //     premium currency stays scarce (see ideation doc's economy pass).
+    //   - enabled: single kill switch - false skips straight to the next
+    //     stage exactly like a pre-T11 boss clear (see bonus.js BonusStage.run).
+    // The free pull itself deliberately reuses CONFIG.GACHA.gemRates verbatim
+    // (bonus.js/gacha.js) - never a boosted table - so this can't undercut the
+    // real gem-egg's premium value.
+    // =========================================================================
+    BONUS: {
+        enabled: true,
+        durationMs: 14000,
+        goldMult: 4,
+        mashBonusMax: 0.5,
+        gemBoss: 3,
+        gemKing: 5
     },
 
     // v2.3: random item drops from kills - picked up = instantly used.

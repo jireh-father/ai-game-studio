@@ -26,7 +26,7 @@ class PvpScene extends Phaser.Scene {
         // v6 Task 4: isolated corner glyph - the picker grid below starts at
         // y=214, far clear of any padding here.
         padTapArea(back);
-        back.on('pointerdown', () => SmooshGame.goto('MenuScene'));
+        back.on('pointerdown', () => SmooshGame.goto('SubMainScene')); // v7 T14: back -> the hub
 
         // v4.0 Phase C Task 3: unified with the other scenes' header-title
         // treatment (goodText on-bg) instead of inventing a one-off deep
@@ -473,6 +473,6 @@ class PvpScene extends Phaser.Scene {
         makeUiButton(this, W / 2, H * 0.6, 420, 96, 'REMATCH', CONFIG.PASTEL.accent,
             () => this.scene.restart(), undefined, { pad: 10 });
         makeUiButton(this, W / 2, H * 0.6 + 124, 420, 96, 'MENU', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('MenuScene'), undefined, { pad: 10 });
+            () => SmooshGame.goto('SubMainScene'), undefined, { pad: 10 }); // v7 T14: back -> the hub
     }
 }

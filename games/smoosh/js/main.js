@@ -398,7 +398,10 @@ window.addEventListener('load', () => {
             // mush). Phaser's pixelArt flag always wins over antialias, so
             // antialias is explicitly false here too rather than left stale.
             render: { pixelArt: true, antialias: false },
-            scene: [BootScene, MenuScene, StageMapScene, DexScene, NestScene, GameScene, ShopScene, PvpScene, FriendsScene]
+            // v7 T14: SubMainScene (the sub-main hub) sits right after MenuScene -
+            // MenuScene's PLAY button opens it, and every destination scene's
+            // back button now returns to it instead of MenuScene.
+            scene: [BootScene, MenuScene, SubMainScene, StageMapScene, DexScene, NestScene, GameScene, ShopScene, PvpScene, FriendsScene, SandboxScene, InfiniteScene]
         });
 
         window.addEventListener('resize', () => {

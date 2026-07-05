@@ -256,6 +256,14 @@ function buildUpgradeBar(scene) {
 
 // =============================================================================
 // Fever gauge strip + AD refill chip
+//
+// v7 T12: shared between GameScene (campaign) and InfiniteScene, but each
+// keeps its gauge in a DIFFERENT place - campaign in the persisted
+// SaveManager.state.feverGauge, Infinite in its own scene-local
+// this.infFeverGauge (see infinitegame.js's isolation note) so the two never
+// leak into each other. This function never knows which scene it's attached
+// to beyond that: if the scene exposes a numeric infFeverGauge, read/write
+// THAT; otherwise fall back to the shared save field exactly as before.
 // =============================================================================
 function buildFeverGauge(scene) {
     const Y = 996, W = CONFIG.WIDTH - 240, X = 44, H = 16;
@@ -263,11 +271,18 @@ function buildFeverGauge(scene) {
     scene.add.text(X - 8, Y + H / 2, '🔥', { fontFamily: CONFIG.FONT, fontSize: '20px' })
         .setOrigin(1, 0.5).setDepth(10);
 
+    const isSceneLocal = () => typeof scene.infFeverGauge === 'number';
+    const gaugeValue = () => isSceneLocal() ? scene.infFeverGauge : SaveManager.state.feverGauge;
+    const setGaugeMax = () => {
+        if (isSceneLocal()) scene.infFeverGauge = CONFIG.FEVER.gaugeMax;
+        else SaveManager.state.feverGauge = CONFIG.FEVER.gaugeMax;
+    };
+
     const chip = makeUiButton(scene, CONFIG.WIDTH - 90, Y + 8, 132, 46, '⚡ AD', CONFIG.PASTEL.accent, () => {
         chip.disable();
         const done = (ok) => {
             if (ok) {
-                SaveManager.state.feverGauge = CONFIG.FEVER.gaugeMax;
+                setGaugeMax();
                 scene.events.emit('feverChanged');
                 scene.triggerFever();
             }
@@ -281,7 +296,7 @@ function buildFeverGauge(scene) {
     });
 
     const redraw = () => {
-        const frac = Phaser.Math.Clamp(SaveManager.state.feverGauge / CONFIG.FEVER.gaugeMax, 0, 1);
+        const frac = Phaser.Math.Clamp(gaugeValue() / CONFIG.FEVER.gaugeMax, 0, 1);
         gfx.clear();
         // v4.0 Phase C Task 2: dark ink frame + light panel track, so the
         // fever-colored fill still pops on a gauge - same rail convention as
@@ -477,6 +492,66 @@ function showSettlement(scene, opts) {
 }
 
 // =============================================================================
+// v7 Task 13: stage-clear-time record popup - a small, NON-BLOCKING toast for
+// a NEW LOCAL best only (game.js checkStageTimeRecord never calls this on an
+// ordinary clear). Shows the local line instantly; if opts.pending (the
+// Leaderboard.reportStageRecord() promise) resolves with a real rank before
+// this toast's own display window ends, it grows in place to add the global
+// rank + #1 line, with an extra flash beat on a top-3 finish. No scrim, no
+// input-blocking, no dependency on the network to even appear - if pending
+// resolves late (or to {offline:true}), the toast has usually already faded
+// and the result is dropped silently via the `live` guard below.
+// =============================================================================
+function showRecordPopup(scene, opts) {
+    const W = CONFIG.WIDTH;
+    const Y = 210; // under the stage/boss header, above the field - never
+                    // overlaps the STAGE CLEAR! banner (centered at H*0.42).
+    let live = true;
+
+    // Fixed panel size sized to fit the eventual TWO-line (local + global
+    // rank) text from the start - no runtime nineslice resize (unlike a
+    // Phaser Text, NineSlice objects in this codebase are never resized
+    // after creation - see the header comment above for why this popup
+    // instead just grows the label WITHIN a panel that's already big enough).
+    const bg = scene.add.nineslice(W / 2, Y + 10, 'pill-tex', 0, 480, 84, 16, 16, 14, 14)
+        .setTint(CONFIG.PASTEL.panel).setDepth(40).setAlpha(0);
+    const label = scene.add.text(W / 2, Y + 10, '⏱ NEW RECORD! ' + (opts.timeMs / 1000).toFixed(1) + 's', {
+        fontFamily: CONFIG.FONT, fontSize: '17px', color: Balance.hex(CONFIG.PASTEL.goodText),
+        align: 'center', wordWrap: { width: 440 }
+    }).setOrigin(0.5).setDepth(41).setAlpha(0);
+    const items = [bg, label];
+
+    scene.tweens.add({ targets: items, alpha: 1, duration: 200 });
+
+    const destroy = () => {
+        if (!live) return;
+        live = false;
+        scene.tweens.add({
+            targets: items, alpha: 0, duration: 250,
+            onComplete: () => items.forEach(o => o.destroy())
+        });
+    };
+    scene.time.delayedCall(2600, destroy);
+
+    if (opts.pending && typeof opts.pending.then === 'function') {
+        opts.pending.then(res => {
+            if (!live || !res || res.offline) return; // dropped silently - see header comment
+            const rankLine = res.medalRank
+                ? ['🥇', '🥈', '🥉'][res.medalRank - 1] + ' GLOBAL #' + res.rank
+                : 'Global Rank #' + res.rank;
+            const topLine = res.globalBest
+                ? ' · #1 ' + (res.globalBest.nickname || '???') + ' ' + (res.globalBest.timeMs / 1000).toFixed(1) + 's'
+                : '';
+            label.setText(label.text + '\n' + rankLine + topLine);
+            fitToWidth(label, 440);
+            if (res.medalRank) scene.cameras.main.flash(220, 255, 214, 74);
+        }).catch(() => {});
+    }
+
+    return { destroy };
+}
+
+// =============================================================================
 // MenuScene
 // =============================================================================
 
@@ -497,7 +572,8 @@ class MenuScene extends Phaser.Scene {
     create() {
         const W = CONFIG.WIDTH, H = CONFIG.HEIGHT;
 
-        // Banner lives ONLY on the menu - never during play.
+        // Banner lives on the menu (and, since v7 final-review, SubMainScene
+        // too - the real post-T14 hub) - never during play.
         if (typeof AdsManager !== 'undefined') {
             AdsManager.showBanner();
             this.events.once('shutdown', () => AdsManager.hideBanner());
@@ -539,46 +615,16 @@ class MenuScene extends Phaser.Scene {
             align: 'center', wordWrap: { width: 680 }
         }).setOrigin(0.5).setDepth(10);
 
-        // v4.0 Phase C Task 2: every generic CTA on this menu (nav buttons +
-        // the main PLAY button) is now the single pastel accent - role-based
-        // mapping ("buttons/accents -> accent"), not per-button hue variety.
-        makeUiButton(this, W / 2, H * 0.58, 520, 116,
+        // v7 T14: MenuScene is now PLAY-only - every destination (SHOP/MAP/
+        // BATTLE/DEX/NEST/FRIENDS, plus the temp INFINITE/SANDBOX entry
+        // points T10/T12 added directly here) moved into the new
+        // SubMainScene "Neon Carnival Midway" hub (submain.js). PLAY now
+        // opens that hub instead of jumping straight into GameScene; the
+        // hub's own PLAY node is what actually starts GameScene. Enlarged +
+        // recentered into the vertical space the removed rows freed up.
+        makeUiButton(this, W / 2, H * 0.64, 580, 156,
             'SMOOSH!  (STAGE ' + st.stage + ')', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('GameScene'));
-
-        // v6 Task 4 review fix: SHOP/MAP/BATTLE centers sit 235px apart at
-        // w=220 (half=110) -> 15px raw horizontal gap, which the default
-        // +14/+14 pad turns into a 13px OVERLAP (wrong nav button eats the
-        // tap near the boundary). pad:6 leaves 3px. This row's 140px vertical
-        // offset from PLAY (h=116/96 halves) keeps a comfortable margin
-        // against the default-padded PLAY button above, so PLAY is untouched.
-        makeUiButton(this, W / 2 - 235, H * 0.58 + 140, 220, 96, '🛒 SHOP', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('ShopScene'), undefined, { pad: 6 });
-        // v3.0 Task 10: MAP nav button, alongside SHOP/BATTLE (map-pin emoji -
-        // no dedicated procedural texture exists, matching this row's existing
-        // emoji-prefixed-label convention rather than adding a new icon asset).
-        makeUiButton(this, W / 2, H * 0.58 + 140, 220, 96, '📍 ' + I18n.t('map.navButton'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('StageMapScene'), undefined, { pad: 6 });
-        makeUiButton(this, W / 2 + 235, H * 0.58 + 140, 220, 96, '⚔ BATTLE', CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('PvpScene'), undefined, { pad: 6 });
-        // v3.0 Task 11: DEX nav button, own row below SHOP/MAP/BATTLE (no
-        // room left in that row - all 720px of width is already spoken for).
-        // v3.5 Task 4: NEST joins DEX on this row (egg emoji - no dedicated
-        // procedural texture, matching this row's emoji-prefixed convention).
-        // v6 Task 4 review fix: this row sits only 22px (raw) below the
-        // SHOP/MAP/BATTLE row (h=96 vs h=84 halves) -> default pad turns that
-        // into a 6px overlap band. Matching pad:6 here (same as the row
-        // above) restores a 10px vertical margin; this row's own DEX-NEST
-        // horizontal gap (40px raw) stays comfortably clear at pad:6 too.
-        makeUiButton(this, W / 2 - 160, H * 0.58 + 252, 280, 84, '📖 ' + I18n.t('dex.title'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('DexScene'), undefined, { pad: 6 });
-        makeUiButton(this, W / 2 + 160, H * 0.58 + 252, 280, 84, '🥚 ' + I18n.t('nest.title'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('NestScene'), undefined, { pad: 6 });
-        // v3.5 Task 5: FRIENDS nav button, own row below DEX/NEST - players
-        // list + friend requests + gift inbox (offline-first, degrades to a
-        // single "offline" card + retry until Social.ready flips true).
-        makeUiButton(this, W / 2, H * 0.58 + 364, 320, 84, '👥 ' + I18n.t('social.title'), CONFIG.PASTEL.accent,
-            () => SmooshGame.goto('FriendsScene'));
+            () => SmooshGame.goto('SubMainScene'));
 
         // wallet
         this.add.image(W / 2 - 110, H * 0.53, 'coin-tex').setDisplaySize(26, 26).setDepth(10);
